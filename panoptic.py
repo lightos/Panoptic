@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Search default file locations on Windows, Linux or Mac.
+Search default file locations on Windows, Linux and Mac.
 """
 
 import difflib
@@ -11,13 +11,16 @@ from urlparse import urlsplit, parse_qsl
 from urllib2 import urlopen, Request
 from sys import argv, exit
 
+NAME = "panoptic"
+VERSION = "v0.1"
+
 class Panoptic:
     """
     Contains all the functionality to run panoptic.
     """
     def __init__(self):
         """
-        Initiates the DFL object.
+        Initiates the Panoptic object.
         """
         self.software = ""
         self.category = ""
@@ -59,19 +62,24 @@ class Panoptic:
         args = {}
         if len(argv) < 2:
             exit()
+        if "--help" in argv:
+            help()
         if "--string" in argv:
             args["string"] = argv[argv.index("--string")+1]
         if "--os" in argv:
             args["os"] = argv[argv.index("--os")+1]
         if "--target" in argv:
             args["target"] = argv[argv.index("--target")+1]
+        else:
+            help()
+        if "--param" in argv:
+            args["param"] = argv[argv.index("--param")+1]
         if "--user-agent" in argv:
             args["user-agent"] = "gotta get a random UA here"
             
         return args        
     
 class Connect:
-
     """
     Handles all requests to web site.
     """
@@ -129,7 +137,7 @@ class Connect:
             status = conn.msg
             responseHeaders = conn.info()
 
-            return page, status, code, parsed_url
+            return page, parsed_url
 
         except IOError, e:
             if hasattr(e, "reason"):
@@ -152,16 +160,18 @@ class Connect:
                 responseHeaders = e.info()
                 print("HTTP error code: %d" % code)
 
-        return page, status, code, parsed_url
+        return page, parsed_url
 
 def main():
     """
     Initialize the execution of the program.
     """
+    
+    banner()
     dfl = Panoptic()
     args = dfl.get_args()
-    html, _, _, parsed_URL = Connect().get_page(**{"target": args["target"]})
-    
+    html, parsed_url = Connect().get_page(**{"target": args["target"]})
+
     if html.find(args["string"]) == -1:
         print("[*] string not found!")
         exit()
@@ -169,9 +179,41 @@ def main():
         dfl.standard_response = html
     
     for file in dfl.parse_file():
+        url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc,
+                                parsed_url.path, parsed_url.query)
+        print parsed_url.query
+        print url
+        quit()
         args = {"target": "%s%s" % ("http://localhost/lfi.php?file=", file["location"])}
-        html, _, _, parsed_URL = Connect().get_page(**args)
-        
-        print difflib.SequenceMatcher(None, dfl.standard_response, html).ratio()
-        
+        html, _ = Connect().get_page(**args)
+
+def help():
+    """
+    Prints help menu.
+    """
+    print """== help menu ==
+    
+--string{:>14}string for normal response.
+--os{:>18}set a specific operating system to limit searches.
+--software{:>12}set the name of the software to search for.
+--category{:>12}set a specific category of software to look for.
+--type{:>16}set the type of file to search for (conf or log).
+--help{:>16}print this menu.
+""".format(" ", " ", " ", " ", " ", " ")
+
+    exit()
+
+def banner():
+    """
+    Prints banner.
+    """
+    print """
+
+ .-',--.`-.
+<_ | () | _>
+  `-`=='-'
+
+%s %s
+""" % (NAME, VERSION)
+
 if __name__ == "__main__": main()
