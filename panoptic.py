@@ -32,7 +32,7 @@ class Panoptic:
         """
         Main function for panoptic.
         """    
-        for file_location in open("file locations/windows.txt"):
+        for file_location in open("file_locations.txt"):
             file_location = file_location.rstrip()
             if not file_location:
                 continue
