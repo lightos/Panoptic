@@ -4,11 +4,11 @@
 Search default file locations on Windows, Linux and Mac.
 """
 
-import difflib
+import re
 
 from urllib import urlencode
-from urlparse import urlsplit, parse_qsl
 from urllib2 import urlopen, Request
+from urlparse import urlsplit, parse_qsl
 from sys import argv, exit
 
 NAME = "panoptic"
@@ -37,14 +37,14 @@ class Panoptic:
             if not file_location:
                 continue
             elif file_location[0] == "[":
-                self.category =  file_location[1:-1]
-                self.operating_system =  file_location[1:-1] # FIXXXX
+                self.category = file_location[1:-1]
+                self.operating_system = file_location[1:-1]  # FIXXXX
                 continue
             elif file_location[0] == "#":
-                self.software =  file_location[1:]
+                self.software = file_location[1:]
                 continue
             elif file_location[0] == "*":
-                self.classification =  file_location[1:]
+                self.classification = file_location[1:]
                 continue
 
             self.file_attributes["OS"] = self.operating_system
@@ -65,15 +65,15 @@ class Panoptic:
         if "--help" in argv:
             help()
         if "--string" in argv:
-            args["string"] = argv[argv.index("--string")+1]
+            args["string"] = argv[argv.index("--string") + 1]
         if "--os" in argv:
-            args["os"] = argv[argv.index("--os")+1]
+            args["os"] = argv[argv.index("--os") + 1]
         if "--target" in argv:
-            args["target"] = argv[argv.index("--target")+1]
+            args["target"] = argv[argv.index("--target") + 1]
         else:
             help()
         if "--param" in argv:
-            args["param"] = argv[argv.index("--param")+1]
+            args["param"] = argv[argv.index("--param") + 1]
         if "--user-agent" in argv:
             args["user-agent"] = "gotta get a random UA here"
             
@@ -171,49 +171,68 @@ def main():
     dfl = Panoptic()
     args = dfl.get_args()
     html, parsed_url = Connect().get_page(**{"target": args["target"]})
-
+    
+    ###REMOVE?
     if html.find(args["string"]) == -1:
         print("[*] string not found!")
         exit()
     else:
         dfl.standard_response = html
+    ##########
     
+    dfl.standard_response = html
+    
+    html, _ = Connect().get_page(**{
+                                    "target": "%s://%s%s?%s" %
+                                    (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args["param"],
+                                     r"\1=%s" % "non_existing_file.panoptic", parsed_url.query))
+                                    })
+    
+    if dfl.standard_response != html:
+        dfl.invalid_response = html
+
     for file in dfl.parse_file():
-        url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc,
-                                parsed_url.path, parsed_url.query)
-        print parsed_url.query
-        print url
-        quit()
-        args = {"target": "%s%s" % ("http://localhost/lfi.php?file=", file["location"])}
-        html, _ = Connect().get_page(**args)
+        html, _ = Connect().get_page(**{
+                                        "target": "%s://%s%s?%s" %
+                                        (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                                         re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args["param"],
+                                         r"\1=%s" % file['location'], parsed_url.query))
+                                        })
+        
+        if html != dfl.invalid_response:
+            print("Possible file found: %s" % _.query)
 
 def help():
     """
     Prints help menu.
     """
-    print """== help menu ==
+    print("""== help menu ==
     
 --string{:>14}string for normal response.
+--target{:>14}set the target to test.
+--param{:>15}set the parameter to test.
 --os{:>18}set a specific operating system to limit searches.
 --software{:>12}set the name of the software to search for.
 --category{:>12}set a specific category of software to look for.
 --type{:>16}set the type of file to search for (conf or log).
 --help{:>16}print this menu.
-""".format(" ", " ", " ", " ", " ", " ")
+""").format(" ", " ", " ", " ", " ", " ")
 
     exit()
 
 def banner():
     """
     Prints banner.
+    
+    ASCII eye taken from http://www.retrojunkie.com/asciiart/health/eyes.htm
     """
-    print """
-
+    print("""
  .-',--.`-.
 <_ | () | _>
   `-`=='-'
 
 %s %s
-""" % (NAME, VERSION)
+""") % (NAME, VERSION)
 
 if __name__ == "__main__": main()
