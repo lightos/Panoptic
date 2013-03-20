@@ -1,5 +1,7 @@
+[Programming]
 # PHP
 *conf
+(*NIX)
 /etc/php.ini
 /bin/php.ini
 /etc/httpd/php.ini
@@ -27,6 +29,9 @@
 /etc/php/cgi/php.ini
 /etc/php4/cgi/php.ini
 /etc/php5/cgi/php.ini
+/home2/bin/stable/apache/php.ini
+/home/bin/stable/apache/php.ini
+(Windows)
 /php5/php.ini
 /php4/php.ini
 /php/php.ini
@@ -36,13 +41,13 @@
 /apache/php/php.ini
 /xampp/apache/bin/php.ini
 /NetServer/bin/stable/apache/php.ini
-/home2/bin/stable/apache/php.ini
-/home/bin/stable/apache/php.ini
+(OSX)
 /Volumes/Macintosh_HD1/usr/local/php/lib/php.ini
 
+[Web Hosting Administration]
 # Cpanel
+(*NIX)
 *log
-/usr/local/cpanel/logs
 /usr/local/cpanel/logs/stats_log
 /usr/local/cpanel/logs/access_log
 /usr/local/cpanel/logs/error_log
@@ -50,6 +55,24 @@
 /usr/local/cpanel/logs/login_log
 *conf
 /var/cpanel/cpanel.config
+
+# Plesk
+(*NIX)
+*log
+/var/log/sw-cp-server/error_log
+/usr/local/psa/admin/logs/httpsd_access_log
+/usr/local/psa/admin/logs/panel.log
+/var/log/sw-cp-server/error_log
+/var/log/sso/sso.log
+*conf
+/usr/local/psa/admin/conf/php.ini
+/etc/sw-cp-server/applications.d/plesk.conf
+/etc/sw-cp-server/applications.d/plesk.conf
+/usr/local/psa/admin/conf/site_isolation_settings.ini
+/usr/local/sb/config
+/usr/local/psa/admin/conf/php.ini
+/etc/sw-cp-server/applications.d/00-sso-cpserver.conf
+/etc/sso/sso_config.ini
 
 [Databases]
 # MySQL
@@ -86,6 +109,7 @@
 /Program Files/MySQL/my.cnf
 /MySQL/my.ini
 /MySQL/my.cnf
+/mysql/bin/my.ini
 (OSX)
 /usr/local/mysql/data/mysql.log
 /usr/local/mysql/data/mysql.err
@@ -93,6 +117,43 @@
 /usr/local/mysql/data/mysql-slow.log
 /usr/local/mysql/data/mysqlderror.log
 /usr/local/mysql/data/{HOST}.err
+
+# PostgreSQL
+*log
+(*NIX)
+/var/postgresql/log/postgresql.log
+/var/log/postgresql/postgresql.log
+/var/log/postgres/pg_backup.log
+/var/log/postgres/postgres.log
+/var/log/postgresql.log
+/var/log/pgsql/pgsql.log
+/var/log/postgresql/postgresql-8.1-main.log
+/var/log/pgsql8.log
+/var/log/postgresql/postgres.log
+/var/log/pgsql_log
+/var/log/postgresql/main.log
+/var/log/cron /var/log/postgres.log
+/usr/internet/pgsql/data/postmaster.log
+/usr/local/pgsql/data/postgresql.log
+/usr/local/pgsql/data/pg_log
+(Windows)
+/PostgreSQL/log/pgadmin.log
+*conf
+(*NIX)
+/var/lib/pgsql/data/postgresql.conf
+/var/postgresql/db/postgresql.conf
+/var/nm2/postgresql.conf
+/usr/local/pgsql/data/postgresql.conf
+/usr/local/pgsql/data/pg_hba.conf
+/usr/internet/pgsql/data/pg_hba.conf
+/usr/local/pgsql/data/passwd
+/usr/local/pgsql/bin/pg_passwd
+/etc/postgresql/postgresql.conf
+/etc/postgresql/pg_hba.conf
+/home/postgres/data/postgresql.conf
+/home/postgres/data/PG_VERSION
+/home/postgres/data/pg_ident.conf
+/home/postgres/data/pg_hba.conf
 
 [Packaged Web Dev]
 # WAMP
@@ -122,6 +183,10 @@
 /etc/logrotate.d/proftpd
 /www/logs/proftpd.system.log
 /var/log/proftpd
+/var/log/proftpd/xferlog.legacy
+/var/log/proftpd.access_log
+/var/log/proftpd.xferlog
+/etc/pam.d/proftpd
 *conf
 /etc/proftp.conf
 /etc/protpd/proftpd.conf
@@ -200,6 +265,7 @@
 
 [Mail server]
 # Exim
+(*NIX)
 *log
 /var/log/exim_mainlog
 /var/log/exim/mainlog
@@ -415,7 +481,41 @@
 /usr/local/etc/lighttpd.conf.new
 /var/www/.lighttpdpassword
 
-# HTTP general
+# nginx
+(*NIX)
+*log
+/var/log/nginx/access_log
+/var/log/nginx/error_log
+/var/log/nginx/access.log
+/var/log/nginx/error.log
+/var/log/nginx.access_log
+/var/log/nginx.error_log
+/logs/access_log
+/logs/error_log
+*conf
+/etc/nginx/nginx.conf
+/usr/local/etc/nginx/nginx.conf
+/usr/local/nginx/conf/nginx.conf
+
+# Zeus Web Server (ZWS)
+(*NIX)
+*conf
+/usr/local/zeus/web/global.cfg
+*log
+/usr/local/zeus/web/log/errors
+
+# LiteSpeed Web Server
+(*NIX)
+*conf
+/opt/lsws/conf/httpd_conf.xml
+/usr/local/lsws/conf/httpd_conf.xml
+*log
+/opt/lsws/logs/error.log
+/opt/lsws/logs/access.log
+/usr/local/lsws/logs/error.log
+/usr/local/logs/access.log
+
+# General
 /usr/local/etc/apache/httpd.conf
 /etc/apache2/sites-available/default
 /etc/apache2/sites-available/default-ssl
@@ -497,44 +597,6 @@
 /etc/samba/private/smbpasswd
 /usr/local/etc/smb.conf
 /usr/local/samba/lib/smb.conf.user
-
-[Databases]
-# PostgreSQL
-*log
-(*NIX)
-/var/postgresql/log/postgresql.log
-/var/log/postgresql/postgresql.log
-/var/log/postgres/pg_backup.log
-/var/log/postgres/postgres.log
-/var/log/postgresql.log
-/var/log/pgsql/pgsql.log
-/var/log/postgresql/postgresql-8.1-main.log
-/var/log/pgsql8.log
-/var/log/postgresql/postgres.log
-/var/log/pgsql_log
-/var/log/postgresql/main.log
-/var/log/cron /var/log/postgres.log
-/usr/internet/pgsql/data/postmaster.log
-/usr/local/pgsql/data/postgresql.log
-/usr/local/pgsql/data/pg_log
-(Windows)
-/PostgreSQL/log/pgadmin.log
-*conf
-(*NIX)
-/var/lib/pgsql/data/postgresql.conf
-/var/postgresql/db/postgresql.conf
-/var/nm2/postgresql.conf
-/usr/local/pgsql/data/postgresql.conf
-/usr/local/pgsql/data/pg_hba.conf
-/usr/internet/pgsql/data/pg_hba.conf
-/usr/local/pgsql/data/passwd
-/usr/local/pgsql/bin/pg_passwd
-/etc/postgresql/postgresql.conf
-/etc/postgresql/pg_hba.conf
-/home/postgres/data/postgresql.conf
-/home/postgres/data/PG_VERSION
-/home/postgres/data/pg_ident.conf
-/home/postgres/data/pg_hba.conf
 
 [Firewall]
 # ipfw
@@ -623,9 +685,6 @@
 *mix
 /root/.ksh_history
 /root/.bash_logut
-/var/log/proftpd/xferlog.legacy
-/var/log/proftpd.access_log
-/var/log/proftpd.xferlog
 /etc/httpd/logs/access_log
 /var/log/httpsd/ssl.access_log
 /var/log/httpsd/ssl_log
@@ -640,6 +699,25 @@
 /usr/local/www/logs/thttpd_log
 /var/log/ncftpd/misclog.txt
 /var/log/ncftpd.errs
+/etc/passwd
+/etc/shadow
+/etc/fstab
+/etc/host.conf
+/etc/motd
+/etc/apache/apache.conf
+/etc/apache2/apache.conf
+/etc/httpd/logs/access.log
+/etc/shadow~
+/etc/hosts
+/etc/sysconfig/network-scripts/ifcfg-eth0
+/etc/redhat-release
+/etc/group
+/etc/security/group
+/etc/security/passwd
+/etc/security/user
+/etc/security/environ
+/etc/security/limits
+/usr/lib/security/mkuser.default
 
 [Web Mail]
 # SquirrelMail
@@ -672,134 +750,8 @@
 *other
 /usr/local/squirrelmail/www/README
 
-# nginx
-(*NIX)
-*log
-/var/log/nginx/access_log
-/var/log/nginx/error_log
-/var/log/nginx/access.log
-/var/log/nginx/error.log
-/var/log/nginx.access_log
-/var/log/nginx.error_log
-/logs/access_log
-/logs/error_log
-*conf
-/etc/nginx/nginx.conf
-/usr/local/etc/nginx/nginx.conf
-/usr/local/nginx/conf/nginx.conf
-
-[Apache]
-# Solaris
-/var/apache/logs/access_log
-/var/apache/logs/error_log
-
-[LAMPP]
-- Debian
-/var/log/apache-ssl/error.log
-/var/log/apache-ssl/access.log
-
-- FreeBSD
-/usr/local/etc/httpd/logs/access_log
-/usr/local/etc/httpd/logs/error_log
-
--- 7.1
-/var/log/httpd-error.log
-/var/log/httpd-access.log
-/usr/etc/wtmp
-/usr/etc/lastlog
-
-- OpenBSD
-/var/www/log/access_log
-/var/www/log/error_log
-
-# Zeus Web Server (ZWS)
-*conf
-/usr/local/zeus/web/global.cfg
-*log
-/usr/local/zeus/web/log/errors
-
-# LiteSpeed Web Server
-*conf
-/opt/lsws/conf/httpd_conf.xml
-/usr/local/lsws/conf/httpd_conf.xml
-*log
-/opt/lsws/logs/error.log
-/opt/lsws/logs/access.log
-/usr/local/lsws/logs/error.log
-/usr/local/logs/access.log
-
-[Linux]
-/etc/passwd
-/etc/shadow
-/etc/fstab
-/etc/host.conf
-/etc/motd
-/etc/apache/apache.conf
-/etc/apache2/apache.conf
-/etc/phpmyadmin/config.inc.php
-/etc/httpd/logs/access.log
-access_log.old
-error_log.old
-/var/log/mysql/mysql-bin.log
-/var/log/mysql.log
-/var/log/mysql/mysql.log
-/xampp/htdocs/aca.txt
-/xampp/htdocs/admin.php
-/xampp/htdocs/leer.txt
-/etc/shadow~
-/etc/hosts
-/etc/sysconfig/network-scripts/ifcfg-eth0
-/etc/redhat-release
-/etc/httpd/conf.d/php.conf
-/etc/pam.d/proftpd
-/var/www/config.php
-/etc/group
-/etc/security/group
-/etc/security/passwd
-/etc/security/user
-/etc/security/environ
-/etc/security/limits
-/usr/lib/security/mkuser.default
-/ProgramFiles/ApacheGroup/Apache/logs/access.log
-/ProgramFiles/ApacheGroup/Apache/logs/error.log
-/ProgramFiles/ApacheGroup/Apache/conf/httpd.conf
-/ProgramFiles/ApacheGroup/Apache2/conf/httpd.conf
-/ProgramFiles/xampp/apache/conf/httpd.conf
-/php5/php.ini
-/php4/php.ini
-/php/php.ini
-/PHP/php.ini
-/WINDOWS/php.ini
-/WINNT/php.ini
-/apache/php/php.ini
-/xampp/apache/bin/php.ini
-/NetServer/bin/stable/apache/php.ini
-/home2/bin/stable/apache/php.ini
-/home/bin/stable/apache/php.ini
-/ProgramFiles/MySQL/MySQLServer5.0/data/hostname.err
-/ProgramFiles/MySQL/MySQLServer5.0/data/mysql.log
-/ProgramFiles/MySQL/MySQLServer5.0/data/mysql.err
-/ProgramFiles/MySQL/MySQLServer5.0/data/mysql-bin.log
-/ProgramFiles/MySQL/data/hostname.err
-/ProgramFiles/MySQL/data/mysql.log
-/ProgramFiles/MySQL/data/mysql.err
-/ProgramFiles/MySQL/data/mysql-bin.log
-/MySQL/data/hostname.err
-/MySQL/data/mysql.log
-/MySQL/data/mysql.err
-/MySQL/data/mysql-bin.log
-/ProgramFiles/MySQL/MySQLServer5.0/my.ini
-/ProgramFiles/MySQL/MySQLServer5.0/my.cnf
-/ProgramFiles/MySQL/my.ini
-/ProgramFiles/MySQL/my.cnf
-/MySQL/my.ini
-/MySQL/my.cnf
-/www/logs/proftpd.system.log
-/logs/pure-ftpd.log
-/var/log/maillog
-/var/log/exim_paniclog
-
-# XAMP
+# XAMPP
+(*)
 *log
 /xampp/apache/logs/error.log
 /xampp/FileZillaFTP/Logs
@@ -809,102 +761,22 @@ error_log.old
 /xampp/apache/conf/httpd.conf
 /xampp/FileZillaFTP/FileZilla Server.xml
 /xampp/MercuryMail/mercury.ini
-/mysql/bin/my.ini
 /xampp/php/php.ini
 /xampp/phpMyAdmin/config.inc.php
 /xampp/sendmail/sendmail.ini
 /xampp/webalizer/webalizer.conf
+*other
+/xampp/htdocs/aca.txt
+/xampp/htdocs/admin.php
+/xampp/htdocs/leer.txt
 
-# Cpanel
-*log
-/usr/local/cpanel/logs
-/usr/local/cpanel/logs/stats_log
-/usr/local/cpanel/logs/access_log
-/usr/local/cpanel/logs/error_log
-/usr/local/cpanel/logs/license_log
-/usr/local/cpanel/logs/login_log
-
-# MySQL(Windows)
-*mix
-/Program Files/MySQL/MySQL Server 5.0/data/hostname.err
-/Program Files/MySQL/MySQL Server 5.0/data/mysql.log
-/Program Files/MySQL/MySQL Server 5.0/data/mysql.err
-/Program Files/MySQL/MySQL Server 5.0/data/mysql-bin.log
-/Program Files/MySQL/data/hostname.err
-/Program Files/MySQL/data/mysql.log
-/Program Files/MySQL/data/mysql.err
-/Program Files/MySQL/data/mysql-bin.log
-/MySQL/data/hostname.err
-/MySQL/data/mysql.log
-/MySQL/data/mysql.err
-/Program Files/MySQL/MySQL Server 5.0/my.ini
-/Program Files/MySQL/MySQL Server 5.0/my.cnf
-/Program Files/MySQL/my.ini
-/Program Files/MySQL/my.cnf
-/MySQL/my.ini
-/usr/local/apache/logs/audit_log
-/logs/security_debug_log
-/etc/logrotate.d/proftpd
-/var/log/proftpd
-/etc/proftp.conf
-/etc/protpd/proftpd.conf
-/etc/vhcs2/proftpd/proftpd.conf
-/etc/proftpd/modules.conf
-/var/log/vsftpd.log
-/etc/vsftpd.chroot_list
-/etc/logrotate.d/vsftpd.log
-/etc/vsftpd/vsftpd.conf
-/etc/vsftpd.conf
-/etc/chrootUsers
-/var/log/xferlog
-/etc/wu-ftpd/ftpaccess
-/etc/wu-ftpd/ftphosts
-/etc/wu-ftpd/ftpusers
-/var/log/pure-ftpd/pure-ftpd.log
-/usr/sbin/pure-config.pl
-/usr/etc/pure-ftpd.conf
-/etc/pure-ftpd/pure-ftpd.conf
-/usr/local/etc/pure-ftpd.conf
-/usr/local/etc/pureftpd.pdb
-/usr/local/pureftpd/etc/pureftpd.pdb
-/usr/local/pureftpd/sbin/pure-config.pl
-/usr/local/pureftpd/etc/pure-ftpd.conf
-/etc/pure-ftpd.conf
-/etc/pure-ftpd/pure-ftpd.pdb
-/etc/pureftpd.pdb
-/etc/pureftpd.passwd
-/etc/pure-ftpd/pureftpd.pdb
-
-# Exim
-/var/log/exim_mainlog
-/var/log/exim/mainlog
-/var/log/exim/paniclog
-/var/log/exim/rejectlog
-/var/log/exim_rejectlog
-
-# Other
+# FTP Other
 *mix
 /var/log/ftp-proxy/ftp-proxy.log
 /var/log/ftp-proxy
 /var/log/ftplog
 /etc/logrotate.d/ftp
 /etc/ftpchroot
-
-# MySQL
-(Windows)
-*mix
-/Program Files/MySQL/MySQL Server 5.0/data/hostname.err
-/Program Files/MySQL/MySQL Server 5.0/data/mysql.log
-/Program Files/MySQL/MySQL Server 5.0/data/mysql.err
-/Program Files/MySQL/MySQL Server 5.0/data/mysql-bin.log
-/Program Files/MySQL/data/hostname.err
-/Program Files/MySQL/data/mysql.log
-/Program Files/MySQL/data/mysql.err
-/Program Files/MySQL/data/mysql-bin.log
-/Program Files/MySQL/MySQL Server 5.0/my.ini
-/Program Files/MySQL/MySQL Server 5.0/my.cnf
-/Program Files/MySQL/my.ini
-/Program Files/MySQL/my.cnf
 
 [Win NT]
 # HTTP
@@ -925,25 +797,10 @@ error_log.old
 %SystemRoot%/system32/logfiles/Firewall/pfirewall.log
 %SystemRoot%/system32/logfiles/Firewall/pfirewall.log.old
 
-# Plesk
-*log
-/var/log/sw-cp-server/error_log
-/usr/local/psa/admin/logs/httpsd_access_log
-/usr/local/psa/admin/logs/panel.log
-/var/log/sw-cp-server/error_log
-/var/log/sso/sso.log
-*conf
-/usr/local/psa/admin/conf/php.ini
-/etc/sw-cp-server/applications.d/plesk.conf
-/etc/sw-cp-server/applications.d/plesk.conf
-/usr/local/psa/admin/conf/site_isolation_settings.ini
-/usr/local/sb/config
-/usr/local/psa/admin/conf/php.ini
-/etc/sw-cp-server/applications.d/00-sso-cpserver.conf
-/etc/sso/sso_config.ini
-
+[Database Administration]
 # phpMyAdmin
 (*NIX)
-*mix
-/usr/local/psa/admin/htdocs/domains/databases/phpMyAdmin/libraries/config.default.phpv
+*conf
+/usr/local/psa/admin/htdocs/domains/databases/phpMyAdmin/libraries/config.default.php
 /etc/apache2/conf.d/phpmyadmin.conf
+/etc/phpmyadmin/config.inc.php
