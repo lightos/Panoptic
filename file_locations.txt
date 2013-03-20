@@ -176,6 +176,26 @@
 /usr/local/apache/conf/modsec.conf
 /usr/local/apache2/conf/modsec.conf
 
+# XAMPP
+(*)
+*log
+/xampp/apache/logs/error.log
+/xampp/FileZillaFTP/Logs
+/xampp/mysql/data/mysql.err
+/xampp/sendmail/sendmail.log
+*conf
+/xampp/apache/conf/httpd.conf
+/xampp/FileZillaFTP/FileZilla Server.xml
+/xampp/MercuryMail/mercury.ini
+/xampp/php/php.ini
+/xampp/phpMyAdmin/config.inc.php
+/xampp/sendmail/sendmail.ini
+/xampp/webalizer/webalizer.conf
+*other
+/xampp/htdocs/aca.txt
+/xampp/htdocs/admin.php
+/xampp/htdocs/leer.txt
+
 [FTP]
 # ProFTPD
 (*NIX)
@@ -749,34 +769,6 @@
 /usr/share/squirrelmail/plugins/squirrel_logger/setup.php
 *other
 /usr/local/squirrelmail/www/README
-
-# XAMPP
-(*)
-*log
-/xampp/apache/logs/error.log
-/xampp/FileZillaFTP/Logs
-/xampp/mysql/data/mysql.err
-/xampp/sendmail/sendmail.log
-*conf
-/xampp/apache/conf/httpd.conf
-/xampp/FileZillaFTP/FileZilla Server.xml
-/xampp/MercuryMail/mercury.ini
-/xampp/php/php.ini
-/xampp/phpMyAdmin/config.inc.php
-/xampp/sendmail/sendmail.ini
-/xampp/webalizer/webalizer.conf
-*other
-/xampp/htdocs/aca.txt
-/xampp/htdocs/admin.php
-/xampp/htdocs/leer.txt
-
-# FTP Other
-*mix
-/var/log/ftp-proxy/ftp-proxy.log
-/var/log/ftp-proxy
-/var/log/ftplog
-/etc/logrotate.d/ftp
-/etc/ftpchroot
 
 [Win NT]
 # HTTP
