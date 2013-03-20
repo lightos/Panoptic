@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 """
-Search default file locations on Windows, Linux and Mac.
+Search default file locations for logs and config files.
 """
 
 import re
@@ -11,7 +11,7 @@ from urllib2 import urlopen, Request
 from urlparse import urlsplit, parse_qsl
 from sys import argv, exit
 
-NAME = "panoptic"
+NAME = "Panoptic"
 VERSION = "v0.1"
 
 class Panoptic:
@@ -26,6 +26,7 @@ class Panoptic:
         self.category = ""
         self.classification = ""
         self.operating_system = ""
+        self.file_found = False
         self.file_attributes = {}
         
     def parse_file(self):
@@ -38,7 +39,9 @@ class Panoptic:
                 continue
             elif file_location[0] == "[":
                 self.category = file_location[1:-1]
-                self.operating_system = file_location[1:-1]  # FIXXXX
+                continue
+            elif file_location[0] == "(":
+                self.operating_system = file_location[1:-1]
                 continue
             elif file_location[0] == "#":
                 self.software = file_location[1:]
@@ -46,10 +49,18 @@ class Panoptic:
             elif file_location[0] == "*":
                 self.classification = file_location[1:]
                 continue
-
-            self.file_attributes["OS"] = self.operating_system
-            self.file_attributes["software"] = self.software
+            elif file_location[0] == r"\n":
+                self.software = ""
+                self.classification = ""
+                self.file_attributes = {}
+                continue
+            elif file_location.find("{") != -1:
+                #HANDLE HOST/DOMAIN replacement
+                continue
+            
             self.file_attributes["location"] = file_location
+            self.file_attributes["software"] = self.software
+            self.file_attributes["category"] = self.category
             self.file_attributes["classification"] = self.classification
             
             yield self.file_attributes
@@ -64,8 +75,6 @@ class Panoptic:
             exit()
         if "--help" in argv:
             help()
-        if "--string" in argv:
-            args["string"] = argv[argv.index("--string") + 1]
         if "--os" in argv:
             args["os"] = argv[argv.index("--os") + 1]
         if "--target" in argv:
@@ -116,7 +125,7 @@ class Connect:
             socket.socket = socks.socksocket
 
         if user_agent is None:
-            user_agent = {"user-agent": "panoptic v0.1"}
+            user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
         
         if post is None:
             url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
@@ -170,38 +179,28 @@ def main():
     banner()
     dfl = Panoptic()
     args = dfl.get_args()
-    html, parsed_url = Connect().get_page(**{"target": args["target"]})
-    
-    ###REMOVE?
-    if html.find(args["string"]) == -1:
-        print("[*] string not found!")
-        exit()
-    else:
-        dfl.standard_response = html
-    ##########
-    
-    dfl.standard_response = html
-    
-    html, _ = Connect().get_page(**{
-                                    "target": "%s://%s%s?%s" %
+    parsed_url = urlsplit(args["target"])
+    dfl.invalid_response, _ = Connect().get_page(**{
+                                    "target": "%s://%s%s?%s" % 
                                     (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
                                      re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args["param"],
                                      r"\1=%s" % "non_existing_file.panoptic", parsed_url.query))
                                     })
-    
-    if dfl.standard_response != html:
-        dfl.invalid_response = html
-
     for file in dfl.parse_file():
         html, _ = Connect().get_page(**{
-                                        "target": "%s://%s%s?%s" %
+                                        "target": "%s://%s%s?%s" % 
                                         (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
                                          re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args["param"],
                                          r"\1=%s" % file['location'], parsed_url.query))
                                         })
         
         if html != dfl.invalid_response:
-            print("Possible file found: %s" % _.query)
+            if not dfl.file_found:
+                print("Possible file(s) found!")
+                if dfl.operating_system:
+                    print("OS: %s\n" % dfl.operating_system)
+                    dfl.file_found = True
+            print("File: %s" % dfl.file_attributes)
 
 def help():
     """
@@ -209,7 +208,6 @@ def help():
     """
     print("""== help menu ==
     
---string{:>14}string for normal response.
 --target{:>14}set the target to test.
 --param{:>15}set the parameter to test.
 --os{:>18}set a specific operating system to limit searches.
