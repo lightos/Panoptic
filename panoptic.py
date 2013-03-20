@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 """
+Panoptic:
 Search default file locations for logs and config files.
 """
 
@@ -31,13 +32,17 @@ class Panoptic:
         
     def parse_file(self):
         """
-        Main function for panoptic.
+        Parses the file locations list.
         """    
         for file_location in open("file_locations.txt"):
-            file_location = file_location.rstrip()
-            if not file_location:
+            if file_location[0] == "\n":
+                self.software = ""
+                self.classification = ""
+                self.operating_system = ""
+                self.file_attributes = {}
                 continue
-            elif file_location[0] == "[":
+            file_location = file_location.rstrip()
+            if file_location[0] == "[":
                 self.category = file_location[1:-1]
                 continue
             elif file_location[0] == "(":
@@ -48,11 +53,6 @@ class Panoptic:
                 continue
             elif file_location[0] == "*":
                 self.classification = file_location[1:]
-                continue
-            elif file_location[0] == r"\n":
-                self.software = ""
-                self.classification = ""
-                self.file_attributes = {}
                 continue
             elif file_location.find("{") != -1:
                 #HANDLE HOST/DOMAIN replacement
@@ -196,10 +196,10 @@ def main():
         
         if html != dfl.invalid_response:
             if not dfl.file_found:
+                dfl.file_found = True
                 print("Possible file(s) found!")
                 if dfl.operating_system:
                     print("OS: %s\n" % dfl.operating_system)
-                    dfl.file_found = True
             print("File: %s" % dfl.file_attributes)
 
 def help():

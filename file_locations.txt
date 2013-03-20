@@ -157,6 +157,7 @@
 
 [Packaged Web Dev]
 # WAMP
+(Windows)
 *log
 /wamp/logs/access.log
 /wamp/logs/apache_error.log
