@@ -85,6 +85,10 @@ class Panoptic:
             args["param"] = argv[argv.index("--param") + 1]
         if "--user-agent" in argv:
             args["user-agent"] = "gotta get a random UA here"
+        if "--software" in argv:
+            args["software"] = argv[argv.index("--software") + 1]
+        if "--category" in argv:
+            args["category"] = argv[argv.index("--category") + 1]
             
         return args        
     
@@ -215,7 +219,7 @@ def help():
 --category{:>12}set a specific category of software to look for.
 --type{:>16}set the type of file to search for (conf or log).
 --help{:>16}print this menu.
-""").format(" ", " ", " ", " ", " ", " ")
+""").format(" ", " ", " ", " ", " ", " ", " ")
 
     exit()
 
