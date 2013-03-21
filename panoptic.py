@@ -14,6 +14,7 @@ from sys import argv, exit
 
 NAME = "Panoptic"
 VERSION = "v0.1"
+URL = "https://github.com/lightos/Panoptic/"
 
 class Panoptic:
     """
@@ -29,6 +30,12 @@ class Panoptic:
         self.operating_system = ""
         self.file_found = False
         self.file_attributes = {}
+        
+    def list(self):
+        """
+        Returns available types of categories, software or operating systems.
+        """
+        pass
         
     def parse_file(self):
         """
@@ -49,7 +56,7 @@ class Panoptic:
                 self.operating_system = file_location[1:-1]
                 continue
             elif file_location[0] == "#":
-                self.software = file_location[1:]
+                self.software = file_location[2:]
                 continue
             elif file_location[0] == "*":
                 self.classification = file_location[1:]
@@ -58,6 +65,19 @@ class Panoptic:
                 #HANDLE HOST/DOMAIN replacement
                 continue
             
+            if self.args.has_key("software"):
+                if self.software.lower() != self.args["software"].lower():
+                    continue
+            if self.args.has_key("category"):
+                if self.category.lower() != self.args["category"].lower():
+                    continue
+            if self.args.has_key("type"):
+                if self.classification.lower() not in [self.args["classification"].lower(), "other"]:
+                    continue
+            if self.args.has_key("os"):
+                if self.operating_system.lower() != self.args["os"].lower():
+                    continue
+
             self.file_attributes["location"] = file_location
             self.file_attributes["software"] = self.software
             self.file_attributes["category"] = self.category
@@ -65,8 +85,7 @@ class Panoptic:
             
             yield self.file_attributes
     
-    @staticmethod
-    def get_args():
+    def get_args(self):
         """
         Parse command line arguements.
         """
@@ -75,6 +94,8 @@ class Panoptic:
             exit()
         if "--help" in argv:
             help()
+        if "--list" in argv:
+            list()
         if "--os" in argv:
             args["os"] = argv[argv.index("--os") + 1]
         if "--target" in argv:
@@ -90,7 +111,7 @@ class Panoptic:
         if "--category" in argv:
             args["category"] = argv[argv.index("--category") + 1]
             
-        return args        
+        self.args = args
     
 class Connect:
     """
@@ -102,7 +123,6 @@ class Connect:
         """
         This method retrieves the URL
         """
-
         url = kwargs.get("target", None)
         post = kwargs.get("data", None)
         header = kwargs.get("header", None)
@@ -150,8 +170,6 @@ class Connect:
             status = conn.msg
             responseHeaders = conn.info()
 
-            return page, parsed_url
-
         except IOError, e:
             if hasattr(e, "reason"):
                 print "failed to reach the server."
@@ -172,29 +190,28 @@ class Connect:
                 status = e.msg
                 responseHeaders = e.info()
                 print("HTTP error code: %d" % code)
-
+        
         return page, parsed_url
 
 def main():
     """
     Initialize the execution of the program.
     """
-    
     banner()
     dfl = Panoptic()
-    args = dfl.get_args()
-    parsed_url = urlsplit(args["target"])
+    dfl.get_args()
+    parsed_url = urlsplit(dfl.args["target"])
     dfl.invalid_response, _ = Connect().get_page(**{
                                     "target": "%s://%s%s?%s" % 
                                     (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args["param"],
+                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args["param"],
                                      r"\1=%s" % "non_existing_file.panoptic", parsed_url.query))
                                     })
     for file in dfl.parse_file():
         html, _ = Connect().get_page(**{
                                         "target": "%s://%s%s?%s" % 
                                         (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                         re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args["param"],
+                                         re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args["param"],
                                          r"\1=%s" % file['location'], parsed_url.query))
                                         })
         
@@ -204,7 +221,10 @@ def main():
                 print("Possible file(s) found!")
                 if dfl.operating_system:
                     print("OS: %s\n" % dfl.operating_system)
-            print("File: %s" % dfl.file_attributes)
+            print("[+] File: %s" % dfl.file_attributes)
+            
+    if not dfl.file_found:
+        print("No files found!")
 
 def help():
     """
@@ -218,8 +238,9 @@ def help():
 --software{:>12}set the name of the software to search for.
 --category{:>12}set a specific category of software to look for.
 --type{:>16}set the type of file to search for (conf or log).
+--list{:>16}list the available types of categories, software or operating systems.
 --help{:>16}print this menu.
-""").format(" ", " ", " ", " ", " ", " ", " ")
+""").format(" ", " ", " ", " ", " ", " ", " ", " ")
 
     exit()
 
@@ -235,6 +256,7 @@ def banner():
   `-`=='-'
 
 %s %s
-""") % (NAME, VERSION)
+%s
+""") % (NAME, VERSION, URL)
 
 if __name__ == "__main__": main()
