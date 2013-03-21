@@ -102,7 +102,7 @@
 /var/lib/mysql/my.cnf
 /etc/mysql/my.cnf
 /etc/my.cnf
-(WINDOWS)
+(Windows)
 /Program Files/MySQL/MySQL Server 5.0/my.ini
 /Program Files/MySQL/MySQL Server 5.0/my.cnf
 /Program Files/MySQL/my.ini
@@ -166,7 +166,7 @@
 /wamp/logs/slowquery.log
 
 # XAMPP
-(*)
+(Windows)
 *log
 /xampp/apache/logs/error.log
 /xampp/FileZillaFTP/Logs
@@ -180,7 +180,10 @@
 /xampp/phpMyAdmin/config.inc.php
 /xampp/sendmail/sendmail.ini
 /xampp/webalizer/webalizer.conf
+(*NIX)
+/opt/lampp/etc/httpd.conf
 *other
+(Windows)
 /xampp/htdocs/aca.txt
 /xampp/htdocs/admin.php
 /xampp/htdocs/leer.txt
@@ -253,7 +256,7 @@
 /var/log/pure-ftpd/pure-ftpd.log
 /logs/pure-ftpd.log
 /var/log/pureftpd.log
-(DragonflyBSD & FreeBSD)
+(DragonflyBSD, FreeBSD)
 /usr/ports/ftp/pure-ftpd/
 (OpenBSD)
 /usr/ports/net/pure-ftpd/
