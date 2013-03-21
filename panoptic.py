@@ -30,13 +30,40 @@ class Panoptic:
         self.operating_system = ""
         self.file_found = False
         self.file_attributes = {}
-        
-    def list(self):
+    
+    @staticmethod
+    def list_items(item):
         """
         Returns available types of categories, software or operating systems.
         """
-        pass
+        if item == "os":
+            tmp = []
+            print("Listing all available Operating Systems...\n")
+        elif item == "category":
+            print("Listing all available categories of software...\n")
+        elif item == "software":
+            print("Listing all available types of software...\n")
+        else:
+            print("[!] --list must be \"os\", \"software\" or \"category\"")
+            exit()
         
+        for file_location in open("file_locations.txt"):
+            file_location = file_location.rstrip()
+            if not file_location: continue
+            if item == "category" and file_location[0] == "[":
+                print("[+] %s" % file_location[1:-1])
+            elif item == "software" and file_location[0] == "#":
+                print("[+] %s" % file_location[2:])
+            elif item == "os" and file_location[0] == "(":
+                if file_location[1:-1] not in tmp:
+                    tmp.append(file_location[1:-1])
+                    
+        if item == "os":
+            for _ in tmp:
+                print("[+] %s" % _)
+                
+        exit()
+            
     def parse_file(self):
         """
         Parses the file locations list.
@@ -95,20 +122,38 @@ class Panoptic:
         if "--help" in argv:
             help()
         if "--list" in argv:
-            list()
+            if len(argv)-1 < argv.index("--list") + 1:
+                print("[!] Missing argument for --list")
+                exit()
+            self.list_items(argv[argv.index("--list") + 1])
         if "--os" in argv:
+            if len(argv)-1 < argv.index("--os") + 1:
+                print("[!] Missing argument for --os")
+                exit()
             args["os"] = argv[argv.index("--os") + 1]
         if "--target" in argv:
+            if len(argv)-1 < argv.index("--target") + 1:
+                print("[!] Missing argument for --target")
+                exit()
             args["target"] = argv[argv.index("--target") + 1]
         else:
             help()
         if "--param" in argv:
+            if len(argv)-1 < argv.index("--param") + 1:
+                print("[!] Missing argument for --param")
+                exit()
             args["param"] = argv[argv.index("--param") + 1]
         if "--user-agent" in argv:
             args["user-agent"] = "gotta get a random UA here"
         if "--software" in argv:
+            if len(argv)-1 < argv.index("--software") + 1:
+                print("[!] Missing argument for --software")
+                exit()
             args["software"] = argv[argv.index("--software") + 1]
         if "--category" in argv:
+            if len(argv)-1 < argv.index("--category") + 1:
+                print("[!] Missing argument for --category")
+                exit()
             args["category"] = argv[argv.index("--category") + 1]
             
         self.args = args
