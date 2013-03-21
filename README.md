@@ -10,8 +10,10 @@ Scan systems for default file locations
     --software            set the name of the software to search for.
     --category            set a specific category of software to look for.
     --type                set the type of file to search for (conf or log).
+    --list                list the available types of categories, software or operating systems.
     --help                print this menu.
 
 ### Examples
     ./panoptic.py --help
-    ./panoptic.py --target "http://localhost/lfi.php?file=test.txt" --param "file"
+    ./panoptic.py --list software
+    ./panoptic.py --target http://localhost/lfi.php?file=test.txt --param file
