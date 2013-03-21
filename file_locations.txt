@@ -165,18 +165,6 @@
 /wamp/logs/mysql.log
 /wamp/logs/slowquery.log
 
-[Firewalls]
-# Mod Security
-(*NIX)
-*log
-/usr/local/apache/logs/audit_log
-/usr/local/apache2/logs/audit_log
-/logs/security_debug_log
-/logs/security_log
-*conf
-/usr/local/apache/conf/modsec.conf
-/usr/local/apache2/conf/modsec.conf
-
 # XAMPP
 (*)
 *log
@@ -196,6 +184,18 @@
 /xampp/htdocs/aca.txt
 /xampp/htdocs/admin.php
 /xampp/htdocs/leer.txt
+
+[Firewalls]
+# Mod Security
+(*NIX)
+*log
+/usr/local/apache/logs/audit_log
+/usr/local/apache2/logs/audit_log
+/logs/security_debug_log
+/logs/security_log
+*conf
+/usr/local/apache/conf/modsec.conf
+/usr/local/apache2/conf/modsec.conf
 
 [FTP]
 # ProFTPD
