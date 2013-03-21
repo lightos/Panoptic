@@ -120,22 +120,22 @@ class Panoptic:
         examples = """
 Examples:
         
-./panoptic.py --target http://localhost/lfi.php?file=test.txt
-./panoptic.py --target http://localhost/lfi.php?file=test.txt&id=1 --param file
-./panoptic.py --target http://localhost/lfi.php --data "file=test.txt&id=1" --param file
+./panoptic.py --url http://localhost/lfi.php?file=test.txt
+./panoptic.py --url http://localhost/lfi.php?file=test.txt&id=1 --param file
+./panoptic.py --url http://localhost/lfi.php --data "file=test.txt&id=1" --param file
 
 ./panoptic.py --list software
 ./panoptic.py --list category
 ./panoptic.py --list os
 
-./panoptic.py --target http://localhost/lfi.php?file=test.txt --os Windows
-./panoptic.py --target http://localhost/lfi.php?file=test.txt --software WAMP
+./panoptic.py --url http://localhost/lfi.php?file=test.txt --os Windows
+./panoptic.py --url http://localhost/lfi.php?file=test.txt --software WAMP
 """
-        OptionParser.format_epilog = lambda self, formatter: self.epilog # Override epilog formatting.
-        parser = OptionParser(usage="usage: %prog --target TARGET [options]", epilog=examples)
+        OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting.
+        parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=examples)
         
         # Required
-        parser.add_option("-t", "--target", dest="target",
+        parser.add_option("-u", "--url", dest="target",
                   help="set the target to test")
         # Optional
         parser.add_option("-p", "--param", dest="param",
@@ -148,12 +148,14 @@ Examples:
                   help="set the name of the software to search for")
         parser.add_option("-c", "--category", dest="category",
                   help="set a specific category of software to look for")
-        parser.add_option("-k", "--type", dest="classification",
+        parser.add_option("-t", "--type", dest="classification",
                   help="set the type of file to search for (conf or log)")
-        parser.add_option("-b", "--prefix", dest="prefix",
-                  help="set a prefix for file path (i.e. \"../*10\")")
-        parser.add_option("-e", "--postfix", dest="postfix",
+        parser.add_option("-b", "--prefix", dest="prefix", default="",
+                  help="set a prefix for file path (i.e. \"../\")")
+        parser.add_option("-e", "--postfix", dest="postfix", default="",
                   help="set a prefix for file path (i.e. \"%00\")")
+        parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
+                  help="set a number to multiply the prefix by")
         parser.add_option("-l", "--list", help="List the available filters (\"os\", \"category\", \"software\")")
         parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                           default=False, help="display extra information in the output")
@@ -161,7 +163,10 @@ Examples:
         self.args = parser.parse_args()[0]
 
         if not self.args.target:
-            parser.error('missing argument for target.')
+            parser.error('missing argument for url.')
+            
+        if self.args.prefix:
+            self.args.prefix = self.args.prefix * self.args.multiplier
 
 def main():
     """
@@ -171,19 +176,33 @@ def main():
     dfl = Panoptic()
     dfl.get_args()
     parsed_url = urlsplit(dfl.args.target)
-    dfl.invalid_response, _ = get_page(**{
-                                    "target": "%s://%s%s?%s" % 
-                                    (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                     r"\1=%s" % "non_existing_file.panoptic", parsed_url.query))
-                                    })
+    request_params = dfl.args.data if dfl.args.data else parsed_url.query
+    
+    if not dfl.args.param:
+        dfl.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
+        
+    if dfl.args.data:
+        request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path),
+                        "data": re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
+                                       r"\1=%s" % "non_existing_file.panoptic", request_params)}
+    else:
+        request_args = {"target": "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                                                    re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
+                                                           r"\1=%s" % "non_existing_file.panoptic", request_params))
+                        }
+        
+    dfl.invalid_response, _ = get_page(**request_args)
+    
     for file in dfl.parse_file():
-        html, _ = get_page(**{
-                              "target": "%s://%s%s?%s" % 
-                              (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                               re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                               r"\1=%s" % file['location'], parsed_url.query))
-                              })
+        if dfl.args.data:
+            request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path),
+                            "data": re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
+                                       r"\1=%s" % file['location'], request_params)}
+        else:
+            request_args = {"target": "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                                                        re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
+                                                               r"\1=%s" % file['location'], request_params))}
+        html, _ = get_page(**request_args)
         
         if html != dfl.invalid_response:
             if not dfl.file_found:
@@ -206,7 +225,7 @@ def get_page(**kwargs):
        cookie = kwargs.get("cookie", None)
        proxy = kwargs.get("proxy", False)
        user_agent = kwargs.get("user_agent", None)
-       verbose  = kwargs.get("verbose", False)
+       verbose = kwargs.get("verbose", False)
 
        if url is None:
            raise Exception("[!] URL cannot be None.")
@@ -233,7 +252,7 @@ def get_page(**kwargs):
            url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
                                    urlencode(parse_qsl(parsed_url.query)))
        else:
-           post = urlencode(post, "POST")
+           post = urlencode(parse_qsl(post), "POST")
 
        # Perform HTTP Request
        try:
