@@ -10,6 +10,7 @@ import re
 from urllib import urlencode
 from urllib2 import urlopen, Request
 from urlparse import urlsplit, parse_qsl
+from optparse import OptionParser
 from sys import argv, exit
 
 NAME = "Panoptic"
@@ -89,20 +90,20 @@ class Panoptic:
                 self.classification = file_location[1:]
                 continue
             elif file_location.find("{") != -1:
-                #HANDLE HOST/DOMAIN replacement
+                # HANDLE HOST/DOMAIN replacement
                 continue
             
-            if self.args.has_key("software"):
-                if self.software.lower() != self.args["software"].lower():
+            if self.args.software:
+                if self.software.lower() != self.args.software.lower():
                     continue
-            if self.args.has_key("category"):
-                if self.category.lower() != self.args["category"].lower():
+            if self.args.category:
+                if self.category.lower() != self.args.category.lower():
                     continue
-            if self.args.has_key("type"):
-                if self.classification.lower() not in [self.args["classification"].lower(), "other"]:
+            if self.args.classification:
+                if self.classification.lower() not in [self.classification.lower(), "other"]:
                     continue
-            if self.args.has_key("os"):
-                if self.operating_system.lower() != self.args["os"].lower():
+            if self.args.os:
+                if self.operating_system.lower() != self.os.lower():
                     continue
 
             self.file_attributes["location"] = file_location
@@ -116,127 +117,51 @@ class Panoptic:
         """
         Parse command line arguements.
         """
-        args = {}
-        if len(argv) < 2:
-            exit()
-        if "--help" in argv:
-            help()
-        if "--list" in argv:
-            if len(argv)-1 < argv.index("--list") + 1:
-                print("[!] Missing argument for --list")
-                exit()
-            self.list_items(argv[argv.index("--list") + 1])
-        if "--os" in argv:
-            if len(argv)-1 < argv.index("--os") + 1:
-                print("[!] Missing argument for --os")
-                exit()
-            args["os"] = argv[argv.index("--os") + 1]
-        if "--target" in argv:
-            if len(argv)-1 < argv.index("--target") + 1:
-                print("[!] Missing argument for --target")
-                exit()
-            args["target"] = argv[argv.index("--target") + 1]
-        else:
-            help()
-        if "--param" in argv:
-            if len(argv)-1 < argv.index("--param") + 1:
-                print("[!] Missing argument for --param")
-                exit()
-            args["param"] = argv[argv.index("--param") + 1]
-        if "--user-agent" in argv:
-            args["user-agent"] = "gotta get a random UA here"
-        if "--software" in argv:
-            if len(argv)-1 < argv.index("--software") + 1:
-                print("[!] Missing argument for --software")
-                exit()
-            args["software"] = argv[argv.index("--software") + 1]
-        if "--category" in argv:
-            if len(argv)-1 < argv.index("--category") + 1:
-                print("[!] Missing argument for --category")
-                exit()
-            args["category"] = argv[argv.index("--category") + 1]
-            
-        self.args = args
-    
-class Connect:
-    """
-    Handles all requests to web site.
-    """
-    
-    @staticmethod
-    def get_page(**kwargs):
-        """
-        This method retrieves the URL
-        """
-        url = kwargs.get("target", None)
-        post = kwargs.get("data", None)
-        header = kwargs.get("header", None)
-        cookie = kwargs.get("cookie", None)
-        proxy = kwargs.get("proxy", False)
-        user_agent = kwargs.get("user_agent", None)
-
-        if url is None:
-            raise Exception("URL cannot be None.")
-
-        try:
-            parsed_url = urlsplit(url)
-        except:
-            raise Exception("unable to parse URL: %s" % url)
-
-        if proxy:
-            import socks
-            import socket
-
-            proxy = proxy.split(':')
-            ip = proxy[0]
-            port = proxy[1]
-            socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
-            socket.socket = socks.socksocket
-
-        if user_agent is None:
-            user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
+        examples = """
+Examples:
         
-        if post is None:
-            url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                    urlencode(parse_qsl(parsed_url.query)))
-        else:
-            post = urlencode(post, "POST")
+./panoptic.py --target http://localhost/lfi.php?file=test.txt
+./panoptic.py --target http://localhost/lfi.php?file=test.txt&id=1 --param file
+./panoptic.py --target http://localhost/lfi.php --data "file=test.txt&id=1" --param file
 
-        # Perform HTTP Request
-        try:
-            headers = user_agent
-            headers["Accept"] = "*"  # Set option to add headers in cmdline
-            req = Request(url, post, headers)
-            conn = urlopen(req)
+./panoptic.py --list software
+./panoptic.py --list category
+./panoptic.py --list os
 
-            # Get HTTP Response
-            page = conn.read()
-            code = conn.code
-            status = conn.msg
-            responseHeaders = conn.info()
-
-        except IOError, e:
-            if hasattr(e, "reason"):
-                print "failed to reach the server."
-                raise Exception(str(e.reason).lower())
-
-            if e.code == 401:
-                exception_msg = "not authorized, try to provide right HTTP "
-                exception_msg += "authentication type and valid credentials"
-                raise Exception("%s - %s\n%s" % (exception_msg, url, str(parsed_url)))
-
-            elif e.code == 404:
-                exception_msg = "page not found"
-                raise Exception("%s - %s\n%s" % (exception_msg, url, str(parsed_url)))
-
-            else:
-                page = e.read()
-                code = e.code
-                status = e.msg
-                responseHeaders = e.info()
-                print("HTTP error code: %d" % code)
+./panoptic.py --target http://localhost/lfi.php?file=test.txt --os Windows
+./panoptic.py --target http://localhost/lfi.php?file=test.txt --software WAMP
+"""
+        OptionParser.format_epilog = lambda self, formatter: self.epilog # Override epilog formatting.
+        parser = OptionParser(usage="usage: %prog --target TARGET [options]", epilog=examples)
         
-        return page, parsed_url
+        # Required
+        parser.add_option("-t", "--target", dest="target",
+                  help="set the target to test")
+        # Optional
+        parser.add_option("-p", "--param", dest="param",
+                  help="set the parameter to test")
+        parser.add_option("-d", "--data", dest="data",
+                  help="set data for POST request")
+        parser.add_option("-o", "--os", dest="os",
+                  help="set an operating system to limit searches to")
+        parser.add_option("-s", "--software", dest="software",
+                  help="set the name of the software to search for")
+        parser.add_option("-c", "--category", dest="category",
+                  help="set a specific category of software to look for")
+        parser.add_option("-k", "--type", dest="classification",
+                  help="set the type of file to search for (conf or log)")
+        parser.add_option("-b", "--prefix", dest="prefix",
+                  help="set a prefix for file path (i.e. \"../*10\")")
+        parser.add_option("-e", "--postfix", dest="postfix",
+                  help="set a prefix for file path (i.e. \"%00\")")
+        parser.add_option("-l", "--list", help="List the available filters (\"os\", \"category\", \"software\")")
+        parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
+                          default=False, help="display extra information in the output")
+
+        self.args = parser.parse_args()[0]
+
+        if not self.args.target:
+            parser.error('missing argument for target.')
 
 def main():
     """
@@ -245,20 +170,20 @@ def main():
     banner()
     dfl = Panoptic()
     dfl.get_args()
-    parsed_url = urlsplit(dfl.args["target"])
-    dfl.invalid_response, _ = Connect().get_page(**{
+    parsed_url = urlsplit(dfl.args.target)
+    dfl.invalid_response, _ = get_page(**{
                                     "target": "%s://%s%s?%s" % 
                                     (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args["param"],
+                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
                                      r"\1=%s" % "non_existing_file.panoptic", parsed_url.query))
                                     })
     for file in dfl.parse_file():
-        html, _ = Connect().get_page(**{
-                                        "target": "%s://%s%s?%s" % 
-                                        (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                         re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args["param"],
-                                         r"\1=%s" % file['location'], parsed_url.query))
-                                        })
+        html, _ = get_page(**{
+                              "target": "%s://%s%s?%s" % 
+                              (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                               re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
+                               r"\1=%s" % file['location'], parsed_url.query))
+                              })
         
         if html != dfl.invalid_response:
             if not dfl.file_found:
@@ -271,23 +196,66 @@ def main():
     if not dfl.file_found:
         print("No files found!")
 
-def help():
-    """
-    Prints help menu.
-    """
-    print("""== help menu ==
-    
---target{:>14}set the target to test.
---param{:>15}set the parameter to test.
---os{:>18}set a specific operating system to limit searches.
---software{:>12}set the name of the software to search for.
---category{:>12}set a specific category of software to look for.
---type{:>16}set the type of file to search for (conf or log).
---list{:>16}list the available types of categories, software or operating systems.
---help{:>16}print this menu.
-""").format(" ", " ", " ", " ", " ", " ", " ", " ")
+def get_page(**kwargs):
+       """
+       This method retrieves the URL
+       """
+       url = kwargs.get("target", None)
+       post = kwargs.get("data", None)
+       header = kwargs.get("header", None)
+       cookie = kwargs.get("cookie", None)
+       proxy = kwargs.get("proxy", False)
+       user_agent = kwargs.get("user_agent", None)
+       verbose  = kwargs.get("verbose", False)
 
-    exit()
+       if url is None:
+           raise Exception("[!] URL cannot be None.")
+
+       try:
+           parsed_url = urlsplit(url)
+       except:
+           raise Exception("[!] Unable to parse URL: %s" % url)
+
+       if proxy:
+           import socks
+           import socket
+
+           proxy = proxy.split(':')
+           ip = proxy[0]
+           port = proxy[1]
+           socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
+           socket.socket = socks.socksocket
+
+       if user_agent is None:
+           user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
+       
+       if post is None:
+           url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                                   urlencode(parse_qsl(parsed_url.query)))
+       else:
+           post = urlencode(post, "POST")
+
+       # Perform HTTP Request
+       try:
+           headers = user_agent
+           headers["Accept"] = "*"  # Set option to add headers in cmdline
+           req = Request(url, post, headers)
+           conn = urlopen(req)
+
+           # Get HTTP Response
+           page = conn.read()
+           code = conn.code
+           status = conn.msg
+           responseHeaders = conn.info()
+
+       except IOError, e:
+           if hasattr(e, "reason"):
+               if verbose:
+                   print("[!] Error msg: %d" % e.msg)
+                   print("[!] HTTP error code: %d" % e.code)
+                   print("[!] Response headers: %d" % e.info())
+       
+       return page, parsed_url
 
 def banner():
     """
