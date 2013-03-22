@@ -15,5 +15,11 @@ Scan systems for default file locations
 
 ### Examples
     ./panoptic.py --help
+    
     ./panoptic.py --list software
+    ./panoptic.py --list category
+    ./panoptic.py --list os
+    
     ./panoptic.py --target http://localhost/lfi.php?file=test.txt --param file
+    ./panoptic.py --target http://localhost/lfi.php?file=test.txt --param file --os Windows
+    ./panoptic.py --target http://localhost/lfi.php?file=test.txt --param file --software WAMP
