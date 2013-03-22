@@ -192,7 +192,7 @@ def main():
     dfl.invalid_response, _ = get_page(**request_args)
     
     for file in dfl.parse_file():
-        if dfl.args.prefix[len(dfl.args.prefix)-1] == "/":
+        if dfl.args.prefix and dfl.args.prefix[len(dfl.args.prefix)-1] == "/":
             dfl.args.prefix = dfl.args.prefix[:-1]
 
         if dfl.args.data:
