@@ -6,6 +6,7 @@ Search default file locations for logs and config files.
 """
 
 import re
+import time
 
 from urllib import urlencode
 from urllib2 import urlopen, Request
@@ -173,6 +174,7 @@ def main():
     Initialize the execution of the program.
     """
     banner()
+    print("%s\n" % time.strftime("%X"))
     dfl = Panoptic()
     dfl.get_args()
     parsed_url = urlsplit(dfl.args.target)
@@ -181,6 +183,7 @@ def main():
     if not dfl.args.param:
         dfl.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
 
+    print("[*] Checking invalid response...")
     if dfl.args.data:
         request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path),
                         "data": re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
@@ -190,7 +193,8 @@ def main():
                                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
                                                            r"\1=%s" % "non_existing_file.panoptic", request_params))}        
     dfl.invalid_response, _ = get_page(**request_args)
-    
+    print("[*] Done!\n")
+    print("[*] Initiating file search...")
     for file in dfl.parse_file():
         if dfl.args.prefix and dfl.args.prefix[len(dfl.args.prefix)-1] == "/":
             dfl.args.prefix = dfl.args.prefix[:-1]
@@ -208,14 +212,17 @@ def main():
         if html != dfl.invalid_response:
             if not dfl.file_found:
                 dfl.file_found = True
-                print("Possible file(s) found!")
+                print("[*] Possible file(s) found!\n")
                 if dfl.operating_system:
-                    print("OS: %s\n" % dfl.operating_system)
+                    print("[*] OS: %s\n" % dfl.operating_system)
             print("[+] File: %s" % dfl.file_attributes)
             
     if not dfl.file_found:
-        print("No files found!")
+        print("[*] No files found!")
 
+    print("\n[*] File search complete.")
+    print("\n%s\n" % time.strftime("%X"))
+    
 def get_page(**kwargs):
        """
        This method retrieves the URL
