@@ -180,7 +180,7 @@ def main():
     
     if not dfl.args.param:
         dfl.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
-        
+
     if dfl.args.data:
         request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path),
                         "data": re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
@@ -188,20 +188,21 @@ def main():
     else:
         request_args = {"target": "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
                                                     re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                                           r"\1=%s" % "non_existing_file.panoptic", request_params))
-                        }
-        
+                                                           r"\1=%s" % "non_existing_file.panoptic", request_params))}        
     dfl.invalid_response, _ = get_page(**request_args)
     
     for file in dfl.parse_file():
+        if dfl.args.prefix[len(dfl.args.prefix)-1] == "/":
+            dfl.args.prefix = dfl.args.prefix[:-1]
+
         if dfl.args.data:
             request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path),
                             "data": re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                       r"\1=%s" % file['location'], request_params)}
+                                       r"\1=%s%s%s" % (dfl.args.prefix, file['location'], dfl.args.postfix), request_params)}
         else:
             request_args = {"target": "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
                                                         re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                                               r"\1=%s" % file['location'], request_params))}
+                                                                r"\1=%s%s%s" % (dfl.args.prefix, file['location'], dfl.args.postfix), request_params))}
         html, _ = get_page(**request_args)
         
         if html != dfl.invalid_response:
