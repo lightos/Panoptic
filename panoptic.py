@@ -160,7 +160,7 @@ Examples:
                   help="set a number to multiply the prefix by")
         parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
                   help="write all found files to output folder")
-        parser.add_option("-l", "--list", help="List the available filters (\"os\", \"category\", \"software\")")
+        parser.add_option("-l", "--list", help="list the available filters (\"os\", \"category\", \"software\")")
         parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                           default=False, help="display extra information in the output")
 
@@ -220,21 +220,15 @@ def main():
                     print("[*] OS: %s\n" % dfl.operating_system)
             print("[+] File: %s" % dfl.file_attributes)
             if dfl.args.write_file:
-                save_file(parsed_url.netloc, file['location'], html)
+                if not os.path.exists("output/%s" % parsed_url.netloc): os.makedirs("output/%s" % parsed_url.netloc)
+                with open("output/%s/%s.html" % (parsed_url.netloc, file['location'].replace("/", "_")), "w") as f:
+                    f.write(html)
             
     if not dfl.file_found:
         print("[*] No files found!")
 
     print("\n[*] File search complete.")
     print("\n%s\n" % time.strftime("%X"))
-    
-def save_file(domain, file, html):
-    """
-    Save found files to output folder.
-    """
-    if not os.path.exists("output/%s" % domain): os.makedirs("output/%s" % domain)
-    with open("output/%s/%s.html" % (domain, file.replace("/", "_")), "w") as f:
-            f.write(html)
     
 def get_page(**kwargs):
        """
