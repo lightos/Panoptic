@@ -160,6 +160,8 @@ Examples:
                   help="set a number to multiply the prefix by")
         parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
                   help="write all found files to output folder")
+        parser.add_option("-x", "--skip-passwd-test", dest="skip_passwd", action="store_true",
+                  help="skip special tests if *NIX passwd file is found")
         parser.add_option("-l", "--list", help="list the available filters (\"os\", \"category\", \"software\")")
         parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                           default=False, help="display extra information in the output")
@@ -186,15 +188,22 @@ def main():
     if not dfl.args.param:
         dfl.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
 
+    def prepare_request(payload):
+        """
+        Prepare the GET or POST request with the proper payload.
+        """
+        armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
+                                r"\1=%s" % payload, request_params)
+        request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path)}
+        if dfl.args.data:
+            request_args["data"] = armed_request
+        else:
+            request_args["target"] += "?%s" % armed_query
+            
+        return request_args
+
     print("[*] Checking invalid response...")
-    if dfl.args.data:
-        request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path),
-                        "data": re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                       r"\1=%s" % "non_existing_file.panoptic", request_params)}
-    else:
-        request_args = {"target": "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                                    re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                                           r"\1=%s" % "non_existing_file.panoptic", request_params))}        
+    request_args = prepare_request("non_existing_file.panoptic")
     dfl.invalid_response, _ = get_page(**request_args)
     print("[*] Done!\n")
     print("[*] Initiating file search...")
@@ -202,14 +211,7 @@ def main():
         if dfl.args.prefix and dfl.args.prefix[len(dfl.args.prefix)-1] == "/":
             dfl.args.prefix = dfl.args.prefix[:-1]
 
-        if dfl.args.data:
-            request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path),
-                            "data": re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                       r"\1=%s%s%s" % (dfl.args.prefix, file['location'], dfl.args.postfix), request_params)}
-        else:
-            request_args = {"target": "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                                        re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
-                                                                r"\1=%s%s%s" % (dfl.args.prefix, file['location'], dfl.args.postfix), request_params))}
+        request_args = prepare_request("%s%s%s" % (dfl.args.prefix, file["location"], dfl.args.postfix))
         html, _ = get_page(**request_args)
         
         if html != dfl.invalid_response:
@@ -218,12 +220,21 @@ def main():
                 print("[*] Possible file(s) found!\n")
                 if dfl.operating_system:
                     print("[*] OS: %s\n" % dfl.operating_system)
+                    
             print("[+] File: %s" % dfl.file_attributes)
+            
+            # If --write-file is set.
             if dfl.args.write_file:
                 if not os.path.exists("output/%s" % parsed_url.netloc): os.makedirs("output/%s" % parsed_url.netloc)
-                with open("output/%s/%s.html" % (parsed_url.netloc, file['location'].replace("/", "_")), "w") as f:
+                with open("output/%s/%s.html" % (parsed_url.netloc, file["location"].replace("/", "_")), "w") as f:
                     f.write(html)
-            
+
+            # If --skip-passwd-test not set.
+            #if file["location"] in ("/etc/passwd", "/etc/security/passwd") and not dfl.args.skip_passwd:
+            #    users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
+            #    for user in users:
+            #        username, password, uid, gid, info, home = user
+                    
     if not dfl.file_found:
         print("[*] No files found!")
 
