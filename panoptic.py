@@ -6,8 +6,11 @@ Panoptic
 Searches default file locations through LFI for common log and config files
 """
 
+import difflib
 import os
+import random
 import re
+import string
 import time
 
 from urllib import urlencode
@@ -19,6 +22,12 @@ from sys import argv, exit
 NAME = "Panoptic"
 VERSION = "v0.1"
 URL = "https://github.com/lightos/Panoptic/"
+
+# Used for retrieving response for a dummy filename
+INVALID_FILENAME = "".join(random.sample(string.letters, 10))
+
+# Used for heuristic comparison of responses
+HEURISTIC_RATIO = 0.9
 
 # ASCII eye taken from http://www.retrojunkie.com/asciiart/health/eyes.htm
 BANNER = """
@@ -234,9 +243,18 @@ def main():
             
         return request_args
 
+    def clean_response(response, filepath):
+        """
+        Cleans response from occurrences of filepath
+        """
+
+        response = response.replace(filepath, "")
+        regex = re.sub(r"[^A-Za-z0-9]", "(.|&\w+;|%[0-9A-Fa-f]{2})", filepath)
+        return re.sub(regex, "", response, re.I)
+
     print("[*] Checking invalid response...")
 
-    request_args = prepare_request("non_existing_file.panoptic")
+    request_args = prepare_request(INVALID_FILENAME)
     panoptic.invalid_response, _ = get_page(**request_args)
 
     print("[*] Done!\n")
@@ -248,8 +266,13 @@ def main():
 
         request_args = prepare_request("%s%s%s" % (panoptic.args.prefix, case["location"], panoptic.args.postfix))
         html, _ = get_page(**request_args)
-        
-        if html != panoptic.invalid_response:
+
+        matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(panoptic.invalid_response, INVALID_FILENAME))
+
+        if matcher.quick_ratio() < HEURISTIC_RATIO:
+            if re.search(r"(access|permission) denied", html, re.I):
+                continue
+
             if not panoptic.file_found:
                 panoptic.file_found = True
 
@@ -265,7 +288,7 @@ def main():
                 _ = os.path.join("output", parsed_url.netloc)
                 if not os.path.exists(_):
                     os.makedirs(_)
-                with open(os.path.join(_, "%s.html" % case["location"].replace("/", "_")), "w") as f:
+                with open(os.path.join(_, "%s.txt" % case["location"].replace("/", "_")), "w") as f:
                     f.write(html)
 
             # If --skip-passwd-test not set.
