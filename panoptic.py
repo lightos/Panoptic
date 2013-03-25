@@ -3,7 +3,7 @@
 """
 Panoptic
 
-Search default file locations through LFI for common log and config files.
+Searches default file locations through LFI for common log and config files
 """
 
 import os
@@ -46,12 +46,14 @@ Examples:
 
 class Panoptic:
     """
-    Contains all the functionality to run panoptic.
+    Contains all the functionality to run Panoptic
     """
+
     def __init__(self):
         """
-        Initiates the Panoptic object.
+        Initiates the Panoptic object
         """
+
         self.software = ""
         self.category = ""
         self.classification = ""
@@ -62,8 +64,9 @@ class Panoptic:
     @staticmethod
     def list_items(item):
         """
-        Returns available types of categories, software or operating systems.
+        Returns available types of categories, software or operating systems
         """
+
         if item == "os":
             tmp = []
             print("Listing all available Operating Systems...\n")
@@ -77,7 +80,10 @@ class Panoptic:
         
         for file_location in open("file_locations.txt"):
             file_location = file_location.rstrip()
-            if not file_location: continue
+
+            if not file_location:
+                continue
+
             if item == "category" and file_location[0] == "[":
                 print("[+] %s" % file_location[1:-1])
             elif item == "software" and file_location[0] == "#":
@@ -94,8 +100,9 @@ class Panoptic:
             
     def parse_file(self):
         """
-        Parses the file locations list.
+        Parses the file locations list
         """
+
         for file_location in open("file_locations.txt"):
             if file_location[0] == "\n":
                 self.software = ""
@@ -103,7 +110,9 @@ class Panoptic:
                 self.operating_system = ""
                 self.file_attributes = {}
                 continue
+
             file_location = file_location.rstrip()
+
             if file_location[0] == "[":
                 self.category = file_location[1:-1]
                 continue
@@ -123,12 +132,15 @@ class Panoptic:
             if self.args.software:
                 if self.software.lower() != self.args.software.lower():
                     continue
+
             if self.args.category:
                 if self.category.lower() != self.args.category.lower():
                     continue
+
             if self.args.classification:
                 if self.classification.lower() not in [self.classification.lower(), "other"]:
                     continue
+
             if self.args.os:
                 if self.operating_system.lower() != self.os.lower():
                     continue
@@ -142,8 +154,9 @@ class Panoptic:
     
     def get_args(self):
         """
-        Parse command line arguments.
+        Parses command line arguments
         """
+
         OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
 
         parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
@@ -189,8 +202,9 @@ class Panoptic:
 
 def main():
     """
-    Initialize the execution of the program.
+    Initializes and executes the program
     """
+
     print(BANNER)
 
     panoptic = Panoptic()
@@ -206,8 +220,9 @@ def main():
 
     def prepare_request(payload):
         """
-        Prepare the GET or POST request with the proper payload.
+        Prepares HTTP (GET or POST) request with proper payload
         """
+
         armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % panoptic.args.param,
                                 r"\1=%s" % payload, request_params)
         request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path)}
@@ -228,7 +243,7 @@ def main():
     print("[*] Initiating file search...")
 
     for case in panoptic.parse_file():
-        if panoptic.args.prefix and panoptic.args.prefix[len(panoptic.args.prefix)-1] == "/":
+        if panoptic.args.prefix and panoptic.args.prefix[len(panoptic.args.prefix) - 1] == "/":
             panoptic.args.prefix = panoptic.args.prefix[:-1]
 
         request_args = prepare_request("%s%s%s" % (panoptic.args.prefix, case["location"], panoptic.args.postfix))
@@ -237,7 +252,9 @@ def main():
         if html != panoptic.invalid_response:
             if not panoptic.file_found:
                 panoptic.file_found = True
+
                 print("[*] Possible file(s) found!\n")
+
                 if panoptic.operating_system:
                     print("[*] OS: %s\n" % panoptic.operating_system)
 
@@ -245,8 +262,10 @@ def main():
 
             # If --write-file is set.
             if panoptic.args.write_file:
-                if not os.path.exists("output/%s" % parsed_url.netloc): os.makedirs("output/%s" % parsed_url.netloc)
-                with open("output/%s/%s.html" % (parsed_url.netloc, case["location"].replace("/", "_")), "w") as f:
+                _ = os.path.join("output", parsed_url.netloc)
+                if not os.path.exists(_):
+                    os.makedirs(_)
+                with open(os.path.join(_, "%s.html" % case["location"].replace("/", "_")), "w") as f:
                     f.write(html)
 
             # If --skip-passwd-test not set.
@@ -263,8 +282,9 @@ def main():
     
 def get_page(**kwargs):
         """
-        This method retrieves the URL
+        Retrieves page content from a given target URL
         """
+
         url = kwargs.get("target", None)
         post = kwargs.get("data", None)
         header = kwargs.get("header", None)
