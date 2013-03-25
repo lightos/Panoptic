@@ -1,4 +1,4 @@
-Panoptic v0.1
+Panoptic
 ===
 
 Search default file locations through LFI for common log and config files
