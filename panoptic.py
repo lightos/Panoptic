@@ -3,7 +3,7 @@
 """
 Panoptic
 
-Searches default file locations through LFI for common log and config files
+Search default file locations through LFI for common log and config files
 """
 
 import difflib
