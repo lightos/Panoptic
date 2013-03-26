@@ -270,9 +270,6 @@ def main():
         matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(panoptic.invalid_response, INVALID_FILENAME))
 
         if matcher.quick_ratio() < HEURISTIC_RATIO:
-            if re.search(r"(access|permission) denied", html, re.I):
-                continue
-
             if not panoptic.file_found:
                 panoptic.file_found = True
 
