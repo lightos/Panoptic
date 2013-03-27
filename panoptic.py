@@ -190,7 +190,8 @@ def main():
 
         armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
                                 r"\1=%s" % payload, request_params)
-        request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path)}
+
+        request_args = {"target": "%s://%s%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path)}
 
         if args.data:
             request_args["data"] = armed_query
