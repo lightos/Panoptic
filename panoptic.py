@@ -151,7 +151,7 @@ class Panoptic:
                     continue
 
             if self.args.os:
-                if self.operating_system.lower() != self.os.lower():
+                if self.operating_system.lower() != self.args.os.lower():
                     continue
 
             self.file_attributes["location"] = file_location
