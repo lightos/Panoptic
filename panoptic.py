@@ -178,6 +178,8 @@ class Panoptic:
                   help="set parameter name to test for")
         parser.add_option("-d", "--data", dest="data",
                   help="set data for POST request")
+        parser.add_option("-y", "--proxy", dest="proxy",
+                  help="set IP:PORT to use as socks proxy")
         parser.add_option("-o", "--os", dest="os",
                   help="set operating system to limit searches to")
         parser.add_option("-s", "--software", dest="software",
@@ -325,8 +327,8 @@ def get_page(**kwargs):
             raise Exception("[!] Unable to parse URL: %s" % url)
 
         if proxy:
-            import socks
             import socket
+            import thirdparty.socks.socks
 
             proxy = proxy.split(':')
             ip = proxy[0]
