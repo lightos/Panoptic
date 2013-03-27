@@ -147,7 +147,7 @@ class Panoptic:
                     continue
 
             if self.args.classification:
-                if self.classification.lower() not in [self.classification.lower(), "other"]:
+                if self.classification.lower() not in [self.args.classification.lower(), "other"]:
                     continue
 
             if self.args.os:
