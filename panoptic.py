@@ -100,7 +100,7 @@ def get_cases(args):
         case["category"] = _(element, "category").value
         case["software"] = _(element, "software").value
         case["type"] = _(element, "log") is not None and "log" or _(element, "conf") is not None and "conf"
-        cases.append(case)        
+        cases.append(case)
 
     return cases
 
