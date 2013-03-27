@@ -17,7 +17,7 @@ from urllib import urlencode
 from urllib2 import urlopen, Request
 from urlparse import urlsplit, parse_qsl
 from optparse import OptionParser
-from sys import argv, exit
+from sys import exit
 
 NAME = "Panoptic"
 VERSION = "v0.1"
@@ -69,7 +69,8 @@ class Panoptic:
         self.operating_system = ""
         self.file_found = False
         self.file_attributes = {}
-    
+        self.args = {}
+
     @staticmethod
     def list_items(item):
         """
@@ -86,7 +87,7 @@ class Panoptic:
         else:
             print("[!] --list must be \"os\", \"software\" or \"category\"")
             exit()
-        
+
         for file_location in open("file_locations.txt"):
             file_location = file_location.rstrip()
 
@@ -100,13 +101,13 @@ class Panoptic:
             elif item == "os" and file_location[0] == "(":
                 if file_location[1:-1] not in tmp:
                     tmp.append(file_location[1:-1])
-                    
+
         if item == "os":
             for _ in tmp:
                 print("[+] %s" % _)
-                
+
         exit()
-            
+
     def parse_file(self):
         """
         Parses the file locations list
@@ -137,7 +138,7 @@ class Panoptic:
             elif file_location.find("{") != -1:
                 # HANDLE HOST/DOMAIN replacement
                 continue
-            
+
             if self.args.software:
                 if self.software.lower() != self.args.software.lower():
                     continue
@@ -158,9 +159,9 @@ class Panoptic:
             self.file_attributes["software"] = self.software
             self.file_attributes["category"] = self.category
             self.file_attributes["classification"] = self.classification
-            
+
             yield self.file_attributes
-    
+
     def get_args(self):
         """
         Parses command line arguments
@@ -169,7 +170,7 @@ class Panoptic:
         OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
 
         parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
-        
+
         # Required
         parser.add_option("-u", "--url", dest="target",
                   help="set the target to test")
@@ -178,7 +179,7 @@ class Panoptic:
                   help="set parameter name to test for")
         parser.add_option("-d", "--data", dest="data",
                   help="set data for POST request")
-        parser.add_option("-y", "--proxy", dest="proxy",
+        parser.add_option("-P", "--proxy", dest="proxy",
                   help="set IP:PORT to use as socks proxy")
         parser.add_option("-o", "--os", dest="os",
                   help="set operating system to limit searches to")
@@ -207,7 +208,7 @@ class Panoptic:
 
         if not self.args.target:
             parser.error('missing argument for url. Use -h for help')
-            
+
         if self.args.prefix:
             self.args.prefix = self.args.prefix * self.args.multiplier
 
@@ -225,7 +226,7 @@ def main():
 
     parsed_url = urlsplit(panoptic.args.target)
     request_params = panoptic.args.data if panoptic.args.data else parsed_url.query
-    
+
     if not panoptic.args.param:
         panoptic.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
 
@@ -239,10 +240,10 @@ def main():
         request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path)}
 
         if panoptic.args.data:
-            request_args["data"] = armed_request
+            request_args["data"] = armed_query
         else:
             request_args["target"] += "?%s" % armed_query
-            
+
         return request_args
 
     def clean_response(response, filepath):
@@ -301,72 +302,72 @@ def main():
 
     print("\n[*] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
-    
+
 def get_page(**kwargs):
-        """
-        Retrieves page content from a given target URL
-        """
+    """
+    Retrieves page content from a given target URL
+    """
 
-        url = kwargs.get("target", None)
-        post = kwargs.get("data", None)
-        header = kwargs.get("header", None)
-        cookie = kwargs.get("cookie", None)
-        proxy = kwargs.get("proxy", False)
-        user_agent = kwargs.get("user_agent", None)
-        verbose = kwargs.get("verbose", False)
+    url = kwargs.get("target", None)
+    post = kwargs.get("data", None)
+    header = kwargs.get("header", None)
+    cookie = kwargs.get("cookie", None)
+    proxy = kwargs.get("proxy", False)
+    user_agent = kwargs.get("user_agent", None)
+    verbose = kwargs.get("verbose", False)
 
-        parsed_url = None
-        page = None
+    parsed_url = None
+    page = None
 
-        if url is None:
-            raise Exception("[!] URL cannot be None.")
+    if url is None:
+        raise Exception("[!] URL cannot be None.")
 
-        try:
-            parsed_url = urlsplit(url)
-        except:
-            raise Exception("[!] Unable to parse URL: %s" % url)
+    try:
+        parsed_url = urlsplit(url)
+    except:
+        raise Exception("[!] Unable to parse URL: %s" % url)
 
-        if proxy:
-            import socket
-            import thirdparty.socks.socks
+    if proxy:
+        import socket
+        import thirdparty.socks.socks
 
-            proxy = proxy.split(':')
-            ip = proxy[0]
-            port = proxy[1]
-            socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
-            socket.socket = socks.socksocket
+        proxy = proxy.split(':')
+        ip = proxy[0]
+        port = proxy[1]
+        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
+        socket.socket = socks.socksocket
 
-        if user_agent is None:
-            user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
-        
-        if post is None:
-            url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
-                                    urlencode(parse_qsl(parsed_url.query)))
-        else:
-            post = urlencode(parse_qsl(post), "POST")
+    if user_agent is None:
+        user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
 
-        # Perform HTTP Request
-        try:
-            headers = user_agent
-            headers["Accept"] = "*"  # Set option to add headers in cmdline
+    if post is None:
+        url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+                                urlencode(parse_qsl(parsed_url.query)))
+    else:
+        post = urlencode(parse_qsl(post), "POST")
 
-            req = Request(url, post, headers)
-            conn = urlopen(req)
+    # Perform HTTP Request
+    try:
+        headers = user_agent
+        headers["Accept"] = "*"  # Set option to add headers in cmdline
 
-            # Get HTTP Response
-            page = conn.read()
-            code = conn.code
-            status = conn.msg
-            responseHeaders = conn.info()
+        req = Request(url, post, headers)
+        conn = urlopen(req)
 
-        except IOError, e:
-            if hasattr(e, "reason"):
-                if verbose:
-                    print("[!] Error msg: %d" % e.msg)
-                    print("[!] HTTP error code: %d" % e.code)
-                    print("[!] Response headers: %d" % e.info())
-        
-        return page, parsed_url
+        # Get HTTP Response
+        page = conn.read()
+        code = conn.code
+        status = conn.msg
+        responseHeaders = conn.info()
+
+    except IOError, e:
+        if hasattr(e, "reason"):
+            if verbose:
+                print("[!] Error msg: %d" % e.msg)
+                print("[!] HTTP error code: %d" % e.code)
+                print("[!] Response headers: %d" % e.info())
+
+    return page, parsed_url
 
 if __name__ == "__main__":
     main()
