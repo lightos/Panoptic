@@ -119,30 +119,43 @@ def parse_args():
     # Optional
     parser.add_option("-p", "--param", dest="param",
                 help="set parameter name to test for")
+
     parser.add_option("-d", "--data", dest="data",
                 help="set data for POST request")
+
     parser.add_option("-P", "--proxy", dest="proxy",
                 help="set IP:PORT to use as socks proxy")
+
     parser.add_option("-o", "--os", dest="os",
                 help="set operating system to limit searches to")
+
     parser.add_option("-s", "--software", dest="software",
                 help="set name of the software to search for")
+
     parser.add_option("-c", "--category", dest="category",
                 help="set specific category of software to look for")
+
     parser.add_option("-t", "--type", dest="type",
                 help="set type of file to search for (\"conf\" or \"log\")")
+
     parser.add_option("-b", "--prefix", dest="prefix", default="",
                 help="set prefix for file path (e.g. \"../\")")
+
     parser.add_option("-e", "--postfix", dest="postfix", default="",
                 help="set prefix for file path (e.g. \"%00\")")
+
     parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
                 help="set number to multiply the prefix by")
+
     parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
                 help="write all found files to output folder")
+
     parser.add_option("-x", "--skip-passwd-test", dest="skip_passwd", action="store_true",
                 help="skip special tests if *NIX passwd file is found")
+
     parser.add_option("-l", "--list", dest="list",
                 help="list available filters (\"os\", \"category\", \"software\")")
+
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                 help="display extra information in the output")
 
@@ -163,7 +176,7 @@ def main():
 
     print(BANNER)
 
-    file_found = False
+    found = False
     args = parse_args()
 
     cases = get_cases(args)
@@ -173,6 +186,7 @@ def main():
 
         for _ in set([_[args.list] for _ in cases]):
             print _ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _
+
         exit()
 
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
@@ -207,6 +221,7 @@ def main():
 
         response = response.replace(filepath, "")
         regex = re.sub(r"[^A-Za-z0-9]", "(.|&\w+;|%[0-9A-Fa-f]{2})", filepath)
+
         return re.sub(regex, "", response, re.I)
 
     print("[*] Checking invalid response...")
@@ -215,7 +230,7 @@ def main():
     invalid_response, _ = get_page(**request_args)
 
     print("[*] Done!\n")
-    print("[*] Starting file search...")
+    print("[*] Searching for files...")
 
     for case in cases:
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
@@ -230,8 +245,8 @@ def main():
         matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
 
         if matcher.quick_ratio() < HEURISTIC_RATIO:
-            if not file_found:
-                file_found = True
+            if not found:
+                found = True
 
                 print("[*] Possible file(s) found!\n")
 
@@ -254,7 +269,7 @@ def main():
             #    for user in users:
             #        username, password, uid, gid, info, home = user
 
-    if not file_found:
+    if not found:
         print("[*] No files found!")
 
     print("\n[*] File search complete.")
@@ -273,6 +288,7 @@ def get_page(**kwargs):
     user_agent = kwargs.get("user_agent", None)
     verbose = kwargs.get("verbose", False)
 
+    headers = {}
     parsed_url = None
     page = None
 
@@ -288,24 +304,22 @@ def get_page(**kwargs):
         import socket
         import thirdparty.socks.socks
 
-        proxy = proxy.split(':')
-        ip = proxy[0]
-        port = proxy[1]
+        ip, port = proxy.split(':')
         socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
         socket.socket = socks.socksocket
 
     if user_agent is None:
-        user_agent = {"user-agent": "%s %s" % (NAME, VERSION)}
+        user_agent = "%s %s" % (NAME, VERSION)
 
     if post is None:
-        url = "%s://%s%s?%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path,
+        url = "%s://%s%s?%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path,
                                 urlencode(parse_qsl(parsed_url.query)))
     else:
         post = urlencode(parse_qsl(post), "POST")
 
     # Perform HTTP Request
     try:
-        headers = user_agent
+        headers["User-agent"] = user_agent
         headers["Accept"] = "*"  # Set option to add headers in cmdline
 
         req = Request(url, post, headers)
