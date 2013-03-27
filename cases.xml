@@ -82,7 +82,7 @@
             <conf>
                 <os value="*NIX">
                     <file value="/usr/local/psa/admin/conf/php.ini"/>
-                    <file value="/etc/sw-cp-server/applications.d/plesk.conf"/><file value="/etc/sw-cp-server/applications.d/plesk.conf"/>
+                    <file value="/etc/sw-cp-server/applications.d/plesk.conf"/>
                     <file value="/usr/local/psa/admin/conf/site_isolation_settings.ini"/>
                     <file value="/usr/local/sb/config"/>
                     <file value="/usr/local/psa/admin/conf/php.ini"/>
