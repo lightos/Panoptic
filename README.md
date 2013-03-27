@@ -14,7 +14,7 @@ Search default file locations through LFI for common log and config files
                             set parameter name to test for
       -d DATA, --data=DATA  set data for POST request
       -P PROXY, --proxy=PROXY
-                            set IP:PORT to use as socks proxy
+                            set IP:PORT to use as SOCKS proxy
       -o OS, --os=OS        set operating system to limit searches to
       -s SOFTWARE, --software=SOFTWARE
                             set name of the software to search for
@@ -24,13 +24,13 @@ Search default file locations through LFI for common log and config files
       -b PREFIX, --prefix=PREFIX
                             set prefix for file path (e.g. "../")
       -e POSTFIX, --postfix=POSTFIX
-                            set prefix for file path (e.g. "%00")
+                            set postfix for file path (e.g. "%00")
       -m MULTIPLIER, --multiplier=MULTIPLIER
                             set number to multiply the prefix by
-      -w, --write-file      write all found files to output folder
+      -w, --write-file      write content of found files to output folder
       -x, --skip-passwd-test
                             skip special tests if *NIX passwd file is found
-      -l LIST, --list=LIST  list available filters ("os", "category", "software")
+      -l LIST, --list=LIST  list available filters ("os", "category" or "software")
       -v, --verbose         display extra information in the output
 
 ### Examples

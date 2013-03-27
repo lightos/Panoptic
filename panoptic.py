@@ -124,7 +124,7 @@ def parse_args():
                 help="set data for POST request")
 
     parser.add_option("-P", "--proxy", dest="proxy",
-                help="set IP:PORT to use as socks proxy")
+                help="set IP:PORT to use as SOCKS proxy")
 
     parser.add_option("-o", "--os", dest="os",
                 help="set operating system to limit searches to")
@@ -142,19 +142,19 @@ def parse_args():
                 help="set prefix for file path (e.g. \"../\")")
 
     parser.add_option("-e", "--postfix", dest="postfix", default="",
-                help="set prefix for file path (e.g. \"%00\")")
+                help="set postfix for file path (e.g. \"%00\")")
 
     parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
                 help="set number to multiply the prefix by")
 
     parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
-                help="write all found files to output folder")
+                help="write content of found files to output folder")
 
     parser.add_option("-x", "--skip-passwd-test", dest="skip_passwd", action="store_true",
                 help="skip special tests if *NIX passwd file is found")
 
     parser.add_option("-l", "--list", dest="list",
-                help="list available filters (\"os\", \"category\", \"software\")")
+                help="list available filters (\"os\", \"category\" or \"software\")")
 
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                 help="display extra information in the output")
@@ -236,6 +236,9 @@ def main():
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
             args.prefix = args.prefix[:-1]
 
+        if args.verbose:
+            print("[?] Trying: '%s'" % case["location"])
+
         request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
         html, _ = get_page(**request_args)
 
@@ -253,7 +256,7 @@ def main():
                 if case["os"]:
                     print("[*] OS: %s\n" % case["os"])
 
-            print("[+] File: %s" % case)
+            print("[+] Found: %s" % case)
 
             # If --write-file is set.
             if args.write_file:
