@@ -1,0 +1,1028 @@
+<cases>
+    <category value="Programming">
+        <software value="PHP">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/php.ini"/>
+                    <file value="/bin/php.ini"/>
+                    <file value="/etc/httpd/php.ini"/>
+                    <file value="/usr/lib/php.ini"/>
+                    <file value="/usr/lib/php/php.ini"/>
+                    <file value="/usr/local/etc/php.ini"/>
+                    <file value="/usr/local/lib/php.ini"/>
+                    <file value="/usr/local/php/lib/php.ini"/>
+                    <file value="/usr/local/php4/lib/php.ini"/>
+                    <file value="/usr/local/php5/lib/php.ini"/>
+                    <file value="/usr/local/apache/conf/php.ini"/>
+                    <file value="/etc/php4.4/fcgi/php.ini"/>
+                    <file value="/etc/php4/apache/php.ini"/>
+                    <file value="/etc/php4/apache2/php.ini"/>
+                    <file value="/etc/php5/apache/php.ini"/>
+                    <file value="/etc/php5/apache2/php.ini"/>
+                    <file value="/etc/php/php.ini"/>
+                    <file value="/etc/php/php4/php.ini"/>
+                    <file value="/etc/php/apache/php.ini"/>
+                    <file value="/etc/php/apache2/php.ini"/>
+                    <file value="/web/conf/php.ini"/>
+                    <file value="/usr/local/Zend/etc/php.ini"/>
+                    <file value="/opt/xampp/etc/php.ini"/>
+                    <file value="/var/local/www/conf/php.ini"/>
+                    <file value="/etc/php/cgi/php.ini"/>
+                    <file value="/etc/php4/cgi/php.ini"/>
+                    <file value="/etc/php5/cgi/php.ini"/>
+                    <file value="/home2/bin/stable/apache/php.ini"/>
+                    <file value="/home/bin/stable/apache/php.ini"/>
+                </os>
+                <os value="Windows">
+                    <file value="/php5/php.ini"/>
+                    <file value="/php4/php.ini"/>
+                    <file value="/php/php.ini"/>
+                    <file value="/PHP/php.ini"/>
+                    <file value="/WINDOWS/php.ini"/>
+                    <file value="/WINNT/php.ini"/>
+                    <file value="/apache/php/php.ini"/>
+                    <file value="/xampp/apache/bin/php.ini"/>
+                    <file value="/NetServer/bin/stable/apache/php.ini"/>
+                </os>
+                <os value="OSX">
+                    <file value="/Volumes/Macintosh_HD1/usr/local/php/lib/php.ini"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="Web Hosting Administration">
+        <software value="Cpanel">
+            <log>
+                <os value="*NIX">
+                    <file value="/usr/local/cpanel/logs/stats_log"/>
+                    <file value="/usr/local/cpanel/logs/access_log"/>
+                    <file value="/usr/local/cpanel/logs/error_log"/>
+                    <file value="/usr/local/cpanel/logs/license_log"/>
+                    <file value="/usr/local/cpanel/logs/login_log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/var/cpanel/cpanel.config"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Plesk">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/sw-cp-server/error_log"/>
+                    <file value="/usr/local/psa/admin/logs/httpsd_access_log"/>
+                    <file value="/usr/local/psa/admin/logs/panel.log"/>
+                    <file value="/var/log/sw-cp-server/error_log"/>
+                    <file value="/var/log/sso/sso.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/local/psa/admin/conf/php.ini"/>
+                    <file value="/etc/sw-cp-server/applications.d/plesk.conf"/><file value="/etc/sw-cp-server/applications.d/plesk.conf"/>
+                    <file value="/usr/local/psa/admin/conf/site_isolation_settings.ini"/>
+                    <file value="/usr/local/sb/config"/>
+                    <file value="/usr/local/psa/admin/conf/php.ini"/>
+                    <file value="/etc/sw-cp-server/applications.d/00-sso-cpserver.conf"/>
+                    <file value="/etc/sso/sso_config.ini"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="Databases">
+        <software value="MySQL">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/mysql/mysql-bin.log"/>
+                    <file value="/var/log/mysql.log"/>
+                    <file value="/var/log/mysqlderror.log"/>
+                    <file value="/var/log/mysql/mysql.log"/>
+                    <file value="/var/log/mysql/mysql-slow.log"/>
+                    <file value="/var/mysql.log"/>
+                </os>
+                <os value="Windows">
+                    <file value="/Program Files/MySQL/MySQL Server 5.0/data/{HOST}.err"/>
+                    <file value="/Program Files/MySQL/MySQL Server 5.0/data/mysql.log"/>
+                    <file value="/Program Files/MySQL/MySQL Server 5.0/data/mysql.err"/>
+                    <file value="/Program Files/MySQL/MySQL Server 5.0/data/mysql-bin.log"/>
+                    <file value="/Program Files/MySQL/data/{HOST}.err"/>
+                    <file value="/Program Files/MySQL/data/mysql.log"/>
+                    <file value="/Program Files/MySQL/data/mysql.err"/>
+                    <file value="/Program Files/MySQL/data/mysql-bin.log"/>
+                    <file value="/MySQL/data/{HOST}.err"/>
+                    <file value="/MySQL/data/mysql.log"/>
+                    <file value="/MySQL/data/mysql.err"/>
+                    <file value="/MySQL/data/mysql-bin.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/var/lib/mysql/my.cnf"/>
+                    <file value="/etc/mysql/my.cnf"/>
+                    <file value="/etc/my.cnf"/>
+                </os>
+                <os value="Windows">
+                    <file value="/Program Files/MySQL/MySQL Server 5.0/my.ini"/>
+                    <file value="/Program Files/MySQL/MySQL Server 5.0/my.cnf"/>
+                    <file value="/Program Files/MySQL/my.ini"/>
+                    <file value="/Program Files/MySQL/my.cnf"/>
+                    <file value="/MySQL/my.ini"/>
+                    <file value="/MySQL/my.cnf"/>
+                    <file value="/mysql/bin/my.ini"/>
+                </os>
+                <os value="OSX">
+                    <file value="/usr/local/mysql/data/mysql.log"/>
+                    <file value="/usr/local/mysql/data/mysql.err"/>
+                    <file value="/usr/local/mysql/data/mysql-bin.log"/>
+                    <file value="/usr/local/mysql/data/mysql-slow.log"/>
+                    <file value="/usr/local/mysql/data/mysqlderror.log"/>
+                    <file value="/usr/local/mysql/data/{HOST}.err"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="PostgreSQL">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/postgresql/log/postgresql.log"/>
+                    <file value="/var/log/postgresql/postgresql.log"/>
+                    <file value="/var/log/postgres/pg_backup.log"/>
+                    <file value="/var/log/postgres/postgres.log"/>
+                    <file value="/var/log/postgresql.log"/>
+                    <file value="/var/log/pgsql/pgsql.log"/>
+                    <file value="/var/log/postgresql/postgresql-8.1-main.log"/>
+                    <file value="/var/log/pgsql8.log"/>
+                    <file value="/var/log/postgresql/postgres.log"/>
+                    <file value="/var/log/pgsql_log"/>
+                    <file value="/var/log/postgresql/main.log"/>
+                    <file value="/var/log/cron/var/log/postgres.log"/>
+                    <file value="/usr/internet/pgsql/data/postmaster.log"/>
+                    <file value="/usr/local/pgsql/data/postgresql.log"/>
+                    <file value="/usr/local/pgsql/data/pg_log"/>
+                </os>
+                <os value="Windows">
+                    <file value="/PostgreSQL/log/pgadmin.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/var/lib/pgsql/data/postgresql.conf"/>
+                    <file value="/var/postgresql/db/postgresql.conf"/>
+                    <file value="/var/nm2/postgresql.conf"/>
+                    <file value="/usr/local/pgsql/data/postgresql.conf"/>
+                    <file value="/usr/local/pgsql/data/pg_hba.conf"/>
+                    <file value="/usr/internet/pgsql/data/pg_hba.conf"/>
+                    <file value="/usr/local/pgsql/data/passwd"/>
+                    <file value="/usr/local/pgsql/bin/pg_passwd"/>
+                    <file value="/etc/postgresql/postgresql.conf"/>
+                    <file value="/etc/postgresql/pg_hba.conf"/>
+                    <file value="/home/postgres/data/postgresql.conf"/>
+                    <file value="/home/postgres/data/PG_VERSION"/>
+                    <file value="/home/postgres/data/pg_ident.conf"/>
+                    <file value="/home/postgres/data/pg_hba.conf"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="Packaged Web Dev">
+        <software value="WAMP">
+            <log>
+                <os value="Windows">
+                    <file value="/wamp/logs/access.log"/>
+                    <file value="/wamp/logs/apache_error.log"/>
+                    <file value="/wamp/logs/genquery.log"/>
+                    <file value="/wamp/logs/mysql.log"/>
+                    <file value="/wamp/logs/slowquery.log"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="XAMPP">
+            <log>
+                <os value="Windows">
+                    <file value="/xampp/apache/logs/error.log"/>
+                    <file value="/xampp/FileZillaFTP/Logs"/>
+                    <file value="/xampp/mysql/data/mysql.err"/>
+                    <file value="/xampp/sendmail/sendmail.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="Windows">
+                    <file value="/xampp/apache/conf/httpd.conf"/>
+                    <file value="/xampp/FileZillaFTP/FileZilla Server.xml"/>
+                    <file value="/xampp/MercuryMail/mercury.ini"/>
+                    <file value="/xampp/php/php.ini"/>
+                    <file value="/xampp/phpMyAdmin/config.inc.php"/>
+                    <file value="/xampp/sendmail/sendmail.ini"/>
+                    <file value="/xampp/webalizer/webalizer.conf"/>
+                </os>
+                <os value="*NIX">
+                    <file value="/opt/lampp/etc/httpd.conf"/>
+                </os>
+            </conf>
+            <other>
+                <os value="Windows">
+                    <file value="/xampp/htdocs/aca.txt"/>
+                    <file value="/xampp/htdocs/admin.php"/>
+                    <file value="/xampp/htdocs/leer.txt"/>
+                </os>
+            </other>
+        </software>
+    </category>
+
+    <category value="Firewalls">
+        <software value="Mod Security">
+            <log>
+                <os value="*NIX">
+                    <file value="/usr/local/apache/logs/audit_log"/>
+                    <file value="/usr/local/apache2/logs/audit_log"/>
+                    <file value="/logs/security_debug_log"/>
+                    <file value="/logs/security_log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/local/apache/conf/modsec.conf"/>
+                    <file value="/usr/local/apache2/conf/modsec.conf"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="FTP">
+        <software value="ProFTPD">
+            <log>
+                <os value="*NIX">
+                    <file value="/etc/logrotate.d/proftpd"/>
+                    <file value="/www/logs/proftpd.system.log"/>
+                    <file value="/var/log/proftpd"/>
+                    <file value="/var/log/proftpd/xferlog.legacy"/>
+                    <file value="/var/log/proftpd.access_log"/>
+                    <file value="/var/log/proftpd.xferlog"/>
+                    <file value="/etc/pam.d/proftpd"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/proftp.conf"/>
+                    <file value="/etc/protpd/proftpd.conf"/>
+                    <file value="/etc/vhcs2/proftpd/proftpd.conf"/>
+                    <file value="/etc/proftpd/modules.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="vsftpd">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/vsftpd.log"/>
+                    <file value="/etc/vsftpd.chroot_list"/>
+                    <file value="/etc/logrotate.d/vsftpd.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/vsftpd/vsftpd.conf"/>
+                    <file value="/etc/vsftpd.conf"/>
+                    <file value="/etc/chrootUsers"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="wu-ftpd">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/xferlog"/>
+                    <file value="/var/adm/log/xferlog"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/wu-ftpd/ftpaccess"/>
+                    <file value="/etc/wu-ftpd/ftphosts"/>
+                    <file value="/etc/wu-ftpd/ftpusers"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Pure-FTPd">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/pure-ftpd/pure-ftpd.log"/>
+                    <file value="/logs/pure-ftpd.log"/>
+                    <file value="/var/log/pureftpd.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/sbin/pure-config.pl"/>
+                    <file value="/usr/etc/pure-ftpd.conf"/>
+                    <file value="/etc/pure-ftpd/pure-ftpd.conf"/>
+                    <file value="/usr/local/etc/pure-ftpd.conf"/>
+                    <file value="/usr/local/etc/pureftpd.pdb"/>
+                    <file value="/usr/local/pureftpd/etc/pureftpd.pdb"/>
+                    <file value="/usr/local/pureftpd/sbin/pure-config.pl"/>
+                    <file value="/usr/local/pureftpd/etc/pure-ftpd.conf"/>
+                    <file value="/etc/pure-ftpd.conf"/>
+                    <file value="/etc/pure-ftpd/pure-ftpd.pdb"/>
+                    <file value="/etc/pureftpd.pdb"/>
+                    <file value="/etc/pureftpd.passwd"/>
+                    <file value="/etc/pure-ftpd/pureftpd.pdb"/>
+                </os>
+                <os value="DragonflyBSD, FreeBSD">
+                    <file value="/usr/ports/ftp/pure-ftpd/pure-ftpd.conf"/>
+                    <file value="/usr/ports/ftp/pure-ftpd/pureftpd.pdb"/>
+                    <file value="/usr/ports/ftp/pure-ftpd/pureftpd.passwd"/>
+                </os>
+                <os value="OpenBSD">
+                    <file value="/usr/ports/net/pure-ftpd/pure-ftpd.conf"/>
+                    <file value="/usr/ports/net/pure-ftpd/pureftpd.pdb"/>
+                    <file value="/usr/ports/net/pure-ftpd/pureftpd.passwd"/>
+                </os>
+                <os value="NetBSD">
+                    <file value="/usr/pkgsrc/net/pureftpd/pure-ftpd.conf"/>
+                    <file value="/usr/pkgsrc/net/pureftpd/pureftpd.pdb"/>
+                    <file value="/usr/pkgsrc/net/pureftpd/pureftpd.passwd"/>
+                </os>
+                <os value="Crux Linux">
+                    <file value="/usr/ports/contrib/pure-ftpd/pure-ftpd.conf"/>
+                    <file value="/usr/ports/contrib/pure-ftpd/pureftpd.pdb"/>
+                    <file value="/usr/ports/contrib/pure-ftpd/pureftpd.passwd"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="MuddleFTPD">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/muddleftpd"/>
+                    <file value="/usr/sbin/mudlogd"/>
+                    <file value="/etc/muddleftpd/mudlog"/>
+                    <file value="/etc/muddleftpd.com"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/muddleftpd/mudlogd.conf"/>
+                    <file value="/etc/muddleftpd/muddleftpd.conf"/>
+                    <file value="/var/log/muddleftpd.conf"/>
+                    <file value="/usr/sbin/mudpasswd"/>
+                    <file value="/etc/muddleftpd/muddleftpd.passwd"/>
+                    <file value="/etc/muddleftpd/passwd"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Other">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/ftp-proxy/ftp-proxy.log"/>
+                    <file value="/var/log/ftp-proxy"/>
+                    <file value="/var/log/ftplog"/>
+                    <file value="/etc/logrotate.d/ftp"/>
+                </os>
+            </log>
+            <other>
+                <os value="*NIX">
+                    <file value="/etc/ftpchroot"/>
+                    <file value="/etc/ftphosts"/>
+                </os>
+            </other>
+        </software>
+    </category>
+
+    <category value="Mail server">
+        <software value="Exim">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/exim_mainlog"/>
+                    <file value="/var/log/exim/mainlog"/>
+                    <file value="/var/log/maillog"/>
+                    <file value="/var/log/exim_paniclog"/>
+                    <file value="/var/log/exim/paniclog"/>
+                    <file value="/var/log/exim/rejectlog"/>
+                    <file value="/var/log/exim_rejectlog"/>
+                </os>
+            </log>
+        </software>
+    </category>
+
+    <category value="HTTP server">
+        <software value="General">
+            <conf>
+                <os value="OS X">
+                    <file value="/etc/osxhttpd/osxhttpd.conf"/>
+                    <file value="/System/Library/WebObjects/Adaptors/Apache2.2/apache.conf"/>
+                    <file value="/Library/WebServer/Documents/.htaccess"/>
+                </os>
+            </conf>
+            <other>
+                <os value="OS X">
+                    <file value="/Library/WebServer/Documents/index.html"/>
+                    <file value="/Library/WebServer/Documents/index.htm"/>
+                    <file value="/Library/WebServer/Documents/default.html"/>
+                    <file value="/Library/WebServer/Documents/default.htm"/>
+                    <file value="/Library/WebServer/Documents/index.php"/>
+                    <file value="/Library/WebServer/Documents/default.php"/>
+                </os>
+            </other>
+        </software>
+
+        <software value="Webmin">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/webmin/miniserv.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/local/etc/webmin/miniserv.conf"/>
+                    <file value="/etc/webmin/miniserv.conf"/>
+                    <file value="/usr/local/etc/webmin/miniserv.users"/>
+                    <file value="/etc/webmin/miniserv.users"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Apache">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/httpd/access_log"/>
+                    <file value="/var/log/httpd/error_log"/>
+                    <file value="/apache/logs/error.log"/>
+                    <file value="/apache/logs/access.log"/>
+                    <file value="/apache2/logs/error.log"/>
+                    <file value="/apache2/logs/access.log"/>
+                    <file value="/logs/error.log"/>
+                    <file value="/logs/access.log"/>
+                    <file value="/etc/httpd/logs/access_log"/>
+                    <file value="/etc/httpd/logs/access.log"/>
+                    <file value="/etc/httpd/logs/error_log"/>
+                    <file value="/etc/httpd/logs/error.log"/>
+                    <file value="/usr/local/apache/logs/access_log"/>
+                    <file value="/usr/local/apache/logs/access.log"/>
+                    <file value="/usr/local/apache/logs/error_log"/>
+                    <file value="/usr/local/apache/logs/error.log"/>
+                    <file value="/usr/local/apache2/logs/access_log"/>
+                    <file value="/usr/local/apache2/logs/access.log"/>
+                    <file value="/usr/local/apache2/logs/error_log"/>
+                    <file value="/usr/local/apache2/logs/error.log"/>
+                    <file value="/var/www/logs/access_log"/>
+                    <file value="/var/www/logs/access.log"/>
+                    <file value="/var/www/logs/error_log"/>
+                    <file value="/var/www/logs/error.log"/>
+                    <file value="/var/log/httpd/access.log"/>
+                    <file value="/var/log/httpd/error.log"/>
+                    <file value="/var/log/apache/access_log"/>
+                    <file value="/var/log/apache/access.log"/>
+                    <file value="/var/log/apache/error_log"/>
+                    <file value="/var/log/apache/error.log"/>
+                    <file value="/var/log/apache2/access_log"/>
+                    <file value="/var/log/apache2/access.log"/>
+                    <file value="/var/log/apache2/error_log"/>
+                    <file value="/var/log/apache2/error.log"/>
+                    <file value="/var/log/access_log"/>
+                    <file value="/var/log/access.log"/>
+                    <file value="/var/log/error_log"/>
+                    <file value="/var/log/error.log"/>
+                    <file value="/opt/lampp/logs/access_log"/>
+                    <file value="/opt/lampp/logs/error_log"/>
+                    <file value="/opt/xampp/logs/access_log"/>
+                    <file value="/opt/xampp/logs/error_log"/>
+                    <file value="/opt/lampp/logs/access.log"/>
+                    <file value="/opt/lampp/logs/error.log"/>
+                    <file value="/opt/xampp/logs/access.log"/>
+                    <file value="/opt/xampp/logs/error.log"/>
+                </os>
+                <os value="Windows">
+                    <file value="/Program Files/Apache Group/Apache/logs/access.log"/>
+                    <file value="/Program Files/Apache Group/Apache/logs/error.log"/>
+                    <file value="/Program Files/Apache Software Foundation/Apache2.2/logs/error.log"/>
+                    <file value="/Program Files/Apache Software Foundation/Apache2.2/logs/access.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/opt/apache/apache.conf"/>
+                    <file value="/opt/apache/conf/apache.conf"/>
+                    <file value="/opt/apache2/apache.conf"/>
+                    <file value="/opt/apache2/conf/apache.conf"/>
+                    <file value="/opt/httpd/apache.conf"/>
+                    <file value="/opt/httpd/conf/apache.conf"/>
+                    <file value="/etc/httpd/apache.conf"/>
+                    <file value="/etc/httpd/conf/apache.conf"/>
+                    <file value="/usr/local/apache/apache.conf"/>
+                    <file value="/usr/local/apache/conf/apache.conf"/>
+                    <file value="/usr/local/apache2/apache.conf"/>
+                    <file value="/usr/local/apache2/conf/apache.conf"/>
+                    <file value="/usr/local/php/apache.conf.php"/>
+                    <file value="/usr/local/php4/apache.conf.php"/>
+                    <file value="/usr/local/php5/apache.conf.php"/>
+                    <file value="/usr/local/php/apache.conf"/>
+                    <file value="/usr/local/php4/apache.conf"/>
+                    <file value="/usr/local/php5/apache.conf"/>
+                    <file value="/private/etc/httpd/apache.conf"/>
+                    <file value="/opt/apache/apache2.conf"/>
+                    <file value="/opt/apache/conf/apache2.conf"/>
+                    <file value="/opt/apache2/apache2.conf"/>
+                    <file value="/opt/apache2/conf/apache2.conf"/>
+                    <file value="/opt/httpd/apache2.conf"/>
+                    <file value="/opt/httpd/conf/apache2.conf"/>
+                    <file value="/etc/httpd/apache2.conf"/>
+                    <file value="/etc/httpd/conf/apache2.conf"/>
+                    <file value="/usr/local/apache/apache2.conf"/>
+                    <file value="/usr/local/apache/conf/apache2.conf"/>
+                    <file value="/usr/local/apache2/apache2.conf"/>
+                    <file value="/usr/local/apache2/conf/apache2.conf"/>
+                    <file value="/usr/local/php/apache2.conf.php"/>
+                    <file value="/usr/local/php4/apache2.conf.php"/>
+                    <file value="/usr/local/php5/apache2.conf.php"/>
+                    <file value="/usr/local/php/apache2.conf"/>
+                    <file value="/usr/local/php4/apache2.conf"/>
+                    <file value="/usr/local/php5/apache2.conf"/>
+                    <file value="/private/etc/httpd/apache2.conf"/>
+                    <file value="/usr/local/apache/conf/httpd.conf"/>
+                    <file value="/usr/local/apache2/conf/httpd.conf"/>
+                    <file value="/etc/httpd/conf/httpd.conf"/>
+                    <file value="/etc/apache/conf/httpd.conf"/>
+                    <file value="/etc/apache2/httpd.conf"/>
+                    <file value="/usr/apache2/conf/httpd.conf"/>
+                    <file value="/usr/apache/conf/httpd.conf"/>
+                    <file value="/usr/local/etc/apache/conf/httpd.conf"/>
+                    <file value="/usr/local/apache/httpd.conf"/>
+                    <file value="/usr/local/apache2/httpd.conf"/>
+                    <file value="/usr/local/httpd/conf/httpd.conf"/>
+                    <file value="/usr/local/etc/apache2/conf/httpd.conf"/>
+                    <file value="/usr/local/etc/httpd/conf/httpd.conf"/>
+                    <file value="/usr/local/apps/apache2/conf/httpd.conf"/>
+                    <file value="/usr/local/apps/apache/conf/httpd.conf"/>
+                    <file value="/usr/local/php/httpd.conf.php"/>
+                    <file value="/usr/local/php4/httpd.conf.php"/>
+                    <file value="/usr/local/php5/httpd.conf.php"/>
+                    <file value="/usr/local/php/httpd.conf"/>
+                    <file value="/usr/local/php4/httpd.conf"/>
+                    <file value="/usr/local/php5/httpd.conf"/>
+                    <file value="/etc/apache2/conf/httpd.conf"/>
+                    <file value="/etc/http/conf/httpd.conf"/>
+                    <file value="/etc/httpd/httpd.conf"/>
+                    <file value="/etc/http/httpd.conf"/>
+                    <file value="/etc/httpd.conf"/>
+                    <file value="/opt/apache/conf/httpd.conf"/>
+                    <file value="/opt/apache2/conf/httpd.conf"/>
+                    <file value="/var/www/conf/httpd.conf"/>
+                    <file value="/private/etc/httpd/httpd.conf"/>
+                    <file value="/private/etc/httpd/httpd.conf.default"/>
+                </os>
+                <os value="Windows">
+                    <file value="/Program Files/Apache Group/Apache/conf/httpd.conf"/>
+                    <file value="/Program Files/Apache Group/Apache2/conf/httpd.conf"/>
+                    <file value="/Program Files/xampp/apache/conf/apache.conf"/>
+                    <file value="/Program Files/xampp/apache/conf/apache2.conf"/>
+                    <file value="/Program Files/xampp/apache/conf/httpd.conf"/>
+                    <file value="/Program Files/Apache Group/Apache/apache.conf"/>
+                    <file value="/Program Files/Apache Group/Apache/conf/apache.conf"/>
+                    <file value="/Program Files/Apache Group/Apache2/conf/apache.conf"/>
+                    <file value="/Program Files/Apache Group/Apache/apache2.conf"/>
+                    <file value="/Program Files/Apache Group/Apache/conf/apache2.conf"/>
+                    <file value="/Program Files/Apache Group/Apache2/conf/apache2.conf"/>
+                    <file value="/Program Files/Apache Software Foundation/Apache2.2/conf/httpd.conf"/>
+                </os>
+                <os value="OS X">
+                    <file value="/Volumes/Macintosh_HD1/opt/httpd/conf/httpd.conf"/>
+                    <file value="/Volumes/Macintosh_HD1/opt/apache/conf/httpd.conf"/>
+                    <file value="/Volumes/Macintosh_HD1/opt/apache2/conf/httpd.conf"/>
+                    <file value="/Volumes/Macintosh_HD1/usr/local/php/httpd.conf.php"/>
+                    <file value="/Volumes/Macintosh_HD1/usr/local/php4/httpd.conf.php"/>
+                    <file value="/Volumes/Macintosh_HD1/usr/local/php5/httpd.conf.php"/>
+                    <file value="/Volumes/webBackup/opt/apache2/conf/httpd.conf"/>
+                    <file value="/Volumes/webBackup/private/etc/httpd/httpd.conf"/>
+                    <file value="/Volumes/webBackup/private/etc/httpd/httpd.conf.default"/>
+                    <file value="/usr/local/etc/apache/vhosts.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="lighthttpd">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/lighttpd.error.log"/>
+                    <file value="/var/log/lighttpd.access.log"/>
+                    <file value="/var/lighttpd.log"/>
+                    <file value="/var/logs/access.log"/>
+                    <file value="/var/log/lighttpd/"/>
+                    <file value="/var/log/lighttpd/error.log"/>
+                    <file value="/var/log/lighttpd/access.www.log"/>
+                    <file value="/var/log/lighttpd/error.www.log"/>
+                    <file value="/var/log/lighttpd/access.log"/>
+                    <file value="/usr/local/apache2/logs/lighttpd.error.log"/>
+                    <file value="/usr/local/apache2/logs/lighttpd.log"/>
+                    <file value="/usr/local/apache/logs/lighttpd.error.log"/>
+                    <file value="/usr/local/apache/logs/lighttpd.log"/>
+                    <file value="/usr/local/lighttpd/log/lighttpd.error.log"/>
+                    <file value="/usr/local/lighttpd/log/access.log"/>
+                    <file value="/var/log/lighttpd/{DOMAIN}/access.log"/>
+                    <file value="/var/log/lighttpd/{DOMAIN}/error.log"/>
+                    <file value="/usr/home/user/var/log/lighttpd.error.log"/>
+                    <file value="/usr/home/user/var/log/apache.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/home/user/lighttpd/lighttpd.conf"/>
+                    <file value="/usr/home/user/lighttpd/lighttpd.conf"/>
+                    <file value="/etc/lighttpd/lighthttpd.conf"/>
+                    <file value="/usr/local/etc/lighttpd.conf"/>
+                    <file value="/usr/local/lighttpd/conf/lighttpd.conf"/>
+                    <file value="/usr/local/etc/lighttpd.conf.new"/>
+                    <file value="/var/www/.lighttpdpassword"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="nginx">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/nginx/access_log"/>
+                    <file value="/var/log/nginx/error_log"/>
+                    <file value="/var/log/nginx/access.log"/>
+                    <file value="/var/log/nginx/error.log"/>
+                    <file value="/var/log/nginx.access_log"/>
+                    <file value="/var/log/nginx.error_log"/>
+                    <file value="/logs/access_log"/>
+                    <file value="/logs/error_log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/nginx/nginx.conf"/>
+                    <file value="/usr/local/etc/nginx/nginx.conf"/>
+                    <file value="/usr/local/nginx/conf/nginx.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Zeus Web Server (ZWS)">
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/local/zeus/web/global.cfg"/>
+                </os>
+            </conf>
+            <log>
+                <os value="*NIX">
+                    <file value="/usr/local/zeus/web/log/errors"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="LiteSpeed Web Server">
+            <conf>
+                <os value="*NIX">
+                    <file value="/opt/lsws/conf/httpd_conf.xml"/>
+                    <file value="/usr/local/lsws/conf/httpd_conf.xml"/>
+                </os>
+            </conf>
+            <log>
+                <os value="*NIX">
+                    <file value="/opt/lsws/logs/error.log"/>
+                    <file value="/opt/lsws/logs/access.log"/>
+                    <file value="/usr/local/lsws/logs/error.log"/>
+                    <file value="/usr/local/logs/access.log"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="General">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/apache2/sites-available/default"/>
+                    <file value="/etc/apache2/sites-available/default-ssl"/>
+                    <file value="/etc/apache2/sites-enabled/000-default"/>
+                    <file value="/etc/apache2/sites-enabled/default"/>
+                    <file value="/etc/apache2/apache2.conf"/>
+                    <file value="/etc/apache2/ports.conf"/>
+                    <file value="/usr/local/etc/apache/httpd.conf"/>
+                    <file value="/usr/pkg/etc/httpd/httpd.conf"/>
+                    <file value="/usr/pkg/etc/httpd/httpd-default.conf"/>
+                    <file value="/usr/pkg/etc/httpd/httpd-vhosts.conf"/>
+                </os>
+                <os value="Slackware">
+                    <file value="/etc/httpd/mod_php.conf"/>
+                    <file value="/etc/httpd/extra/httpd-ssl.conf"/>
+                    <file value="/etc/rc.d/rc.httpd"/>
+                </os>
+                <os value="FreeBSD">
+                    <file value="/usr/local/apache/conf/httpd.conf.default"/>
+                    <file value="/usr/local/apache/conf/access.conf"/>
+                    <file value="/usr/local/apache22/conf/httpd.conf"/>
+                    <file value="/usr/local/apache22/httpd.conf"/>
+                    <file value="/usr/local/etc/apache22/conf/httpd.conf"/>
+                    <file value="/usr/local/apps/apache22/conf/httpd.conf"/>
+                    <file value="/etc/apache22/conf/httpd.conf"/>
+                    <file value="/etc/apache22/httpd.conf"/>
+                    <file value="/opt/apache22/conf/httpd.conf"/>
+                    <file value="/usr/local/etc/apache2/vhosts.conf"/>
+                    <file value="/usr/local/apache/conf/vhosts.conf"/>
+                    <file value="/usr/local/apache2/conf/vhosts.conf"/>
+                    <file value="/usr/local/apache/conf/vhosts-custom.conf"/>
+                    <file value="/usr/local/apache2/conf/vhosts-custom.conf"/>
+                    <file value="/etc/apache/default-server.conf"/>
+                    <file value="/etc/apache2/default-server.conf"/>
+                    <file value="/usr/local/apache2/conf/extra/httpd-ssl.conf"/>
+                    <file value="/usr/local/apache2/conf/ssl.conf"/>
+                    <file value="/etc/httpd/conf.d"/>
+                    <file value="/usr/local/etc/apache22/httpd.conf"/>
+                    <file value="/usr/local/etc/apache2/httpd.conf"/>
+                    <file value="/etc/apache2/httpd2.conf"/>
+                    <file value="/etc/apache2/ssl-global.conf"/>
+                    <file value="/etc/apache2/vhosts.d/00_default_vhost.conf"/>
+                    <file value="/apache/conf/httpd.conf"/>
+                    <file value="/etc/apache/httpd.conf"/>
+                    <file value="/etc/httpd/conf"/>
+                    <file value="/http/httpd.conf"/>
+                    <file value="/usr/local/apache1.3/conf/httpd.conf"/>
+                    <file value="/usr/local/etc/httpd/conf"/>
+                    <file value="/var/apache/conf/httpd.conf"/>
+                    <file value="/var/www/conf"/>
+                    <file value="/www/apache/conf/httpd.conf"/>
+                    <file value="/www/conf/httpd.conf"/>
+                    <file value="/etc/init.d"/>
+                    <file value="/etc/apache/access.conf"/>
+                    <file value="/etc/rc.conf"/>
+                </os>
+            </conf>
+            <log>
+                <os value="FreeBSD">
+                    <file value="/etc/newsyslog.conf"/>
+                    <file value="/www/logs/freebsddiary-error.log"/>
+                    <file value="/www/logs/freebsddiary-access_log"/>
+                </os>
+            </log>
+        </software>
+    </category>
+
+    <category value="Network">
+        <software value="Samba">
+            <log>
+                <os value="*NIX">
+                    <file value="/usr/local/samba/lib/log.user"/>
+                    <file value="/usr/local/logs/samba.log"/>
+                    <file value="/var/log/samba/log.smbd"/>
+                    <file value="/var/log/samba/log.nmbd"/>
+                    <file value="/var/log/samba.log"/>
+                    <file value="/var/log/samba.log1"/>
+                    <file value="/var/log/samba.log2"/>
+                    <file value="/var/log/log.smb"/>
+                    <file value="/etc/samba/netlogon"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/smbpasswd"/>
+                    <file value="/etc/smb.conf"/>
+                    <file value="/etc/samba/smb.conf"/>
+                    <file value="/etc/samba/samba.conf"/>
+                    <file value="/etc/samba/smb.conf.user"/>
+                    <file value="/etc/samba/smbpasswd"/>
+                    <file value="/etc/samba/smbusers"/>
+                    <file value="/etc/samba/private/smbpasswd"/>
+                    <file value="/usr/local/etc/smb.conf"/>
+                    <file value="/usr/local/samba/lib/smb.conf.user"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="Firewall">
+        <software value="ipfw">
+            <log>
+                <os value="FreeBSD">
+                    <file value="/var/log/ipfw.log"/>
+                    <file value="/var/log/ipfw"/>
+                    <file value="/var/log/ipfw/ipfw.log"/>
+                    <file value="/var/log/ipfw.today"/>
+                </os>
+            </log>
+            <conf>
+                <os value="FreeBSD">
+                    <file value="/etc/ipfw.rules"/>
+                    <file value="/etc/ipfw.conf"/>
+                    <file value="/etc/firewall.rules"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="*NIX">
+        <software value="Proc">
+            <other>
+                <os value="*NIX">
+                    <file value="/proc/self/environ"/>
+                    <file value="/proc/self/stat"/>
+                    <file value="/proc/self/status"/>
+                    <file value="/proc/self/cmdline"/>
+                    <file value="/proc/self/fd/2"/>
+                    <file value="/proc/self/fd/7"/>
+                    <file value="/proc/version"/>
+                    <file value="/proc/devices"/>
+                    <file value="/proc/net/tcp"/>
+                    <file value="/proc/net/udp"/>
+                </os>
+            </other>
+        </software>
+
+        <software value="Bash">
+            <mix>
+                <os value="*NIX">
+                    <file value="/root/.bash_logout"/>
+                    <file value="/root/.bash_history"/>
+                    <file value="/root/.bash_config"/>
+                    <file value="/var/adm/SYSLOG"/>
+                    <file value="/var/adm/sulog"/>
+                    <file value="/var/adm/utmp"/>
+                    <file value="/var/adm/utmpx"/>
+                    <file value="/var/adm/wtmp"/>
+                    <file value="/var/adm/wtmpx"/>
+                    <file value="/var/adm/lastlog/username"/>
+                    <file value="/usr/spool/lp/log"/>
+                    <file value="/var/adm/lp/lpd-errs"/>
+                    <file value="/usr/lib/cron/log"/>
+                    <file value="/var/adm/loginlog"/>
+                    <file value="/var/adm/pacct"/>
+                    <file value="/var/adm/dtmp"/>
+                    <file value="/var/adm/acct/sum/loginlog"/>
+                    <file value="/var/adm/X0msgs"/>
+                    <file value="/var/adm/crash/vmcore"/>
+                    <file value="/var/adm/crash/unix"/>
+                </os>
+            </mix>
+        </software>
+
+        <software value="AIX">
+            <log>
+                <os value="AIX">
+                    <file value="/var/adm/qacct"/>
+                    <file value="/var/adm/ras/errlog"/>
+                    <file value="/var/adm/ras/bootlog"/>
+                    <file value="/var/adm/cron/log"/>
+                    <file value="/etc/utmp"/>
+                    <file value="/etc/security/lastlog"/>
+                    <file value="/etc/security/failedlogin"/>
+                    <file value="/usr/spool/mqueue/syslog"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="SunOS">
+            <log>
+                <os value="SunOS">
+                    <file value="/var/adm/messages"/>
+                    <file value="/var/adm/aculogs"/>
+                    <file value="/var/adm/aculog"/>
+                    <file value="/var/adm/vold.log"/>
+                    <file value="/var/adm/log/asppp.log"/>
+                    <file value="/var/log/syslog"/>
+                    <file value="/var/log/POPlog"/>
+                    <file value="/var/log/authlog"/>
+                    <file value="/var/lp/logs/lpsched"/>
+                    <file value="/var/lp/logs/lpNet"/>
+                    <file value="/var/lp/logs/requests"/>
+                    <file value="/var/cron/log"/>
+                    <file value="/var/saf/_log"/>
+                    <file value="/var/saf/port/log"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="Linux">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/news.all"/>
+                    <file value="/var/log/news/news.all"/>
+                    <file value="/var/log/news/news.crit"/>
+                    <file value="/var/log/news/news.err"/>
+                    <file value="/var/log/news/news.notice"/>
+                    <file value="/var/log/news/suck.err"/>
+                    <file value="/var/log/news/suck.notice"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/host.conf"/>
+                </os>
+            </conf>
+            <other>
+                <os value="*NIX">
+                    <file value="/etc/passwd"/>
+                    <file value="/etc/shadow"/>
+                    <file value="/etc/fstab"/>
+                    <file value="/etc/motd"/>
+                    <file value="/root/.ksh_history"/>
+                    <file value="/root/.bash_logut"/>
+                    <file value="/root/.Xauthority"/>
+                    <file value="/etc/shadow~"/>
+                    <file value="/etc/hosts"/>
+                    <file value="/etc/sysconfig/network-scripts/ifcfg-eth0"/>
+                    <file value="/etc/redhat-release"/>
+                    <file value="/etc/group"/>
+                    <file value="/etc/security/group"/>
+                    <file value="/etc/security/passwd"/>
+                    <file value="/etc/security/user"/>
+                    <file value="/etc/security/environ"/>
+                    <file value="/etc/security/limits"/>
+                    <file value="/usr/lib/security/mkuser.default"/>
+                </os>
+            </other>
+        </software>
+    </category>
+
+    <category value="Web Mail">
+        <software value="SquirrelMail">
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/squirrelmail.log"/>
+                    <file value="/var/log/apache2/squirrelmail.log"/>
+                    <file value="/var/log/apache2/squirrelmail.err.log"/>
+                    <file value="/var/lib/squirrelmail/prefs/squirrelmail.log"/>
+                    <file value="/var/log/squirrelmail.log"/>
+                    <file value="/var/log/mail.log"/>
+                </os>
+            </log>
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/squirrelmail/apache.conf"/>
+                    <file value="/etc/squirrelmail/config_local.php"/>
+                    <file value="/etc/squirrelmail/default_pref"/>
+                    <file value="/etc/squirrelmail/index.php"/>
+                    <file value="/etc/squirrelmail/config_default.php"/>
+                    <file value="/etc/squirrelmail/config.php"/>
+                    <file value="/etc/squirrelmail/filters_setup.php"/>
+                    <file value="/etc/squirrelmail/sqspell_config.php"/>
+                    <file value="/etc/squirrelmail/config/config.php"/>
+                    <file value="/etc/httpd/conf.d/squirrelmail.conf"/>
+                    <file value="/usr/share/squirrelmail/config/config.php"/>
+                    <file value="/private/etc/squirrelmail/config/config.php"/>
+                    <file value="/srv/www/htdos/squirrelmail/config/config.php"/>
+                    <file value="/var/www/squirrelmail/config/config.php"/>
+                    <file value="/var/www/html/squirrelmail/config/config.php"/>
+                    <file value="/var/www/html/squirrelmail-1.2.9/config/config.php"/>
+                    <file value="/usr/share/squirrelmail/plugins/squirrel_logger/setup.php"/>
+                </os>
+            </conf>
+            <other>
+                <os value="*NIX">
+                    <file value="/usr/local/squirrelmail/www/README"/>
+                </os>
+            </other>
+        </software>
+    </category>
+
+    <category value="Win NT">
+        <software value="HTTP">
+            <log>
+                <os value="Windows">
+                    <file value="%SystemRoot%/system32/logfiles/W3SVC"/>
+                    <file value="%SystemRoot%/system32/logfiles/W3SVC1"/>
+                    <file value="%SystemRoot%/system32/logfiles/W3SVC2"/>
+                    <file value="%SystemRoot%/system32/logfiles/W3SVC3"/>
+                    <file value="%SystemRoot%/system32/logfiles/MSFTPSVC"/>
+                    <file value="%SystemRoot%/system32/logfiles/MSFTPSVC1"/>
+                    <file value="%SystemRoot%/system32/logfiles/MSFTPSVC2"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="SMTP">
+            <log>
+                <os value="Windows">
+                    <file value="%SystemRoot%/system32/logfiles/SMTPSVC#(SMTPSVC1,S MTPSVC2...)"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="Firewall">
+            <log>
+                <os value="Windows">
+                    <file value="%SystemRoot%/system32/logfiles/Firewall/pfirewall.log"/>
+                    <file value="%SystemRoot%/system32/logfiles/Firewall/pfirewall.log.old"/>
+                </os>
+            </log>
+        </software>
+    </category>
+
+    <category value="Database Administration">
+        <software value="phpMyAdmin">
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/local/psa/admin/htdocs/domains/databases/phpMyAdmin/libraries/config.default.php"/>
+                    <file value="/etc/apache2/conf.d/phpmyadmin.conf"/>
+                    <file value="/etc/phpmyadmin/config.inc.php"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+</cases>

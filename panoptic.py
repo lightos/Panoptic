@@ -12,6 +12,7 @@ import random
 import re
 import string
 import time
+import xml.etree.ElementTree as ET
 
 from urllib import urlencode
 from urllib2 import urlopen, Request
@@ -25,6 +26,9 @@ URL = "https://github.com/lightos/Panoptic/"
 
 # Used for retrieving response for a dummy filename
 INVALID_FILENAME = "".join(random.sample(string.letters, 10))
+
+# Location of file containing test cases
+CASES_FILE = "cases.xml"
 
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
@@ -52,165 +56,105 @@ Examples:
 ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
 """
 
-
-class Panoptic:
+def get_cases(args):
     """
-    Contains all the functionality to run Panoptic
+    Parse XML and return testing cases filtered by provided args
     """
 
-    def __init__(self):
-        """
-        Initiates the Panoptic object
-        """
+    tree = ET.parse(CASES_FILE)
+    root = tree.getroot()
 
-        self.software = ""
-        self.category = ""
-        self.classification = ""
-        self.operating_system = ""
-        self.file_found = False
-        self.file_attributes = {}
-        self.args = {}
+    def _(parent, element):
+        element.parent = parent
+        for key, value in element.attrib.items():
+            setattr(element, key, value)
+        for child in element.getchildren():
+            _(element, child)
 
-    @staticmethod
-    def list_items(item):
-        """
-        Returns available types of categories, software or operating systems
-        """
+    _(None, root)
 
-        if item == "os":
-            tmp = []
-            print("Listing all available Operating Systems...\n")
-        elif item == "category":
-            print("Listing all available categories of software...\n")
-        elif item == "software":
-            print("Listing all available types of software...\n")
-        else:
-            print("[!] --list must be \"os\", \"software\" or \"category\"")
-            exit()
+    for attr in ("os", "software", "category"):
+        if getattr(args, attr):
+            for element in root.iterfind(".//%s" % attr):
+                if element.value.lower() != getattr(args, attr).lower():
+                    element.parent.remove(element)
 
-        for file_location in open("file_locations.txt"):
-            file_location = file_location.rstrip()
+    if args.type:
+        for _ in (_ for _ in ("conf", "log", "other") if _.lower() != args.type.lower()):
+            for element in root.iterfind(".//%s" % _):
+                element.parent.remove(element)
 
-            if not file_location:
-                continue
+    def _(element, tag):
+        while element.parent is not None:
+            if element.parent.tag == tag:
+                return element.parent
+            else:
+                element = element.parent
 
-            if item == "category" and file_location[0] == "[":
-                print("[+] %s" % file_location[1:-1])
-            elif item == "software" and file_location[0] == "#":
-                print("[+] %s" % file_location[2:])
-            elif item == "os" and file_location[0] == "(":
-                if file_location[1:-1] not in tmp:
-                    tmp.append(file_location[1:-1])
+    cases = []
 
-        if item == "os":
-            for _ in tmp:
-                print("[+] %s" % _)
+    for element in root.iterfind(".//file"):
+        case = {}
+        case["location"] = element.value
+        case["os"] = _(element, "os").value
+        case["category"] = _(element, "category").value
+        case["software"] = _(element, "software").value
+        case["type"] = _(element, "log") is not None and "log" or _(element, "conf") is not None and "conf"
+        cases.append(case)        
 
-        exit()
+    return cases
 
-    def parse_file(self):
-        """
-        Parses the file locations list
-        """
+def parse_args():
+    """
+    Parses command line arguments
+    """
 
-        for file_location in open("file_locations.txt"):
-            if file_location[0] == "\n":
-                self.software = ""
-                self.classification = ""
-                self.operating_system = ""
-                self.file_attributes = {}
-                continue
+    OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
 
-            file_location = file_location.rstrip()
+    parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
 
-            if file_location[0] == "[":
-                self.category = file_location[1:-1]
-                continue
-            elif file_location[0] == "(":
-                self.operating_system = file_location[1:-1]
-                continue
-            elif file_location[0] == "#":
-                self.software = file_location[2:]
-                continue
-            elif file_location[0] == "*":
-                self.classification = file_location[1:]
-                continue
-            elif file_location.find("{") != -1:
-                # HANDLE HOST/DOMAIN replacement
-                continue
+    # Required
+    parser.add_option("-u", "--url", dest="target",
+                help="set the target to test")
+    # Optional
+    parser.add_option("-p", "--param", dest="param",
+                help="set parameter name to test for")
+    parser.add_option("-d", "--data", dest="data",
+                help="set data for POST request")
+    parser.add_option("-P", "--proxy", dest="proxy",
+                help="set IP:PORT to use as socks proxy")
+    parser.add_option("-o", "--os", dest="os",
+                help="set operating system to limit searches to")
+    parser.add_option("-s", "--software", dest="software",
+                help="set name of the software to search for")
+    parser.add_option("-c", "--category", dest="category",
+                help="set specific category of software to look for")
+    parser.add_option("-t", "--type", dest="type",
+                help="set type of file to search for (\"conf\" or \"log\")")
+    parser.add_option("-b", "--prefix", dest="prefix", default="",
+                help="set prefix for file path (e.g. \"../\")")
+    parser.add_option("-e", "--postfix", dest="postfix", default="",
+                help="set prefix for file path (e.g. \"%00\")")
+    parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
+                help="set number to multiply the prefix by")
+    parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
+                help="write all found files to output folder")
+    parser.add_option("-x", "--skip-passwd-test", dest="skip_passwd", action="store_true",
+                help="skip special tests if *NIX passwd file is found")
+    parser.add_option("-l", "--list", dest="list",
+                help="list available filters (\"os\", \"category\", \"software\")")
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
+                help="display extra information in the output")
 
-            if self.args.software:
-                if self.software.lower() != self.args.software.lower():
-                    continue
+    args = parser.parse_args()[0]
 
-            if self.args.category:
-                if self.category.lower() != self.args.category.lower():
-                    continue
+    if not any((args.target, args.list)):
+        parser.error('missing argument for url. Use -h for help')
 
-            if self.args.classification:
-                if self.classification.lower() not in [self.args.classification.lower(), "other"]:
-                    continue
+    if args.prefix:
+        args.prefix = args.prefix * args.multiplier
 
-            if self.args.os:
-                if self.operating_system.lower() != self.args.os.lower():
-                    continue
-
-            self.file_attributes["location"] = file_location
-            self.file_attributes["software"] = self.software
-            self.file_attributes["category"] = self.category
-            self.file_attributes["classification"] = self.classification
-
-            yield self.file_attributes
-
-    def get_args(self):
-        """
-        Parses command line arguments
-        """
-
-        OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
-
-        parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
-
-        # Required
-        parser.add_option("-u", "--url", dest="target",
-                  help="set the target to test")
-        # Optional
-        parser.add_option("-p", "--param", dest="param",
-                  help="set parameter name to test for")
-        parser.add_option("-d", "--data", dest="data",
-                  help="set data for POST request")
-        parser.add_option("-P", "--proxy", dest="proxy",
-                  help="set IP:PORT to use as socks proxy")
-        parser.add_option("-o", "--os", dest="os",
-                  help="set operating system to limit searches to")
-        parser.add_option("-s", "--software", dest="software",
-                  help="set name of the software to search for")
-        parser.add_option("-c", "--category", dest="category",
-                  help="set specific category of software to look for")
-        parser.add_option("-t", "--type", dest="classification",
-                  help="set type of file to search for (\"conf\" or \"log\")")
-        parser.add_option("-b", "--prefix", dest="prefix", default="",
-                  help="set prefix for file path (e.g. \"../\")")
-        parser.add_option("-e", "--postfix", dest="postfix", default="",
-                  help="set prefix for file path (e.g. \"%00\")")
-        parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
-                  help="set number to multiply the prefix by")
-        parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
-                  help="write all found files to output folder")
-        parser.add_option("-x", "--skip-passwd-test", dest="skip_passwd", action="store_true",
-                  help="skip special tests if *NIX passwd file is found")
-        parser.add_option("-l", "--list",
-                  help="list available filters (\"os\", \"category\", \"software\")")
-        parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                  help="display extra information in the output")
-
-        self.args = parser.parse_args()[0]
-
-        if not self.args.target:
-            parser.error('missing argument for url. Use -h for help')
-
-        if self.args.prefix:
-            self.args.prefix = self.args.prefix * self.args.multiplier
+    return args
 
 def main():
     """
@@ -219,27 +163,36 @@ def main():
 
     print(BANNER)
 
-    panoptic = Panoptic()
-    panoptic.get_args()
+    file_found = False
+    args = parse_args()
+
+    cases = get_cases(args)
+
+    if args.list:
+        print("[i] Listing available filters for usage with option '--%s':\n" % args.list)
+
+        for _ in set([_[args.list] for _ in cases]):
+            print _ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _
+        exit()
 
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
-    parsed_url = urlsplit(panoptic.args.target)
-    request_params = panoptic.args.data if panoptic.args.data else parsed_url.query
+    parsed_url = urlsplit(args.target)
+    request_params = args.data if args.data else parsed_url.query
 
-    if not panoptic.args.param:
-        panoptic.args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
+    if not args.param:
+        args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
 
     def prepare_request(payload):
         """
         Prepares HTTP (GET or POST) request with proper payload
         """
 
-        armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % panoptic.args.param,
+        armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
                                 r"\1=%s" % payload, request_params)
         request_args = {"target": "%s://%s%s" % (parsed_url.scheme, parsed_url.netloc, parsed_url.path)}
 
-        if panoptic.args.data:
+        if args.data:
             request_args["data"] = armed_query
         else:
             request_args["target"] += "?%s" % armed_query
@@ -258,33 +211,36 @@ def main():
     print("[*] Checking invalid response...")
 
     request_args = prepare_request(INVALID_FILENAME)
-    panoptic.invalid_response, _ = get_page(**request_args)
+    invalid_response, _ = get_page(**request_args)
 
     print("[*] Done!\n")
-    print("[*] Initiating file search...")
+    print("[*] Starting file search...")
 
-    for case in panoptic.parse_file():
-        if panoptic.args.prefix and panoptic.args.prefix[len(panoptic.args.prefix) - 1] == "/":
-            panoptic.args.prefix = panoptic.args.prefix[:-1]
+    for case in cases:
+        if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
+            args.prefix = args.prefix[:-1]
 
-        request_args = prepare_request("%s%s%s" % (panoptic.args.prefix, case["location"], panoptic.args.postfix))
+        request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
         html, _ = get_page(**request_args)
 
-        matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(panoptic.invalid_response, INVALID_FILENAME))
+        if not html:
+            continue
+
+        matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
 
         if matcher.quick_ratio() < HEURISTIC_RATIO:
-            if not panoptic.file_found:
-                panoptic.file_found = True
+            if not file_found:
+                file_found = True
 
                 print("[*] Possible file(s) found!\n")
 
-                if panoptic.operating_system:
-                    print("[*] OS: %s\n" % panoptic.operating_system)
+                if case["os"]:
+                    print("[*] OS: %s\n" % case["os"])
 
-            print("[+] File: %s" % panoptic.file_attributes)
+            print("[+] File: %s" % case)
 
             # If --write-file is set.
-            if panoptic.args.write_file:
+            if args.write_file:
                 _ = os.path.join("output", parsed_url.netloc)
                 if not os.path.exists(_):
                     os.makedirs(_)
@@ -292,12 +248,12 @@ def main():
                     f.write(html)
 
             # If --skip-passwd-test not set.
-            #if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not panoptic.args.skip_passwd:
+            #if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_passwd:
             #    users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
             #    for user in users:
             #        username, password, uid, gid, info, home = user
 
-    if not panoptic.file_found:
+    if not file_found:
         print("[*] No files found!")
 
     print("\n[*] File search complete.")
