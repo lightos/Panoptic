@@ -75,7 +75,6 @@
                     <file value="/var/log/sw-cp-server/error_log"/>
                     <file value="/usr/local/psa/admin/logs/httpsd_access_log"/>
                     <file value="/usr/local/psa/admin/logs/panel.log"/>
-                    <file value="/var/log/sw-cp-server/error_log"/>
                     <file value="/var/log/sso/sso.log"/>
                 </os>
             </log>
@@ -85,7 +84,6 @@
                     <file value="/etc/sw-cp-server/applications.d/plesk.conf"/>
                     <file value="/usr/local/psa/admin/conf/site_isolation_settings.ini"/>
                     <file value="/usr/local/sb/config"/>
-                    <file value="/usr/local/psa/admin/conf/php.ini"/>
                     <file value="/etc/sw-cp-server/applications.d/00-sso-cpserver.conf"/>
                     <file value="/etc/sso/sso_config.ini"/>
                 </os>
@@ -948,7 +946,6 @@
                     <file value="/var/log/apache2/squirrelmail.log"/>
                     <file value="/var/log/apache2/squirrelmail.err.log"/>
                     <file value="/var/lib/squirrelmail/prefs/squirrelmail.log"/>
-                    <file value="/var/log/squirrelmail.log"/>
                     <file value="/var/log/mail.log"/>
                 </os>
             </log>
