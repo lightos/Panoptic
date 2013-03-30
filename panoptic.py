@@ -145,7 +145,7 @@ def parse_args():
                 help="set parameter name to test for")
 
     parser.add_option("-d", "--data", dest="data",
-                help="set data for POST request")
+                help="set data for POST request (e.g. \"page=default\")")
 
     parser.add_option("-P", "--proxy", dest="proxy",
                 help="set IP:PORT to use as SOCKS proxy")
@@ -169,7 +169,7 @@ def parse_args():
                 help="set postfix for file path (e.g. \"%00\")")
 
     parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
-                help="set number to multiply the prefix by")
+                help="set number to multiply the prefix by (e.g. 10)")
 
     parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
                 help="write content of found files to output folder")
@@ -200,8 +200,9 @@ def main():
 
     print(BANNER)
 
-    found = False
     args = parse_args()
+    found = False
+    kb = {}
 
     cases = get_cases(args)
 
@@ -257,11 +258,17 @@ def main():
     print("[*] Searching for files...")
 
     for case in cases:
+        if kb.get("restrictOS") and kb.get("restrictOS") != case["os"]:
+            if args.verbose:
+                print("[o] Skipping '%s'" % case["location"])
+
+            continue
+
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
             args.prefix = args.prefix[:-1]
 
         if args.verbose:
-            print("[?] Trying: '%s'" % case["location"])
+            print("[o] Trying '%s'" % case["location"])
 
         request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
         html, _ = get_page(**request_args)
@@ -277,10 +284,14 @@ def main():
 
                 print("[*] Possible file(s) found!\n")
 
-                if case["os"]:
-                    print("[*] OS: %s\n" % case["os"])
+                print("[*] OS: %s\n" % case["os"])
 
-            print("[+] Found: %s" % case)
+                if kb.get("restrictOS") is None:
+                    _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
+                    print
+                    kb["restrictOS"] = _.lower() != 'n' and case["os"]
+
+            print("[+] Found '%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
 
             # If --write-file is set.
             if args.write_file:
