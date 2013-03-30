@@ -32,6 +32,7 @@
                     <file value="/etc/php5/cgi/php.ini"/>
                     <file value="/home2/bin/stable/apache/php.ini"/>
                     <file value="/home/bin/stable/apache/php.ini"/>
+                    <file value="/etc/httpd/conf.d/php.conf"/>
                 </os>
                 <os value="Windows">
                     <file value="/php5/php.ini"/>
@@ -116,6 +117,14 @@
                     <file value="/MySQL/data/mysql.err"/>
                     <file value="/MySQL/data/mysql-bin.log"/>
                 </os>
+                <os value="OSX">
+                    <file value="/usr/local/mysql/data/mysql.log"/>
+                    <file value="/usr/local/mysql/data/mysql.err"/>
+                    <file value="/usr/local/mysql/data/mysql-bin.log"/>
+                    <file value="/usr/local/mysql/data/mysql-slow.log"/>
+                    <file value="/usr/local/mysql/data/mysqlderror.log"/>
+                    <file value="/usr/local/mysql/data/{HOST}.err"/>
+                </os>
             </log>
             <conf>
                 <os value="*NIX">
@@ -131,14 +140,6 @@
                     <file value="/MySQL/my.ini"/>
                     <file value="/MySQL/my.cnf"/>
                     <file value="/mysql/bin/my.ini"/>
-                </os>
-                <os value="OSX">
-                    <file value="/usr/local/mysql/data/mysql.log"/>
-                    <file value="/usr/local/mysql/data/mysql.err"/>
-                    <file value="/usr/local/mysql/data/mysql-bin.log"/>
-                    <file value="/usr/local/mysql/data/mysql-slow.log"/>
-                    <file value="/usr/local/mysql/data/mysqlderror.log"/>
-                    <file value="/usr/local/mysql/data/{HOST}.err"/>
                 </os>
             </conf>
         </software>
@@ -204,7 +205,6 @@
             <log>
                 <os value="Windows">
                     <file value="/xampp/apache/logs/error.log"/>
-                    <file value="/xampp/FileZillaFTP/Logs"/>
                     <file value="/xampp/mysql/data/mysql.err"/>
                     <file value="/xampp/sendmail/sendmail.log"/>
                 </os>
@@ -547,6 +547,7 @@
                     <file value="/usr/local/apache/conf/httpd.conf"/>
                     <file value="/usr/local/apache2/conf/httpd.conf"/>
                     <file value="/etc/httpd/conf/httpd.conf"/>
+                    <file value="/etc/apache/apache.conf"/>
                     <file value="/etc/apache/conf/httpd.conf"/>
                     <file value="/etc/apache2/httpd.conf"/>
                     <file value="/usr/apache2/conf/httpd.conf"/>
@@ -575,6 +576,7 @@
                     <file value="/var/www/conf/httpd.conf"/>
                     <file value="/private/etc/httpd/httpd.conf"/>
                     <file value="/private/etc/httpd/httpd.conf.default"/>
+                    <file value="/etc/apache2/vhosts.d/default_vhost.include"/>
                 </os>
                 <os value="Windows">
                     <file value="/Program Files/Apache Group/Apache/conf/httpd.conf"/>
@@ -917,21 +919,21 @@
                 <os value="*NIX">
                     <file value="/etc/passwd"/>
                     <file value="/etc/shadow"/>
+                    <file value="/etc/shadow~"/>
                     <file value="/etc/fstab"/>
                     <file value="/etc/motd"/>
-                    <file value="/root/.ksh_history"/>
-                    <file value="/root/.bash_logut"/>
-                    <file value="/root/.Xauthority"/>
-                    <file value="/etc/shadow~"/>
                     <file value="/etc/hosts"/>
+                    <file value="/etc/group"/>
                     <file value="/etc/sysconfig/network-scripts/ifcfg-eth0"/>
                     <file value="/etc/redhat-release"/>
-                    <file value="/etc/group"/>
                     <file value="/etc/security/group"/>
                     <file value="/etc/security/passwd"/>
                     <file value="/etc/security/user"/>
                     <file value="/etc/security/environ"/>
                     <file value="/etc/security/limits"/>
+                    <file value="/root/.ksh_history"/>
+                    <file value="/root/.bash_logut"/>
+                    <file value="/root/.Xauthority"/>
                     <file value="/usr/lib/security/mkuser.default"/>
                 </os>
             </other>
@@ -982,21 +984,29 @@
         <software value="HTTP">
             <log>
                 <os value="Windows">
-                    <file value="%SystemRoot%/system32/logfiles/W3SVC"/>
-                    <file value="%SystemRoot%/system32/logfiles/W3SVC1"/>
-                    <file value="%SystemRoot%/system32/logfiles/W3SVC2"/>
-                    <file value="%SystemRoot%/system32/logfiles/W3SVC3"/>
-                    <file value="%SystemRoot%/system32/logfiles/MSFTPSVC"/>
-                    <file value="%SystemRoot%/system32/logfiles/MSFTPSVC1"/>
-                    <file value="%SystemRoot%/system32/logfiles/MSFTPSVC2"/>
+                    <file value="/system32/logfiles/W3SVC"/>
+                    <file value="/system32/logfiles/W3SVC1"/>
+                    <file value="/system32/logfiles/W3SVC2"/>
+                    <file value="/system32/logfiles/W3SVC3"/>
+                    <file value="/system32/logfiles/MSFTPSVC"/>
+                    <file value="/system32/logfiles/MSFTPSVC1"/>
+                    <file value="/system32/logfiles/MSFTPSVC2"/>
                 </os>
             </log>
+            <conf>
+                <os value="Windows">
+                    <file value="/boot.ini"/>
+            </conf>
         </software>
 
         <software value="SMTP">
             <log>
                 <os value="Windows">
-                    <file value="%SystemRoot%/system32/logfiles/SMTPSVC#(SMTPSVC1,S MTPSVC2...)"/>
+                    <file value="/system32/logfiles/SMTPSVC1"/>
+                    <file value="/system32/logfiles/SMTPSVC2"/>
+                    <file value="/system32/logfiles/SMTPSVC3"/>
+                    <file value="/system32/logfiles/SMTPSVC4"/>
+                    <file value="/system32/logfiles/SMTPSVC5"/>
                 </os>
             </log>
         </software>
@@ -1004,8 +1014,8 @@
         <software value="Firewall">
             <log>
                 <os value="Windows">
-                    <file value="%SystemRoot%/system32/logfiles/Firewall/pfirewall.log"/>
-                    <file value="%SystemRoot%/system32/logfiles/Firewall/pfirewall.log.old"/>
+                    <file value="/system32/logfiles/Firewall/pfirewall.log"/>
+                    <file value="/system32/logfiles/Firewall/pfirewall.log.old"/>
                 </os>
             </log>
         </software>
