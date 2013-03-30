@@ -25,7 +25,7 @@ SOFTWARE.
 """
 Panoptic
 
-Search default file locations through LFI for common log and config files
+Search default file locations through LFI vulnerability for common log and config files
 """
 
 import difflib
@@ -138,8 +138,8 @@ def parse_args():
     parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
 
     # Required
-    parser.add_option("-u", "--url", dest="target",
-                help="set the target to test")
+    parser.add_option("-u", "--url", dest="url",
+                help="set the target URL to test")
     # Optional
     parser.add_option("-p", "--param", dest="param",
                 help="set parameter name to test for")
@@ -185,7 +185,7 @@ def parse_args():
 
     args = parser.parse_args()[0]
 
-    if not any((args.target, args.list)):
+    if not any((args.url, args.list)):
         parser.error('missing argument for url. Use -h for help')
 
     if args.prefix:
@@ -215,7 +215,7 @@ def main():
 
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
-    parsed_url = urlsplit(args.target)
+    parsed_url = urlsplit(args.url)
     request_params = args.data if args.data else parsed_url.query
 
     if not args.param:
@@ -226,15 +226,15 @@ def main():
         Prepares HTTP (GET or POST) request with proper payload
         """
 
-        armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
+        _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
                                 r"\1=%s" % payload, request_params)
 
-        request_args = {"target": "%s://%s%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path)}
+        request_args = {"url": "%s://%s%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path)}
 
         if args.data:
-            request_args["data"] = armed_query
+            request_args["data"] = _
         else:
-            request_args["target"] += "?%s" % armed_query
+            request_args["url"] += "?%s" % _
 
         return request_args
 
@@ -307,7 +307,7 @@ def get_page(**kwargs):
     Retrieves page content from a given target URL
     """
 
-    url = kwargs.get("target", None)
+    url = kwargs.get("url", None)
     post = kwargs.get("data", None)
     header = kwargs.get("header", None)
     cookie = kwargs.get("cookie", None)
