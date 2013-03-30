@@ -996,6 +996,7 @@
             <conf>
                 <os value="Windows">
                     <file value="/boot.ini"/>
+                </os>
             </conf>
         </software>
 
