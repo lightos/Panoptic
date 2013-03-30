@@ -176,6 +176,9 @@ def parse_args():
 
     parser.add_option("-x", "--skip-file-parsing", dest="skip_parsing", action="store_true",
                 help="skip special tests if *NIX passwd file is found")
+    
+    parser.add_option("-r", "--replace-slash", dest="replace_slash",
+                help="skip special tests if *NIX passwd file is found")
 
     parser.add_option("-l", "--list", dest="list",
                 help="list available filters (\"os\", \"category\" or \"software\")")
@@ -259,6 +262,9 @@ def main():
     for case in cases:
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
             args.prefix = args.prefix[:-1]
+
+        #if args.replace_slash:
+        #    case["location"] = case["location"].replace("/", repr(args.replace_slash))
 
         if args.verbose:
             print("[?] Trying: '%s'" % case["location"])
