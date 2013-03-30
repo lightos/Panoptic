@@ -37,7 +37,7 @@ import time
 import xml.etree.ElementTree as ET
 
 from urllib import urlencode
-from urllib2 import urlopen, Request
+from urllib2 import build_opener, install_opener, urlopen, ProxyHandler, Request
 from urlparse import urlsplit, parse_qsl
 from optparse import OptionParser
 from sys import exit
@@ -148,7 +148,7 @@ def parse_args():
                 help="set data for POST request (e.g. \"page=default\")")
 
     parser.add_option("-P", "--proxy", dest="proxy",
-                help="set IP:PORT to use as SOCKS proxy")
+                help="set proxy type and address (e.g. \"socks5://192.168.5.92\")")
 
     parser.add_option("-o", "--os", dest="os",
                 help="set operating system to limit searches to")
@@ -214,6 +214,21 @@ def main():
 
         exit()
 
+    if args.proxy:
+        import thirdparty.socks.socks
+
+        match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
+
+        if match:
+            if match.group("type").lower() == "socks4":
+                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
+            elif match.group("type").lower() == "socks5":
+                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
+            elif match.group("type").lower() in ("http", "https"):
+                _ = ProxyHandler({match.group("type"): args.proxy})
+                opener = build_opener(_)
+                install_opener(opener)
+
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
     parsed_url = urlsplit(args.url)
@@ -236,6 +251,8 @@ def main():
             request_args["data"] = _
         else:
             request_args["url"] += "?%s" % _
+
+        request_args["verbose"] = args.verbose
 
         return request_args
 
@@ -283,7 +300,6 @@ def main():
                 found = True
 
                 print("[*] Possible file(s) found!\n")
-
                 print("[*] OS: %s\n" % case["os"])
 
                 if kb.get("restrictOS") is None:
@@ -322,7 +338,6 @@ def get_page(**kwargs):
     post = kwargs.get("data", None)
     header = kwargs.get("header", None)
     cookie = kwargs.get("cookie", None)
-    proxy = kwargs.get("proxy", False)
     user_agent = kwargs.get("user_agent", None)
     verbose = kwargs.get("verbose", False)
 
@@ -337,14 +352,6 @@ def get_page(**kwargs):
         parsed_url = urlsplit(url)
     except:
         raise Exception("[!] Unable to parse URL: %s" % url)
-
-    if proxy:
-        import socket
-        import thirdparty.socks.socks
-
-        ip, port = proxy.split(':')
-        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, ip, int(port), True)
-        socket.socket = socks.socksocket
 
     if user_agent is None:
         user_agent = "%s %s" % (NAME, VERSION)
@@ -369,14 +376,26 @@ def get_page(**kwargs):
         status = conn.msg
         responseHeaders = conn.info()
 
-    except IOError, e:
-        if hasattr(e, "reason"):
-            if verbose:
-                print("[!] Error msg: %d" % e.msg)
-                print("[!] HTTP error code: %d" % e.code)
-                print("[!] Response headers: %d" % e.info())
+    except KeyboardInterrupt:
+        raise
+
+    except Exception, e:
+        if verbose:
+            if getattr(e, "msg", None):
+                print("[!] Error msg '%s'" % e.msg)
+            if getattr(e, "reason", None):
+                print("[!] Error reason '%s'" % e.reason)
+            if getattr(e, "message", None):
+                print("[!] Error message '%s'" % e.message)
+            if getattr(e, "code", None):
+                print("[!] HTTP error code '%d'" % e.code)
+            if getattr(e, "info", None):
+                print("[!] Response headers '%s'" % e.info())
 
     return page, parsed_url
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print "[x] Ctrl-C pressed"
