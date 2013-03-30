@@ -99,7 +99,9 @@ def get_cases(args):
         case["os"] = _(element, "os").value
         case["category"] = _(element, "category").value
         case["software"] = _(element, "software").value
-        case["type"] = _(element, "log") is not None and "log" or _(element, "conf") is not None and "conf"
+        case["type"] = _(element, "log") is not None and "log"\
+                    or _(element, "conf") is not None and "conf"\
+                    or _(element, "other") is not None and "other"
         cases.append(case)
 
     return cases
@@ -150,7 +152,7 @@ def parse_args():
     parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
                 help="write content of found files to output folder")
 
-    parser.add_option("-x", "--skip-passwd-test", dest="skip_passwd", action="store_true",
+    parser.add_option("-x", "--skip-file-parsing", dest="skip_parsing", action="store_true",
                 help="skip special tests if *NIX passwd file is found")
 
     parser.add_option("-l", "--list", dest="list",
@@ -266,11 +268,11 @@ def main():
                 with open(os.path.join(_, "%s.txt" % case["location"].replace("/", "_")), "w") as f:
                     f.write(html)
 
-            # If --skip-passwd-test not set.
-            #if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_passwd:
-            #    users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
-            #    for user in users:
-            #        username, password, uid, gid, info, home = user
+            # If --skip-file-parsing is not set.
+            if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
+                users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
+                for user in users:
+                    username, password, uid, gid, info, home = user
 
     if not found:
         print("[*] No files found!")
