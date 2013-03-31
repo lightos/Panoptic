@@ -253,6 +253,19 @@
     </category>
 
     <category value="FTP">
+        <software value="IIS FTP">
+            <log>
+                <os value="Windows">
+                    <file value="/WINNT/system32/logfiles/MSFTPSVC"/>
+                    <file value="/WINNT/system32/logfiles/MSFTPSVC1"/>
+                    <file value="/WINNT/system32/logfiles/MSFTPSVC2"/>
+                    <file value="/WINDOWS/system32/logfiles/MSFTPSVC"/>
+                    <file value="/WINDOWS/system32/logfiles/MSFTPSVC1"/>
+                    <file value="/WINDOWS/system32/logfiles/MSFTPSVC2"/>
+                </os>
+            </log>
+        </software>
+
         <software value="ProFTPD">
             <log>
                 <os value="*NIX">
@@ -408,6 +421,25 @@
                 </os>
             </log>
         </software>
+
+        <software value="Windows SMTP">
+            <log>
+                <os value="Windows">
+                    <file value="/WINNT/system32/logfiles/SMTPSVC"/>
+                    <file value="/WINNT/system32/logfiles/SMTPSVC1"/>
+                    <file value="/WINNT/system32/logfiles/SMTPSVC2"/>
+                    <file value="/WINNT/system32/logfiles/SMTPSVC3"/>
+                    <file value="/WINNT/system32/logfiles/SMTPSVC4"/>
+                    <file value="/WINNT/system32/logfiles/SMTPSVC5"/>
+                    <file value="/WINDOWS/system32/logfiles/SMTPSVC"/>
+                    <file value="/WINDOWS/system32/logfiles/SMTPSVC1"/>
+                    <file value="/WINDOWS/system32/logfiles/SMTPSVC2"/>
+                    <file value="/WINDOWS/system32/logfiles/SMTPSVC3"/>
+                    <file value="/WINDOWS/system32/logfiles/SMTPSVC4"/>
+                    <file value="/WINDOWS/system32/logfiles/SMTPSVC5"/>
+                </os>
+            </log>
+        </software>
     </category>
 
     <category value="HTTP server">
@@ -418,7 +450,69 @@
                     <file value="/System/Library/WebObjects/Adaptors/Apache2.2/apache.conf"/>
                     <file value="/Library/WebServer/Documents/.htaccess"/>
                 </os>
+                <os value="*NIX">
+                    <file value="/etc/apache2/sites-available/default"/>
+                    <file value="/etc/apache2/sites-available/default-ssl"/>
+                    <file value="/etc/apache2/sites-enabled/000-default"/>
+                    <file value="/etc/apache2/sites-enabled/default"/>
+                    <file value="/etc/apache2/apache2.conf"/>
+                    <file value="/etc/apache2/ports.conf"/>
+                    <file value="/usr/local/etc/apache/httpd.conf"/>
+                    <file value="/usr/pkg/etc/httpd/httpd.conf"/>
+                    <file value="/usr/pkg/etc/httpd/httpd-default.conf"/>
+                    <file value="/usr/pkg/etc/httpd/httpd-vhosts.conf"/>
+                </os>
+                <os value="Slackware">
+                    <file value="/etc/httpd/mod_php.conf"/>
+                    <file value="/etc/httpd/extra/httpd-ssl.conf"/>
+                    <file value="/etc/rc.d/rc.httpd"/>
+                </os>
+                <os value="FreeBSD">
+                    <file value="/usr/local/apache/conf/httpd.conf.default"/>
+                    <file value="/usr/local/apache/conf/access.conf"/>
+                    <file value="/usr/local/apache22/conf/httpd.conf"/>
+                    <file value="/usr/local/apache22/httpd.conf"/>
+                    <file value="/usr/local/etc/apache22/conf/httpd.conf"/>
+                    <file value="/usr/local/apps/apache22/conf/httpd.conf"/>
+                    <file value="/etc/apache22/conf/httpd.conf"/>
+                    <file value="/etc/apache22/httpd.conf"/>
+                    <file value="/opt/apache22/conf/httpd.conf"/>
+                    <file value="/usr/local/etc/apache2/vhosts.conf"/>
+                    <file value="/usr/local/apache/conf/vhosts.conf"/>
+                    <file value="/usr/local/apache2/conf/vhosts.conf"/>
+                    <file value="/usr/local/apache/conf/vhosts-custom.conf"/>
+                    <file value="/usr/local/apache2/conf/vhosts-custom.conf"/>
+                    <file value="/etc/apache/default-server.conf"/>
+                    <file value="/etc/apache2/default-server.conf"/>
+                    <file value="/usr/local/apache2/conf/extra/httpd-ssl.conf"/>
+                    <file value="/usr/local/apache2/conf/ssl.conf"/>
+                    <file value="/etc/httpd/conf.d"/>
+                    <file value="/usr/local/etc/apache22/httpd.conf"/>
+                    <file value="/usr/local/etc/apache2/httpd.conf"/>
+                    <file value="/etc/apache2/httpd2.conf"/>
+                    <file value="/etc/apache2/ssl-global.conf"/>
+                    <file value="/etc/apache2/vhosts.d/00_default_vhost.conf"/>
+                    <file value="/apache/conf/httpd.conf"/>
+                    <file value="/etc/apache/httpd.conf"/>
+                    <file value="/etc/httpd/conf"/>
+                    <file value="/http/httpd.conf"/>
+                    <file value="/usr/local/apache1.3/conf/httpd.conf"/>
+                    <file value="/usr/local/etc/httpd/conf"/>
+                    <file value="/var/apache/conf/httpd.conf"/>
+                    <file value="/var/www/conf"/>
+                    <file value="/www/apache/conf/httpd.conf"/>
+                    <file value="/www/conf/httpd.conf"/>
+                    <file value="/etc/init.d"/>
+                    <file value="/etc/apache/access.conf"/>
+                    <file value="/etc/rc.conf"/>
+                </os>
             </conf>
+            <log>
+                <os value="FreeBSD">
+                    <file value="/www/logs/freebsddiary-error.log"/>
+                    <file value="/www/logs/freebsddiary-access_log"/>
+                </os>
+            </log>
             <other>
                 <os value="OS X">
                     <file value="/Library/WebServer/Documents/index.html"/>
@@ -445,6 +539,21 @@
                     <file value="/etc/webmin/miniserv.users"/>
                 </os>
             </conf>
+        </software>
+
+        <software value="IIS">
+            <log>
+                <os value="Windows">
+                    <file value="/WINNT/system32/logfiles/W3SVC"/>
+                    <file value="/WINNT/system32/logfiles/W3SVC1"/>
+                    <file value="/WINNT/system32/logfiles/W3SVC2"/>
+                    <file value="/WINNT/system32/logfiles/W3SVC3"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC1"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC2"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC3"/>
+                </os>
+            </log>
         </software>
 
         <software value="Apache">
@@ -698,70 +807,8 @@
 
         <software value="General">
             <conf>
-                <os value="*NIX">
-                    <file value="/etc/apache2/sites-available/default"/>
-                    <file value="/etc/apache2/sites-available/default-ssl"/>
-                    <file value="/etc/apache2/sites-enabled/000-default"/>
-                    <file value="/etc/apache2/sites-enabled/default"/>
-                    <file value="/etc/apache2/apache2.conf"/>
-                    <file value="/etc/apache2/ports.conf"/>
-                    <file value="/usr/local/etc/apache/httpd.conf"/>
-                    <file value="/usr/pkg/etc/httpd/httpd.conf"/>
-                    <file value="/usr/pkg/etc/httpd/httpd-default.conf"/>
-                    <file value="/usr/pkg/etc/httpd/httpd-vhosts.conf"/>
-                </os>
-                <os value="Slackware">
-                    <file value="/etc/httpd/mod_php.conf"/>
-                    <file value="/etc/httpd/extra/httpd-ssl.conf"/>
-                    <file value="/etc/rc.d/rc.httpd"/>
-                </os>
-                <os value="FreeBSD">
-                    <file value="/usr/local/apache/conf/httpd.conf.default"/>
-                    <file value="/usr/local/apache/conf/access.conf"/>
-                    <file value="/usr/local/apache22/conf/httpd.conf"/>
-                    <file value="/usr/local/apache22/httpd.conf"/>
-                    <file value="/usr/local/etc/apache22/conf/httpd.conf"/>
-                    <file value="/usr/local/apps/apache22/conf/httpd.conf"/>
-                    <file value="/etc/apache22/conf/httpd.conf"/>
-                    <file value="/etc/apache22/httpd.conf"/>
-                    <file value="/opt/apache22/conf/httpd.conf"/>
-                    <file value="/usr/local/etc/apache2/vhosts.conf"/>
-                    <file value="/usr/local/apache/conf/vhosts.conf"/>
-                    <file value="/usr/local/apache2/conf/vhosts.conf"/>
-                    <file value="/usr/local/apache/conf/vhosts-custom.conf"/>
-                    <file value="/usr/local/apache2/conf/vhosts-custom.conf"/>
-                    <file value="/etc/apache/default-server.conf"/>
-                    <file value="/etc/apache2/default-server.conf"/>
-                    <file value="/usr/local/apache2/conf/extra/httpd-ssl.conf"/>
-                    <file value="/usr/local/apache2/conf/ssl.conf"/>
-                    <file value="/etc/httpd/conf.d"/>
-                    <file value="/usr/local/etc/apache22/httpd.conf"/>
-                    <file value="/usr/local/etc/apache2/httpd.conf"/>
-                    <file value="/etc/apache2/httpd2.conf"/>
-                    <file value="/etc/apache2/ssl-global.conf"/>
-                    <file value="/etc/apache2/vhosts.d/00_default_vhost.conf"/>
-                    <file value="/apache/conf/httpd.conf"/>
-                    <file value="/etc/apache/httpd.conf"/>
-                    <file value="/etc/httpd/conf"/>
-                    <file value="/http/httpd.conf"/>
-                    <file value="/usr/local/apache1.3/conf/httpd.conf"/>
-                    <file value="/usr/local/etc/httpd/conf"/>
-                    <file value="/var/apache/conf/httpd.conf"/>
-                    <file value="/var/www/conf"/>
-                    <file value="/www/apache/conf/httpd.conf"/>
-                    <file value="/www/conf/httpd.conf"/>
-                    <file value="/etc/init.d"/>
-                    <file value="/etc/apache/access.conf"/>
-                    <file value="/etc/rc.conf"/>
-                </os>
+
             </conf>
-            <log>
-                <os value="FreeBSD">
-                    <file value="/etc/newsyslog.conf"/>
-                    <file value="/www/logs/freebsddiary-error.log"/>
-                    <file value="/www/logs/freebsddiary-access_log"/>
-                </os>
-            </log>
         </software>
     </category>
 
@@ -815,6 +862,17 @@
                 </os>
             </conf>
         </software>
+
+        <software value="Windows firewall">
+            <log>
+                <os value="Windows">
+                    <file value="/WINNT/system32/logfiles/Firewall/pfirewall.log"/>
+                    <file value="/WINNT/system32/logfiles/Firewall/pfirewall.log.old"/>
+                    <file value="/WINDOWS/system32/logfiles/Firewall/pfirewall.log"/>
+                    <file value="/WINDOWS/system32/logfiles/Firewall/pfirewall.log.old"/>
+                </os>
+            </log>
+        </software>
     </category>
 
     <category value="*NIX">
@@ -860,6 +918,14 @@
                     <file value="/var/adm/crash/unix"/>
                 </os>
             </mix>
+        </software>
+
+        <software value="FreeBSD">
+            <conf>
+                <os value="FreeBSD">
+                    <file value="/etc/newsyslog.conf"/>
+                </os>
+            </conf>
         </software>
 
         <software value="AIX">
@@ -981,44 +1047,12 @@
     </category>
 
     <category value="Win NT">
-        <software value="HTTP">
-            <log>
-                <os value="Windows">
-                    <file value="/system32/logfiles/W3SVC"/>
-                    <file value="/system32/logfiles/W3SVC1"/>
-                    <file value="/system32/logfiles/W3SVC2"/>
-                    <file value="/system32/logfiles/W3SVC3"/>
-                    <file value="/system32/logfiles/MSFTPSVC"/>
-                    <file value="/system32/logfiles/MSFTPSVC1"/>
-                    <file value="/system32/logfiles/MSFTPSVC2"/>
-                </os>
-            </log>
+        <software value="Windows">
             <conf>
                 <os value="Windows">
                     <file value="/boot.ini"/>
                 </os>
             </conf>
-        </software>
-
-        <software value="SMTP">
-            <log>
-                <os value="Windows">
-                    <file value="/system32/logfiles/SMTPSVC1"/>
-                    <file value="/system32/logfiles/SMTPSVC2"/>
-                    <file value="/system32/logfiles/SMTPSVC3"/>
-                    <file value="/system32/logfiles/SMTPSVC4"/>
-                    <file value="/system32/logfiles/SMTPSVC5"/>
-                </os>
-            </log>
-        </software>
-
-        <software value="Firewall">
-            <log>
-                <os value="Windows">
-                    <file value="/system32/logfiles/Firewall/pfirewall.log"/>
-                    <file value="/system32/logfiles/Firewall/pfirewall.log.old"/>
-                </os>
-            </log>
         </software>
     </category>
 
