@@ -323,7 +323,7 @@ def main():
                 _ = os.path.join("output", parsed_url.netloc)
                 if not os.path.exists(_):
                     os.makedirs(_)
-                with open(os.path.join(_, "%s.txt" % case["location"].replace("/", "_")), "w") as f:
+                with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/" , "_")), "w") as f:
                     f.write(html)
 
         return html, found
