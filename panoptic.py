@@ -178,7 +178,7 @@ def parse_args():
                 help="skip special tests if *NIX passwd file is found")
     
     parser.add_option("-r", "--replace-slash", dest="replace_slash",
-                help="skip special tests if *NIX passwd file is found")
+                help="set replacement for forward slash in path (e.g. \"/././\")")
 
     parser.add_option("-l", "--list", dest="list",
                 help="list available filters (\"os\", \"category\" or \"software\")")
@@ -278,6 +278,9 @@ def main():
     print("[*] Searching for files...")
 
     for case in cases:
+        if args.replace_slash:
+            case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
+
         if kb.get("restrictOS") and kb.get("restrictOS") != case["os"]:
             if args.verbose:
                 print("[o] Skipping '%s'" % case["location"])
@@ -286,9 +289,6 @@ def main():
 
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
             args.prefix = args.prefix[:-1]
-
-        #if args.replace_slash:
-        #    case["location"] = case["location"].replace("/", repr(args.replace_slash))
 
         if args.verbose:
             print("[o] Trying '%s'" % case["location"])
