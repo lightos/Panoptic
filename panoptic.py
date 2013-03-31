@@ -206,6 +206,7 @@ def main():
     args = parse_args()
     found = False
     kb = {}
+    files = []
 
     cases = get_cases(args)
 
@@ -318,6 +319,9 @@ def main():
 
             print("[+] Found '%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
 
+            if args.verbose:
+                files.append("'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
+
             # If --write-file is set.
             if args.write_file:
                 _ = os.path.join("output", parsed_url.netloc)
@@ -343,6 +347,10 @@ def main():
 
     if not found:
         print("[*] No files found!")
+    elif args.verbose:
+        print "\n[i] Found files:"
+        for _ in files:
+            print "[+] %s" % _
 
     print("\n[*] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
