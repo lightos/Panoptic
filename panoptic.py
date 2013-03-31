@@ -336,7 +336,7 @@ def main():
     for case in cases:
         html, found = request_file(case, found)
 
-        if not html:
+        if html is None or not found:
             continue
 
         # If --skip-file-parsing is not set.
