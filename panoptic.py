@@ -115,6 +115,8 @@ def get_cases(args):
 
     cases = []
 
+    import pdb
+    pdb.set_trace()
     for element in root.iterfind(".//file"):
         case = {}
         case["location"] = element.value
