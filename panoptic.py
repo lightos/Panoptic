@@ -52,6 +52,9 @@ INVALID_FILENAME = "".join(random.sample(string.letters, 10))
 # Location of file containing test cases
 CASES_FILE = "cases.xml"
 
+# Location of file containing user agents
+USER_AGENTS_FILE = "agents.txt"
+
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
 
@@ -152,8 +155,14 @@ def parse_args():
     parser.add_option("-d", "--data", dest="data",
                 help="set data for POST request (e.g. \"page=default\")")
 
-    parser.add_option("-P", "--proxy", dest="proxy",
+    parser.add_option("--proxy", dest="proxy",
                 help="set proxy type and address (e.g. \"socks5://192.168.5.92\")")
+
+    parser.add_option("--user-agent", dest="user_agent",
+                help="set the HTTP User-Agent header value")
+
+    parser.add_option("--random-agent", dest="random_agent", action="store_true",
+                help="choose random HTTP User-Agent header value")
 
     parser.add_option("-o", "--os", dest="os",
                 help="set operating system to limit searches to")
@@ -238,6 +247,10 @@ def main():
                 opener = build_opener(_)
                 install_opener(opener)
 
+    if args.random_agent:
+        with open(USER_AGENTS_FILE, 'r') as f:
+            args.user_agent = random.sample(f.readlines(), 1)[0]
+
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
     parsed_url = urlsplit(args.url)
@@ -260,6 +273,9 @@ def main():
             request_args["data"] = _
         else:
             request_args["url"] += "?%s" % _
+
+        if args.user_agent:
+            request_args["user_agent"] = args.user_agent
 
         request_args["verbose"] = args.verbose
 
