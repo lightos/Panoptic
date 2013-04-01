@@ -114,9 +114,8 @@ def get_cases(args):
                 element = element.parent
 
     cases = []
+    replacements = {'HOST': urlsplit(args.url).netloc}
 
-    import pdb
-    pdb.set_trace()
     for element in root.iterfind(".//file"):
         case = {}
         case["location"] = element.value
@@ -126,6 +125,10 @@ def get_cases(args):
         case["type"] = _(element, "log") is not None and "log"\
                     or _(element, "conf") is not None and "conf"\
                     or _(element, "other") is not None and "other"
+
+        for variable in re.findall(r"\{[^}]+\}", case["location"]):
+            case["location"] = case["location"].replace(variable, replacements.get(variable.strip("{}"), variable))
+
         cases.append(case)
 
     return cases
