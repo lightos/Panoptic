@@ -190,7 +190,7 @@ def parse_args():
 
     parser.add_option("-x", "--skip-file-parsing", dest="skip_parsing", action="store_true",
                 help="skip special tests if *NIX passwd file is found")
-    
+
     parser.add_option("-r", "--replace-slash", dest="replace_slash",
                 help="set replacement for forward slash in path (e.g. \"/././\")")
 
