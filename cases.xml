@@ -544,14 +544,14 @@
         <software value="IIS">
             <log>
                 <os value="Windows">
-                    <file value="/WINNT/system32/logfiles/W3SVC"/>
-                    <file value="/WINNT/system32/logfiles/W3SVC1"/>
-                    <file value="/WINNT/system32/logfiles/W3SVC2"/>
-                    <file value="/WINNT/system32/logfiles/W3SVC3"/>
-                    <file value="/WINDOWS/system32/logfiles/W3SVC"/>
-                    <file value="/WINDOWS/system32/logfiles/W3SVC1"/>
-                    <file value="/WINDOWS/system32/logfiles/W3SVC2"/>
-                    <file value="/WINDOWS/system32/logfiles/W3SVC3"/>
+                    <file value="/WINNT/system32/logfiles/W3SVC/inetsvn1.log"/>
+                    <file value="/WINNT/system32/logfiles/W3SVC1/inetsvn1.log"/>
+                    <file value="/WINNT/system32/logfiles/W3SVC2/inetsvn1.log"/>
+                    <file value="/WINNT/system32/logfiles/W3SVC3/inetsvn1.log"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC/inetsvn1.log"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC1/inetsvn1.log"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC2/inetsvn1.log"/>
+                    <file value="/WINDOWS/system32/logfiles/W3SVC3/inetsvn1.log"/>
                 </os>
             </log>
         </software>
