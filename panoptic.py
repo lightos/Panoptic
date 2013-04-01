@@ -343,7 +343,7 @@ def main():
         if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
             users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
-            print("\n[i] Extracting home folders from %s." % case["location"])
+            print("\n[i] Extracting home folders from '%s'" % case["location"])
 
             for user in users:
                 if args.verbose:
