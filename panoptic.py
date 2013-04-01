@@ -189,7 +189,7 @@ def parse_args():
     args = parser.parse_args()[0]
 
     if not any((args.url, args.list)):
-        parser.error('missing argument for url. Use -h for help')
+        parser.error('missing argument for target url. Use -h for help')
 
     if args.prefix:
         args.prefix = args.prefix * args.multiplier
@@ -346,7 +346,7 @@ def main():
             print("\n[i] Extracting home folders from %s." % case["location"])
 
             for user in users:
-                if verbose:
+                if args.verbose:
                     print("[o] User: %s, Info: %s" % (user[0], user[4]))
                 for _ in (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority"):
                     if user[5] == "/": # Will later add a constraint to only check root folder "/" once.
