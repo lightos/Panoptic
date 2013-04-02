@@ -104,13 +104,13 @@ def get_cases(args):
 
     for attr in ("os", "software", "category"):
         if getattr(args, attr):
-            for element in root.iterfind(".//%s" % attr):
+            for element in root.findall(".//%s" % attr):
                 if element.value.lower() != getattr(args, attr).lower():
                     element.parent.remove(element)
 
     if args.type:
         for _ in (_ for _ in ("conf", "log", "other") if _.lower() != args.type.lower()):
-            for element in root.iterfind(".//%s" % _):
+            for element in root.findall(".//%s" % _):
                 element.parent.remove(element)
 
     def _(element, tag):
@@ -126,7 +126,7 @@ def get_cases(args):
     if args.url:
         replacements["HOST"] = urlsplit(args.url).netloc
 
-    for element in root.iterfind(".//file"):
+    for element in root.findall(".//file"):
         case = {}
         case["location"] = element.value
         case["os"] = _(element, "os").value
@@ -414,7 +414,7 @@ def main():
     elif args.verbose:
         print "\n[i] Files found:"
         for _ in files:
-            print "[+] %s" % _
+            print "[o] %s" % _
 
     print("\n[*] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
