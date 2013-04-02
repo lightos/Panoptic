@@ -8,13 +8,15 @@ Search default file locations through LFI for common log and config files
 
     Options:
       -h, --help            show this help message and exit
-      -u TARGET, --url=TARGET
-                            set the target to test
+      -u URL, --url=URL     set the target URL to test
       -p PARAM, --param=PARAM
                             set parameter name to test for
-      -d DATA, --data=DATA  set data for POST request
-      -P PROXY, --proxy=PROXY
-                            set IP:PORT to use as SOCKS proxy
+      -d DATA, --data=DATA  set data for POST request (e.g. "page=default")
+      --proxy=PROXY         set proxy type and address (e.g.
+                            "socks5://192.168.5.92")
+      --user-agent=USER_AGENT
+                            set the HTTP User-Agent header value
+      --random-agent        choose random HTTP User-Agent header value
       -o OS, --os=OS        set operating system to limit searches to
       -s SOFTWARE, --software=SOFTWARE
                             set name of the software to search for
@@ -26,11 +28,16 @@ Search default file locations through LFI for common log and config files
       -e POSTFIX, --postfix=POSTFIX
                             set postfix for file path (e.g. "%00")
       -m MULTIPLIER, --multiplier=MULTIPLIER
-                            set number to multiply the prefix by
+                            set number to multiply the prefix by (e.g. 10)
       -w, --write-file      write content of found files to output folder
-      -x, --skip-passwd-test
+      -x, --skip-file-parsing
                             skip special tests if *NIX passwd file is found
-      -l LIST, --list=LIST  list available filters ("os", "category" or "software")
+      -r REPLACE_SLASH, --replace-slash=REPLACE_SLASH
+                            set replacement for forward slash in path (e.g.
+                            "/././")
+      -l LIST, --list=LIST  list available filters ("os", "category" or
+                            "software")
+      --update              update Panoptic from official repository
       -v, --verbose         display extra information in the output
 
 ### Examples
