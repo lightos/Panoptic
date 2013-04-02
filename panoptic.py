@@ -40,6 +40,7 @@ from urllib import urlencode
 from urllib2 import build_opener, install_opener, urlopen, ProxyHandler, Request
 from urlparse import urlsplit, parse_qsl
 from optparse import OptionParser
+from subprocess import Popen, PIPE
 from sys import exit
 
 NAME = "Panoptic"
@@ -66,6 +67,9 @@ BANNER = """
 
 %s %s (%s)
 """ % (NAME, VERSION, URL)
+
+# Location of Git repository
+GIT_REPOSITORY = "git://github.com/lightos/Panoptic.git"
 
 EXAMPLES = """
 Examples:
@@ -117,7 +121,10 @@ def get_cases(args):
                 element = element.parent
 
     cases = []
-    replacements = {'HOST': urlsplit(args.url).netloc}
+    replacements = {}
+
+    if args.url:
+        replacements["HOST"] = urlsplit(args.url).netloc
 
     for element in root.iterfind(".//file"):
         case = {}
@@ -135,6 +142,27 @@ def get_cases(args):
         cases.append(case)
 
     return cases
+
+def update():
+    """
+    Do the program update
+    """
+
+    print("[i] Doing program update...")
+
+    process = Popen("git pull %s HEAD" % GIT_REPOSITORY, shell=True, stdout=PIPE, stderr=PIPE)
+    stdout, stderr = process.communicate()
+    success = not process.returncode
+
+    if success:
+        updated = "Already" not in stdout
+        process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
+        stdout, _ = process.communicate()
+        revision = stdout[:7] if stdout and re.search(r"(?i)[0-9a-f]{32}", stdout) else "-"
+        print("[i] %s the latest revision '%s'" % ("Already at" if not updated else "Updated to", revision))
+    else:
+        print "[x] Problem occurred while updating program (%s)" % repr(stderr.strip())
+        print "[i] Please make sure that you have a 'git' package installed"
 
 def parse_args():
     """
@@ -197,12 +225,15 @@ def parse_args():
     parser.add_option("-l", "--list", dest="list",
                 help="list available filters (\"os\", \"category\" or \"software\")")
 
+    parser.add_option("--update", dest="update", action="store_true",
+                help="update Panoptic from official repository")
+
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                 help="display extra information in the output")
 
     args = parser.parse_args()[0]
 
-    if not any((args.url, args.list)):
+    if not any((args.url, args.list, args.update)):
         parser.error('missing argument for target url. Use -h for help')
 
     if args.prefix:
@@ -222,6 +253,9 @@ def main():
     kb = {}
     files = []
 
+    if args.update:
+        update()
+
     cases = get_cases(args)
 
     if args.list:
@@ -230,6 +264,7 @@ def main():
         for _ in set([_[args.list] for _ in cases]):
             print _ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _
 
+    if not args.url:
         exit()
 
     if args.proxy:
