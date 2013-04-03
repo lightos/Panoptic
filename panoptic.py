@@ -428,6 +428,15 @@ def main():
                         continue
                     request_file({"category": "*NIX Password File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user[5], _), "software": "*NIX"})
 
+        if "mysql-bin.index" in case["location"] and not args.skip_parsing:
+            binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
+            location = case["location"].rfind(args.replace_slash if args.replace_slash else "/") + (len(args.replace_slash) if args.replace_slash else 1)
+
+            print("\n[i] Extracting MySQL binary logs from '%s'" % case["location"])
+
+            for _ in binlogs:
+                request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"})
+
     if not found:
         print("[*] No files found!")
     elif args.verbose:
@@ -474,8 +483,12 @@ def get_page(**kwargs):
     # Perform HTTP Request
     try:
         headers["User-agent"] = user_agent
-        headers["Cookie"] = cookie
-        headers[header.split("=")[0]] = header.split("=")[1]
+
+        if cookie:
+            headers["Cookie"] = cookie
+
+        if header:
+            headers[header.split("=")[0]] = header.split("=")[1]
 
         req = Request(url, post, headers)
         conn = urlopen(req)
