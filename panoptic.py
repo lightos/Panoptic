@@ -350,11 +350,11 @@ def main():
     print("[*] Done!\n")
     print("[*] Searching for files...")
 
-    def request_file(case):
+    def request_file(case, replace_slashes=True):
         """
         Request file from URL
         """
-        if args.replace_slash:
+        if args.replace_slash and replace_slashes:
             case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
 
         if kb.get("restrictOS") and kb.get("restrictOS") != case["os"]:
@@ -430,12 +430,13 @@ def main():
 
         if "mysql-bin.index" in case["location"] and not args.skip_parsing:
             binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
-            location = case["location"].rfind(args.replace_slash if args.replace_slash else "/") + (len(args.replace_slash) if args.replace_slash else 1)
+            location = case["location"].rfind("/") + 1
 
             print("\n[i] Extracting MySQL binary logs from '%s'" % case["location"])
 
             for _ in binlogs:
-                request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"})
+                print "%s%s" % (case["location"][:location], _)
+                request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"}, False)
 
     if not found:
         print("[*] No files found!")
