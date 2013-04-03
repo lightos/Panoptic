@@ -186,6 +186,12 @@ def parse_args():
     parser.add_option("--proxy", dest="proxy",
                 help="set proxy type and address (e.g. \"socks5://192.168.5.92\")")
 
+    parser.add_option("--header", dest="header",
+                help="set a custom header (e.g. \"name=value\")")
+
+    parser.add_option("--cookie", dest="cookie",
+                help="add cookies to headers (e.g. \"name=value\")")
+
     parser.add_option("--user-agent", dest="user_agent",
                 help="set the HTTP User-Agent header value")
 
@@ -222,6 +228,9 @@ def parse_args():
     parser.add_option("-r", "--replace-slash", dest="replace_slash",
                 help="set replacement for forward slash in path (e.g. \"/././\")")
 
+    parser.add_option("-a", "--auto", dest="automatic", action="store_true",
+                help="avoid user interaction by automatically selecting the default options")
+
     parser.add_option("-l", "--list", dest="list",
                 help="list available filters (\"os\", \"category\" or \"software\")")
 
@@ -255,6 +264,7 @@ def main():
 
     if args.update:
         update()
+        exit()
 
     cases = get_cases(args)
 
@@ -308,6 +318,12 @@ def main():
             request_args["data"] = _
         else:
             request_args["url"] += "?%s" % _
+
+        if args.header:
+            request_args["header"] = args.header
+
+        if args.cookie:
+            request_args["cookie"] = args.cookie
 
         if args.user_agent:
             request_args["user_agent"] = args.user_agent
@@ -367,8 +383,11 @@ def main():
                 print("[*] OS: %s\n" % case["os"])
 
                 if kb.get("restrictOS") is None:
-                    _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
-                    print
+                    if args.automatic:
+                        _ = "Y"
+                    else:
+                        _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
+                        print
                     kb["restrictOS"] = _.lower() != 'n' and case["os"]
 
             print("[+] Found '%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
@@ -455,7 +474,8 @@ def get_page(**kwargs):
     # Perform HTTP Request
     try:
         headers["User-agent"] = user_agent
-        headers["Accept"] = "*"  # Set option to add headers in cmdline
+        headers["Cookie"] = cookie
+        headers[header.split("=")[0]] = header.split("=")[1]
 
         req = Request(url, post, headers)
         conn = urlopen(req)

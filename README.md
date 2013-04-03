@@ -14,6 +14,8 @@ Search default file locations through LFI for common log and config files
       -d DATA, --data=DATA  set data for POST request (e.g. "page=default")
       --proxy=PROXY         set proxy type and address (e.g.
                             "socks5://192.168.5.92")
+      --header=HEADER       set a custom header (e.g. "name=value")
+      --cookie=COOKIE       add cookies to headers (e.g. "name=value")
       --user-agent=USER_AGENT
                             set the HTTP User-Agent header value
       --random-agent        choose random HTTP User-Agent header value
@@ -35,6 +37,8 @@ Search default file locations through LFI for common log and config files
       -r REPLACE_SLASH, --replace-slash=REPLACE_SLASH
                             set replacement for forward slash in path (e.g.
                             "/././")
+      -a, --auto            avoid user interaction by automatically selecting the
+                            default options
       -l LIST, --list=LIST  list available filters ("os", "category" or
                             "software")
       --update              update Panoptic from official repository
