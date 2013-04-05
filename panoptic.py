@@ -158,7 +158,7 @@ def update():
         updated = "Already" not in stdout
         process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, _ = process.communicate()
-        revision = stdout[:7] if stdout and re.search(r"(?i)[0-9a-f]{32}", stdout, re.I) else "-"
+        revision = stdout[:7] if stdout and re.search(r"(?i)[0-9a-f]{32}", stdout) else "-"
         print("[i] %s the latest revision '%s'" % ("Already at" if not updated else "Updated to", revision))
     else:
         print("[!] Problem occurred while updating program (%s)" % repr(stderr.strip()))
