@@ -1,48 +1,36 @@
 Panoptic
 ===
 
-Search default file locations through LFI for common log and config files
+Panoptic is an open source penetration testing tool that automates the process of searching and retrieval of common log and config file locations through LFI vulnerability.
 
 ### Help Menu
     Usage: panoptic.py --url TARGET [options]
 
     Options:
-      -h, --help            show this help message and exit
-      -u URL, --url=URL     set the target URL to test
-      -p PARAM, --param=PARAM
-                            set parameter name to test for
-      -d DATA, --data=DATA  set data for POST request (e.g. "page=default")
-      --proxy=PROXY         set proxy type and address (e.g.
-                            "socks5://192.168.5.92")
-      --header=HEADER       set a custom header (e.g. "name=value")
-      --cookie=COOKIE       add cookies to headers (e.g. "name=value")
-      --user-agent=USER_AGENT
-                            set the HTTP User-Agent header value
+      -h/--help             show this help message and exit
+      -v/--verbose          display extra output information
+      -u/--url=URL          set target URL
+      -p/--param=PARAM      set parameter name to test for (e.g. "page")
+      -d/--data=DATA        set data for HTTP POST request (e.g. "page=default")
+      -t/--type=TYPE        set type of file to look for ("conf" or "log")
+      -o/--os=OS            set filter name for OS (e.g. "*NIX")
+      -s/--software=SOFT..  set filter name for software (e.g. "PHP")
+      -c/--category=CATE..  set filter name for category (e.g. "FTP")
+      -l/--list=GROUP       list available filters for group (e.g. "software")
+      -a/--auto             avoid user interaction by using default options
+      -w/--write-files      write content of retrieved files to output folder
+      -x/--skip-parsing     skip special tests if *NIX passwd file is found
+      --ignore-proxy        ignore system default HTTP proxy
+      --proxy=PROXY         set proxy (e.g. "socks5://192.168.5.92")
+      --user-agent=UA       set HTTP User-Agent header value
       --random-agent        choose random HTTP User-Agent header value
-      -o OS, --os=OS        set operating system to limit searches to
-      -s SOFTWARE, --software=SOFTWARE
-                            set name of the software to search for
-      -c CATEGORY, --category=CATEGORY
-                            set specific category of software to look for
-      -t TYPE, --type=TYPE  set type of file to search for ("conf" or "log")
-      -b PREFIX, --prefix=PREFIX
-                            set prefix for file path (e.g. "../")
-      -e POSTFIX, --postfix=POSTFIX
-                            set postfix for file path (e.g. "%00")
-      -m MULTIPLIER, --multiplier=MULTIPLIER
-                            set number to multiply the prefix by (e.g. 10)
-      -w, --write-file      write content of found files to output folder
-      -x, --skip-file-parsing
-                            skip special tests if *NIX passwd file is found
-      -r REPLACE_SLASH, --replace-slash=REPLACE_SLASH
-                            set replacement for forward slash in path (e.g.
-                            "/././")
-      -a, --auto            avoid user interaction by automatically selecting the
-                            default options
-      -l LIST, --list=LIST  list available filters ("os", "category" or
-                            "software")
+      --cookie=COOKIE       set HTTP Cookie header value (e.g. "sid=foobar")
+      --header=HEADER       set a custom HTTP header (e.g. "Max-Forwards=10")
+      --prefix=PREFIX       set prefix for file path (e.g. "../")
+      --postfix=POSTFIX     set postfix for file path (e.g. "%00")
+      --multiplier=MULTI..  set multiplication number for prefix (e.g. 10)
+      --replace-slash=RE..  set replacement for char / in paths (e.g. "/././")
       --update              update Panoptic from official repository
-      -v, --verbose         display extra information in the output
 
 ### Examples
     ./panoptic.py --url "http://localhost/lfi.php?file=test.txt"
@@ -55,6 +43,4 @@ Search default file locations through LFI for common log and config files
     
     ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --os Windows
     ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
-
-
 
