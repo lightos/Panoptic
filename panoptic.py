@@ -50,6 +50,9 @@ URL = "https://github.com/lightos/Panoptic/"
 # Used for retrieving response for a dummy filename
 INVALID_FILENAME = "".join(random.sample(string.letters, 10))
 
+# Maximum length of left option column in help listing
+MAX_HELP_OPTION_LENGTH = 20
+
 # Location of file containing test cases
 CASES_FILE = "cases.xml"
 
@@ -246,7 +249,6 @@ def parse_args():
     parser.formatter.store_option_strings(parser)
     parser.formatter.store_option_strings = lambda _: None
 
-    MAX_HELP_OPTION_LENGTH = 20
     for option, value in parser.formatter.option_strings.items():
         value = re.sub(r"\A(-\w+) (\w+), (--[\w-]+=(\2))\Z", r"\g<1>/\g<3>", value)
         value = value.replace(", ", '/')
