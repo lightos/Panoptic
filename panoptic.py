@@ -444,7 +444,7 @@ def main():
                 if args.verbose:
                     print("[*] User: %s, Info: %s" % (user[0], user[4]))
                 for _ in (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority"):
-                    if user[5] == "/": # Will later add a constraint to only check root folder "/" once.
+                    if user[5] == "/":
                         continue
                     request_file({"category": "*NIX Password File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user[5], _), "software": "*NIX"})
 
@@ -452,10 +452,10 @@ def main():
             binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
             location = case["location"].rfind("/") + 1
 
-            print("[i] Extracting MySQL binary logs from '%s'" % case["location"])
+            if args.verbose:
+                print("[i] Extracting MySQL binary logs from '%s'" % case["location"])
 
             for _ in binlogs:
-                print "%s%s" % (case["location"][:location], _)
                 request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"}, False)
 
     if not found:
