@@ -173,72 +173,86 @@ def parse_args():
 
     parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
 
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
+                help="display extra output information")
+
     # Required
     parser.add_option("-u", "--url", dest="url",
-                help="set the target URL to test")
+                help="set target URL")
     # Optional
     parser.add_option("-p", "--param", dest="param",
-                help="set parameter name to test for")
+                help="set parameter name to test for (e.g. \"page\")")
 
     parser.add_option("-d", "--data", dest="data",
-                help="set data for POST request (e.g. \"page=default\")")
+                help="set data for HTTP POST request (e.g. \"page=default\")")
+
+    parser.add_option("-t", "--type", dest="type",
+                help="set type of file to look for (\"conf\" or \"log\")")
+
+    parser.add_option("-o", "--os", dest="os",
+                help="set filter name for OS (e.g. \"*NIX\")")
+
+    parser.add_option("-s", "--software", dest="software",
+                help="set filter name for software (e.g. \"PHP\")")
+
+    parser.add_option("-c", "--category", dest="category",
+                help="set filter name for category (e.g. \"FTP\")")
+
+    parser.add_option("-l", "--list", dest="list", metavar="GROUP",
+                help="list available filters for group (e.g. \"software\")")
+
+    parser.add_option("-a", "--auto", dest="automatic", action="store_true",
+                help="avoid user interaction by using default options")
+
+    parser.add_option("-w", "--write-files", dest="write_files", action="store_true",
+                help="write content of retrieved files to output folder")
+
+    parser.add_option("-x", "--skip-parsing", dest="skip_parsing", action="store_true",
+                help="skip special tests if *NIX passwd file is found")
+
+    parser.add_option("--ignore-proxy", dest="ignore_proxy", action="store_true",
+                help="ignore system default HTTP proxy")
 
     parser.add_option("--proxy", dest="proxy",
-                help="set proxy type and address (e.g. \"socks5://192.168.5.92\")")
+                help="set proxy (e.g. \"socks5://192.168.5.92\")")
 
-    parser.add_option("--header", dest="header",
-                help="set a custom header (e.g. \"name=value\")")
-
-    parser.add_option("--cookie", dest="cookie",
-                help="add cookies to headers (e.g. \"name=value\")")
-
-    parser.add_option("--user-agent", dest="user_agent",
-                help="set the HTTP User-Agent header value")
+    parser.add_option("--user-agent", dest="user_agent", metavar="UA",
+                help="set HTTP User-Agent header value")
 
     parser.add_option("--random-agent", dest="random_agent", action="store_true",
                 help="choose random HTTP User-Agent header value")
 
-    parser.add_option("-o", "--os", dest="os",
-                help="set operating system to limit searches to")
+    parser.add_option("--cookie", dest="cookie",
+                help="set HTTP Cookie header value (e.g. \"sid=foobar\")")
 
-    parser.add_option("-s", "--software", dest="software",
-                help="set name of the software to search for")
+    parser.add_option("--header", dest="header",
+                help="set a custom HTTP header (e.g. \"Max-Forwards=10\")")
 
-    parser.add_option("-c", "--category", dest="category",
-                help="set specific category of software to look for")
-
-    parser.add_option("-t", "--type", dest="type",
-                help="set type of file to search for (\"conf\" or \"log\")")
-
-    parser.add_option("-b", "--prefix", dest="prefix", default="",
+    parser.add_option("--prefix", dest="prefix", default="",
                 help="set prefix for file path (e.g. \"../\")")
 
-    parser.add_option("-e", "--postfix", dest="postfix", default="",
+    parser.add_option("--postfix", dest="postfix", default="",
                 help="set postfix for file path (e.g. \"%00\")")
 
-    parser.add_option("-m", "--multiplier", dest="multiplier", type="int", default=1,
-                help="set number to multiply the prefix by (e.g. 10)")
+    parser.add_option("--multiplier", dest="multiplier", type="int", default=1, metavar="multi",
+                help="set multiplication number for prefix (e.g. 10)")
 
-    parser.add_option("-w", "--write-file", dest="write_file", action="store_true",
-                help="write content of found files to output folder")
-
-    parser.add_option("-x", "--skip-file-parsing", dest="skip_parsing", action="store_true",
-                help="skip special tests if *NIX passwd file is found")
-
-    parser.add_option("-r", "--replace-slash", dest="replace_slash",
-                help="set replacement for forward slash in path (e.g. \"/././\")")
-
-    parser.add_option("-a", "--auto", dest="automatic", action="store_true",
-                help="avoid user interaction by automatically selecting the default options")
-
-    parser.add_option("-l", "--list", dest="list",
-                help="list available filters (\"os\", \"category\" or \"software\")")
+    parser.add_option("--replace-slash", dest="replace_slash",
+                help="set replacement for char / in paths (e.g. \"/././\")")
 
     parser.add_option("--update", dest="update", action="store_true",
                 help="update Panoptic from official repository")
 
-    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                help="display extra information in the output")
+    parser.formatter.store_option_strings(parser)
+    parser.formatter.store_option_strings = lambda _: None
+
+    MAX_HELP_OPTION_LENGTH = 20
+    for option, value in parser.formatter.option_strings.items():
+        value = re.sub(r"\A(-\w+) (\w+), (--[\w-]+=(\2))\Z", r"\g<1>/\g<3>", value)
+        value = value.replace(", ", '/')
+        if len(value) > MAX_HELP_OPTION_LENGTH:
+            value = ("%%.%ds.." % (MAX_HELP_OPTION_LENGTH - parser.formatter.indent_increment)) % value
+        parser.formatter.option_strings[option] = value
 
     args = parser.parse_args()[0]
 
@@ -277,11 +291,13 @@ def main():
     if not args.url:
         exit()
 
-    if args.proxy:
-        import thirdparty.socks.socks
-
+    if args.ignore_proxy:
+        _ = ProxyHandler({})
+        opener = build_opener(_)
+        install_opener(opener)
+    elif args.proxy:
+        from thirdparty.socks import socks
         match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
-
         if match:
             if match.group("type").lower() == "socks4":
                 socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
@@ -347,7 +363,7 @@ def main():
     request_args = prepare_request(INVALID_FILENAME)
     invalid_response, _ = get_page(**request_args)
 
-    print("[*] Done!\n")
+    print("[*] Done!")
     print("[*] Searching for files...")
 
     def request_file(case, replace_slashes=True):
@@ -379,15 +395,14 @@ def main():
 
         if matcher.quick_ratio() < HEURISTIC_RATIO:
             if not found:
-                print("[*] Possible file(s) found!\n")
-                print("[*] OS: %s\n" % case["os"])
+                print("[*] Possible file(s) found!")
+                print("[*] OS: %s" % case["os"])
 
                 if kb.get("restrictOS") is None:
                     if args.automatic:
                         _ = "Y"
                     else:
                         _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
-                        print
                     kb["restrictOS"] = _.lower() != 'n' and case["os"]
 
             print("[+] Found '%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
@@ -396,7 +411,7 @@ def main():
                 files.append("'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
 
             # If --write-file is set
-            if args.write_file:
+            if args.write_files:
                 _ = os.path.join("output", parsed_url.netloc)
                 if not os.path.exists(_):
                     os.makedirs(_)
@@ -418,7 +433,8 @@ def main():
         if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
             users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
-            print("\n[i] Extracting home folders from '%s'" % case["location"])
+            if args.verbose:
+                print("[o] Extracting home folders from '%s'" % case["location"])
 
             for user in users:
                 if args.verbose:
@@ -432,7 +448,7 @@ def main():
             binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
             location = case["location"].rfind("/") + 1
 
-            print("\n[i] Extracting MySQL binary logs from '%s'" % case["location"])
+            print("[i] Extracting MySQL binary logs from '%s'" % case["location"])
 
             for _ in binlogs:
                 print "%s%s" % (case["location"][:location], _)
