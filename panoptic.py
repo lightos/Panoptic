@@ -174,7 +174,7 @@ def parse_args():
 
     OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
 
-    parser = OptionParser(usage="usage: %prog --url TARGET [OPTIONS]", epilog=EXAMPLES)
+    parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
 
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
                 help="display extra output information")
