@@ -361,6 +361,16 @@ def main():
 
         return re.sub(regex, "", response, re.I)
 
+    print("[i] Checking original response...")
+
+    request_args = prepare_request(None)
+    request_args["url"] = args.url
+
+    if args.data:
+        request_args["data"] = args.data
+
+    original_response = get_page(**request_args)
+
     print("[i] Checking invalid response...")
 
     request_args = prepare_request(INVALID_FILENAME)
@@ -376,7 +386,7 @@ def main():
         if args.replace_slash and replace_slashes:
             case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
 
-        if kb.get("restrictOS") and kb.get("restrictOS") != case["os"]:
+        if kb.get("restrict_os") and kb.get("restrict_os") != case["os"]:
             if args.verbose:
                 print("[*] Skipping '%s'" % case["location"])
 
@@ -401,13 +411,13 @@ def main():
                 print("[i] Possible file(s) found!")
                 print("[i] OS: %s" % case["os"])
 
-                if kb.get("restrictOS") is None:
+                if kb.get("restrict_os") is None:
                     if args.automatic:
                         _ = "Y"
                     else:
                         _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
                         print
-                    kb["restrictOS"] = _.lower() != 'n' and case["os"]
+                    kb["restrict_os"] = _.lower() != 'n' and case["os"]
 
             _ = "'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"])
             _ = _.replace("%s/%s/" % (case["os"], case["os"]), "%s/" % case["os"])
@@ -420,11 +430,38 @@ def main():
             # If --write-file is set
             if args.write_files:
                 _ = os.path.join("output", parsed_url.netloc)
+
                 if not os.path.exists(_):
                     os.makedirs(_)
+
                 with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
-                    f.write(html)
+                    content = html
+
+                    if kb.get("filter_output") is None:
+                        if args.automatic:
+                            _ = "Y"
+                        else:
+                            _ = raw_input("[?] Do you want to filter retrieved files from original HTML page content? [Y/n] ")
+                            print
+                        kb["filter_output"] = _.lower() != 'n'
+
+                    if kb.get("filter_output"):
+                        matcher = difflib.SequenceMatcher(None, html, original_response)
+                        matching_blocks = matcher.get_matching_blocks()
+
+                        if matching_blocks:
+                            start = matching_blocks[0]
+                            if start[0] == start[1] == 0 and start[2] > 0:
+                                content = content[start[2]:]
+                            if len(matching_blocks) > 2:
+                                end = matching_blocks[-2]
+                                if end[2] > 0 and end[0] + end[2] == len(html) and end[1] + end[2] == len(original_response):
+                                    content = content[:-end[2]]
+
+                    f.write(content)
+
             return html
+
         return None
 
     # Test file locations in XML file
