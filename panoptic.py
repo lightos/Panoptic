@@ -25,7 +25,7 @@ SOFTWARE.
 """
 Panoptic
 
-Search default file locations through LFI vulnerability for common log and config files
+Search and retrieve content of common log and config files through LFI vulnerability
 """
 
 import difflib
