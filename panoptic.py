@@ -406,10 +406,13 @@ def main():
                         print
                     kb["restrictOS"] = _.lower() != 'n' and case["os"]
 
-            print("[+] Found '%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
+            _ = "'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"])
+            _ = _.replace("%s/%s/" % (case["os"], case["os"]), "%s/" % case["os"])
+
+            print("[+] Found %s" % _)
 
             if args.verbose:
-                files.append("'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
+                files.append(_)
 
             # If --write-file is set
             if args.write_files:
