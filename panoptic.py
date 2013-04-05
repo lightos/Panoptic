@@ -297,6 +297,7 @@ def main():
         install_opener(opener)
     elif args.proxy:
         from thirdparty.socks import socks
+
         match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
         if match:
             if match.group("type").lower() == "socks4":
