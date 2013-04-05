@@ -38,7 +38,7 @@ import xml.etree.ElementTree as ET
 
 from urllib import urlencode
 from urllib2 import build_opener, install_opener, urlopen, ProxyHandler, Request
-from urlparse import urlsplit, parse_qsl
+from urlparse import urlsplit, urlunsplit, parse_qsl
 from optparse import OptionParser
 from subprocess import Popen, PIPE
 from sys import exit
@@ -362,7 +362,7 @@ def main():
     print("[i] Checking invalid response...")
 
     request_args = prepare_request(INVALID_FILENAME)
-    invalid_response, _ = get_page(**request_args)
+    invalid_response = get_page(**request_args)
 
     print("[i] Done!")
     print("[i] Searching for files...")
@@ -387,7 +387,7 @@ def main():
             print("[*] Trying '%s'" % case["location"])
 
         request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
-        html, _ = get_page(**request_args)
+        html = get_page(**request_args)
 
         if not html:
             return None
@@ -497,8 +497,8 @@ def get_page(**kwargs):
         user_agent = "%s %s" % (NAME, VERSION)
 
     if post is None:
-        url = "%s://%s%s?%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path,
-                                urlencode(parse_qsl(parsed_url.query)))
+        parsed_url = parsed_url._replace(query=urlencode(parse_qsl(parsed_url.query)))
+        url = urlunsplit(parsed_url)
     else:
         post = urlencode(parse_qsl(post), "POST")
 
@@ -537,7 +537,7 @@ def get_page(**kwargs):
             if getattr(e, "info", None):
                 print("[!] Response headers '%s'" % e.info())
 
-    return page, parsed_url
+    return page
 
 if __name__ == "__main__":
     try:
