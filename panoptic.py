@@ -237,7 +237,7 @@ def parse_args():
     parser.add_option("--postfix", dest="postfix", default="",
                 help="set postfix for file path (e.g. \"%00\")")
 
-    parser.add_option("--multiplier", dest="multiplier", type="int", default=1, metavar="multi",
+    parser.add_option("--multiplier", dest="multiplier", type="int", default=1,
                 help="set multiplication number for prefix (e.g. 10)")
 
     parser.add_option("--replace-slash", dest="replace_slash",
