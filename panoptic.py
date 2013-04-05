@@ -167,6 +167,23 @@ def update():
         print("[!] Problem occurred while updating program (%s)" % repr(stderr.strip()))
         print("[i] Please make sure that you have a 'git' package installed")
 
+def ask_question(question, default=None, automatic=False):
+    """
+    Asks a given question and returns result
+    """
+
+    question = "[?] %s " % question
+
+    if automatic:
+        answer = default
+        print("%s%s" % (question, answer))
+    else:
+        answer = raw_input(question)
+
+    print
+
+    return answer
+
 def parse_args():
     """
     Parses command line arguments
@@ -405,19 +422,14 @@ def main():
             return None
 
         matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
-
         if matcher.quick_ratio() < HEURISTIC_RATIO:
             if not found:
                 print("[i] Possible file(s) found!")
                 print("[i] OS: %s" % case["os"])
 
                 if kb.get("restrict_os") is None:
-                    if args.automatic:
-                        _ = "Y"
-                    else:
-                        _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
-                        print
-                    kb["restrict_os"] = _.lower() != 'n' and case["os"]
+                    answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case["os"], default='Y', automatic=args.automatic)
+                    kb["restrict_os"] = answer.upper() != 'N' and case["os"]
 
             _ = "'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"])
             _ = _.replace("%s/%s/" % (case["os"], case["os"]), "%s/" % case["os"])
@@ -438,12 +450,8 @@ def main():
                     content = html
 
                     if kb.get("filter_output") is None:
-                        if args.automatic:
-                            _ = "Y"
-                        else:
-                            _ = raw_input("[?] Do you want to filter retrieved files from original HTML page content? [Y/n] ")
-                            print
-                        kb["filter_output"] = _.lower() != 'n'
+                        answer = ask_question("Do you want to filter retrieved files from original HTML page content? [Y/n]", default='Y', automatic=args.automatic)
+                        kb["filter_output"] = answer.upper() != 'N'
 
                     if kb.get("filter_output"):
                         matcher = difflib.SequenceMatcher(None, html, original_response)
