@@ -161,8 +161,8 @@ def update():
         revision = stdout[:7] if stdout and re.search(r"(?i)[0-9a-f]{32}", stdout) else "-"
         print("[i] %s the latest revision '%s'" % ("Already at" if not updated else "Updated to", revision))
     else:
-        print "[x] Problem occurred while updating program (%s)" % repr(stderr.strip())
-        print "[i] Please make sure that you have a 'git' package installed"
+        print("[!] Problem occurred while updating program (%s)" % repr(stderr.strip()))
+        print("[i] Please make sure that you have a 'git' package installed")
 
 def parse_args():
     """
@@ -358,13 +358,13 @@ def main():
 
         return re.sub(regex, "", response, re.I)
 
-    print("[*] Checking invalid response...")
+    print("[i] Checking invalid response...")
 
     request_args = prepare_request(INVALID_FILENAME)
     invalid_response, _ = get_page(**request_args)
 
-    print("[*] Done!")
-    print("[*] Searching for files...")
+    print("[i] Done!")
+    print("[i] Searching for files...")
 
     def request_file(case, replace_slashes=True):
         """
@@ -375,7 +375,7 @@ def main():
 
         if kb.get("restrictOS") and kb.get("restrictOS") != case["os"]:
             if args.verbose:
-                print("[o] Skipping '%s'" % case["location"])
+                print("[*] Skipping '%s'" % case["location"])
 
             return None
 
@@ -383,7 +383,7 @@ def main():
             args.prefix = args.prefix[:-1]
 
         if args.verbose:
-            print("[o] Trying '%s'" % case["location"])
+            print("[*] Trying '%s'" % case["location"])
 
         request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
         html, _ = get_page(**request_args)
@@ -395,14 +395,15 @@ def main():
 
         if matcher.quick_ratio() < HEURISTIC_RATIO:
             if not found:
-                print("[*] Possible file(s) found!")
-                print("[*] OS: %s" % case["os"])
+                print("[i] Possible file(s) found!")
+                print("[i] OS: %s" % case["os"])
 
                 if kb.get("restrictOS") is None:
                     if args.automatic:
                         _ = "Y"
                     else:
                         _ = raw_input("[?] Do you want to restrict further scans to '%s'? [Y/n] " % case["os"])
+                        print
                     kb["restrictOS"] = _.lower() != 'n' and case["os"]
 
             print("[+] Found '%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"]))
@@ -434,11 +435,11 @@ def main():
             users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
             if args.verbose:
-                print("[o] Extracting home folders from '%s'" % case["location"])
+                print("[*] Extracting home folders from '%s'" % case["location"])
 
             for user in users:
                 if args.verbose:
-                    print("[o] User: %s, Info: %s" % (user[0], user[4]))
+                    print("[*] User: %s, Info: %s" % (user[0], user[4]))
                 for _ in (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority"):
                     if user[5] == "/": # Will later add a constraint to only check root folder "/" once.
                         continue
@@ -455,13 +456,13 @@ def main():
                 request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"}, False)
 
     if not found:
-        print("[*] No files found!")
+        print("[i] No files found!")
     elif args.verbose:
         print "\n[i] Files found:"
         for _ in files:
             print "[o] %s" % _
 
-    print("\n[*] File search complete.")
+    print("\n[i] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
 
 def get_page(**kwargs):
@@ -538,4 +539,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print "[x] Ctrl-C pressed"
+        print "[!] Ctrl-C pressed"
