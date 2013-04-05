@@ -564,9 +564,6 @@ def get_page(**kwargs):
 
         # Get HTTP Response
         page = conn.read()
-        code = conn.code
-        status = conn.msg
-        responseHeaders = conn.info()
 
     except KeyboardInterrupt:
         raise
