@@ -259,7 +259,7 @@ def parse_args():
     args = parser.parse_args()[0]
 
     if not any((args.url, args.list, args.update)):
-        parser.error('missing argument for target url. Use -h for help')
+        parser.error("missing argument for target url. Use '-h' for help")
 
     if args.prefix:
         args.prefix = args.prefix * args.multiplier
