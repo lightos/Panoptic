@@ -510,7 +510,7 @@ def get_page(**kwargs):
             headers["Cookie"] = cookie
 
         if header:
-            headers[header.split("=")[0]] = header.split("=")[1]
+            headers[header.split("=")[0]] = header.split("=", 1)[1]
 
         req = Request(url, post, headers)
         conn = urlopen(req)
