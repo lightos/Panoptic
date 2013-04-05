@@ -570,15 +570,15 @@ def get_page(**kwargs):
 
     except Exception, e:
         if verbose:
-            if getattr(e, "msg", None):
+            if hasattr(e, "msg"):
                 print("[!] Error msg '%s'" % e.msg)
-            if getattr(e, "reason", None):
+            if hasattr(e, "reason"):
                 print("[!] Error reason '%s'" % e.reason)
-            if getattr(e, "message", None):
+            if hasattr(e, "message"):
                 print("[!] Error message '%s'" % e.message)
-            if getattr(e, "code", None):
+            if hasattr(e, "code"):
                 print("[!] HTTP error code '%d'" % e.code)
-            if getattr(e, "info", None):
+            if hasattr(e, "info"):
                 print("[!] Response headers '%s'" % e.info())
 
     return page
