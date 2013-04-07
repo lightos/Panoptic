@@ -1,7 +1,7 @@
 Panoptic
 ===
 
-![Logo](http://i.imgur.com/8fyg3g2.jpg)
+![Logo](http://i.imgur.com/PPGy8UE.jpg)
 
 Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through LFI vulnerability.
 
