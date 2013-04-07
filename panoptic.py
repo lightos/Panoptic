@@ -257,6 +257,9 @@ def parse_args():
     parser.add_option("--multiplier", dest="multiplier", type="int", default=1,
                 help="set multiplication number for prefix (e.g. 10)")
 
+    parser.add_option("--bad-string", dest="bad_string", metavar="STRING",
+                help="set a string to be detected when file is not found")
+
     parser.add_option("--replace-slash", dest="replace_slash",
                 help="set replacement for char / in paths (e.g. \"/././\")")
 
@@ -418,7 +421,7 @@ def main():
         request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
         html = get_page(**request_args)
 
-        if not html:
+        if not html or args.bad_string and html.find(args.bad_string) != -1:
             return None
 
         matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
