@@ -258,7 +258,7 @@ def parse_args():
                 help="set multiplication number for prefix (e.g. 10)")
 
     parser.add_option("--bad-string", dest="bad_string", metavar="STRING",
-                help="set a string to be detected when file is not found")
+                help="set a string occurring when file is not found")
 
     parser.add_option("--replace-slash", dest="replace_slash",
                 help="set replacement for char / in paths (e.g. \"/././\")")
