@@ -3,7 +3,7 @@ Panoptic
 
 ![Logo](http://i.imgur.com/PPGy8UE.jpg)
 
-Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through LFI vulnerability. You can find a sample run [here](https://gist.github.com/stamparm/5335273).
+Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through LFI vulnerability. Official introductionary post can be found [here](http://websec.ca/blog/view/panoptic). Also, you can find a sample run [here](https://gist.github.com/stamparm/5335273).
 
 ### Help Menu
     Usage: panoptic.py --url TARGET [options]
