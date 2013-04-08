@@ -31,7 +31,7 @@ Panoptic is an open source penetration testing tool that automates the process o
       --prefix=PREFIX       set prefix for file path (e.g. "../")
       --postfix=POSTFIX     set postfix for file path (e.g. "%00")
       --multiplier=MULTI..  set multiplication number for prefix (e.g. 10)
-      --bad-string=STRING   set a string to be detected when file is not found
+      --bad-string=STRING   set a string occurring when file is not found
       --replace-slash=RE..  set replacement for char / in paths (e.g. "/././")
       --update              update Panoptic from official repository
 
