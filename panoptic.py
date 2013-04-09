@@ -310,7 +310,6 @@ def main():
         for _ in set([_[args.list] for _ in cases]):
             print _ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _
 
-    if not args.url:
         exit()
 
     if args.ignore_proxy:
