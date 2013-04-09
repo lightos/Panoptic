@@ -308,7 +308,7 @@ def main():
         print("[i] Listing available filters for usage with option '--%s':\n" % args.list)
 
         for _ in set([_[args.list] for _ in cases]):
-            print _ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _
+            print(_ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _)
 
         exit()
 
@@ -334,13 +334,18 @@ def main():
         with open(USER_AGENTS_FILE, 'r') as f:
             args.user_agent = random.sample(f.readlines(), 1)[0]
 
-    print("[i] Starting scan at: %s\n" % time.strftime("%X"))
-
     parsed_url = urlsplit(args.url)
     request_params = args.data if args.data else parsed_url.query
 
     if not args.param:
-        args.param = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params).group(1)
+        match = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params)
+        if match:
+            args.param = match.group(1)
+        else:
+            print("[!] no usable GET/POST parameters found")
+            exit()
+
+    print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
     def prepare_request(payload):
         """
@@ -511,9 +516,9 @@ def main():
     if not found:
         print("[i] No files found!")
     elif args.verbose:
-        print "\n[i] Files found:"
+        print("\n[i] Files found:")
         for _ in files:
-            print "[o] %s" % _
+            print("[o] %s" % _)
 
     print("\n[i] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
@@ -589,4 +594,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print "[!] Ctrl-C pressed"
+        print("[!] Ctrl-C pressed")
