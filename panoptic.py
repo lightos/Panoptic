@@ -146,6 +146,63 @@ def get_cases(args):
 
     return cases
 
+def get_revision():
+    """
+    Returns abbreviated commit hash number as retrieved with "git rev-parse --short HEAD"
+    """
+
+    retval = None
+    filepath = None
+    _ = os.path.dirname(__file__)
+
+    while True:
+        filepath = os.path.join(_, ".git", "HEAD")
+        if os.path.exists(filepath):
+            break
+        else:
+            filepath = None
+            if _ == os.path.dirname(_):
+                break
+            else:
+                _ = os.path.dirname(_)
+
+    while True:
+        if filepath and os.path.isfile(filepath):
+            with open(filepath, "r") as f:
+                content = f.read()
+                filepath = None
+                if content.startswith("ref: "):
+                    filepath = os.path.join(_, ".git", content.replace("ref: ", "")).strip()
+                else:
+                    match = re.match(r"(?i)[0-9a-f]{32}", content)
+                    retval = match.group(0) if match else None
+                    break
+        else:
+            break
+
+    if not retval:
+        process = execute("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
+        stdout, _ = process.communicate()
+        match = re.search(r"(?i)[0-9a-f]{32}", stdout or "")
+        retval = match.group(0) if match else None
+
+    return retval[:7] if retval else None
+
+def use_revision():
+    """
+    Adapts default version string and banner to use revision number (if available)
+    """
+
+    global BANNER
+    global VERSION
+
+    revision = get_revision()
+
+    if revision:
+        _ = VERSION
+        VERSION = "%s (%s)" % (VERSION, revision)
+        BANNER = BANNER.replace(_, VERSION)
+
 def update():
     """
     Do the program update
@@ -290,6 +347,8 @@ def main():
     """
     Initializes and executes the program
     """
+
+    use_revision()
 
     print(BANNER)
 
