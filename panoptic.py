@@ -181,7 +181,7 @@ def get_revision():
             break
 
     if not retval:
-        process = execute("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
+        process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, _ = process.communicate()
         match = re.search(r"(?i)[0-9a-f]{32}", stdout or "")
         retval = match.group(0) if match else None
