@@ -560,7 +560,9 @@ def main():
             for user in users:
                 if args.verbose:
                     print("[*] User: %s, Info: %s" % (user[0], user[4]))
-                for _ in (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority"):
+                for _ in (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority", ".ssh/authorized_keys", ".ssh/id_dsa",
+                          ".ssh/id_rsa", ".ssh/known_hosts", ".ssh/identity.pub", ".ssh/identity", ".ssh/id_dsa.pub", ".ssh/id_rsa.pub", ".ssh/config",
+                          ".my.cnf", ".mysql_history"):
                     if user[5] == "/":
                         continue
                     request_file({"category": "*NIX Password File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user[5], _), "software": "*NIX"})
