@@ -404,6 +404,9 @@ def main():
             print("[!] No usable GET/POST parameters found.")
             exit()
 
+    if args.os:
+        kb["restrict_os"] = args.os
+
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
     def prepare_request(payload):
