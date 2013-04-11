@@ -59,9 +59,6 @@ CASES_FILE = "cases.xml"
 # Location of file containing user agents
 USER_AGENTS_FILE = "agents.txt"
 
-# Common files that can be found inside *NIX home user directories
-COMMON_HOME_FILES = (".bash_config", ".bashrc", ".cshrc", ".zshrc", ".bash_history", ".bash_logout", ".aptitude/config", ".ksh_history", ".nano_history", ".gitconfig", ".subversion/servers", ".profile", ".psql_history", ".sqlite_history", ".Xauthority", ".ssh/authorized_keys", ".ssh/id_dsa", ".ssh/id_rsa", ".ssh/known_hosts", ".ssh/identity.pub", ".ssh/identity", ".ssh/id_dsa.pub", ".ssh/id_rsa.pub", ".ssh/config", ".my.cnf", ".mysql_history")
-
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
 
@@ -573,10 +570,13 @@ def main():
             for user in users:
                 if args.verbose:
                     print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
-                for _ in COMMON_HOME_FILES:
+                if not kb.home_files:
+                    with open("home.txt", "r") as f:
+                        kb.home_files = filter(None, (_.strip() for _ in f.readlines()))
+                for _ in kb.home_files:
                     if user.group("home") == "/":
                         continue
-                    request_file({"category": "*NIX Password File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"})
+                    request_file({"category": "*NIX User File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"})
 
         if "mysql-bin.index" in case["location"] and not args.skip_parsing:
             binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
