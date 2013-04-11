@@ -659,6 +659,7 @@
                     <file value="/opt/httpd/apache.conf"/>
                     <file value="/opt/httpd/conf/apache.conf"/>
                     <file value="/etc/httpd/apache.conf"/>
+                    <file value="/etc/apache2/apache.conf"/>
                     <file value="/etc/httpd/conf/apache.conf"/>
                     <file value="/usr/local/apache/apache.conf"/>
                     <file value="/usr/local/apache/conf/apache.conf"/>
@@ -1012,6 +1013,11 @@
                     <file value="/var/log/news/news.notice"/>
                     <file value="/var/log/news/suck.err"/>
                     <file value="/var/log/news/suck.notice"/>
+                    <file value="/var/log/messages"/>
+                    <file value="/var/log/messages.1"/>
+                    <file value="/var/log/user.log"/>
+                    <file value="/var/log/user.log.1"/>
+                    <file value="/tmp/access.log"/>
                 </os>
             </log>
             <conf>
@@ -1051,6 +1057,11 @@
                     <file value="/etc/sysctl.conf"/>
                     <file value="/etc/sysconfig/network-scripts/ifcfg-eth0"/>
                     <file value="/etc/redhat-release"/>
+                    <file value="/etc/debian_version"/>
+                    <file value="/etc/fedora-release"/>
+                    <file value="/etc/mandrake-release"/>
+                    <file value="/etc/slackware-release"/>
+                    <file value="/etc/SUSE-release"/>
                     <file value="/etc/security/group"/>
                     <file value="/etc/security/passwd"/>
                     <file value="/etc/security/user"/>
@@ -1122,6 +1133,16 @@
                     <file value="/usr/local/psa/admin/htdocs/domains/databases/phpMyAdmin/libraries/config.default.php"/>
                     <file value="/etc/apache2/conf.d/phpmyadmin.conf"/>
                     <file value="/etc/phpmyadmin/config.inc.php"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="LDAP">
+        <software value="OpenLDAP">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/openldap/ldap.conf"/>
                 </os>
             </conf>
         </software>
