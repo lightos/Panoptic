@@ -358,6 +358,7 @@ def main():
     args = parse_args()
     found = False
     kb = {}
+    lll = object()
     files = []
 
     if args.update:
@@ -520,6 +521,8 @@ def main():
 
                 with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
                     content = html
+                    import pdb
+                    pdb.set_trace()
 
                     if kb.get("filter_output") is None:
                         answer = ask_question("Do you want to filter retrieved files from original HTML page content? [Y/n]", default='Y', automatic=args.automatic)
