@@ -59,6 +59,9 @@ CASES_FILE = "cases.xml"
 # Location of file containing user agents
 USER_AGENTS_FILE = "agents.txt"
 
+# Common files that can be found inside *NIX home user directories
+COMMON_HOME_FILES = (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority", ".ssh/authorized_keys", ".ssh/id_dsa", ".ssh/id_rsa", ".ssh/known_hosts", ".ssh/identity.pub", ".ssh/identity", ".ssh/id_dsa.pub", ".ssh/id_rsa.pub", ".ssh/config", ".my.cnf", ".mysql_history")
+
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
 
@@ -552,20 +555,18 @@ def main():
 
         # If --skip-file-parsing is not set.
         if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
-            users = re.findall("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
+            users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
             if args.verbose:
                 print("[*] Extracting home folders from '%s'" % case["location"])
 
             for user in users:
                 if args.verbose:
-                    print("[*] User: %s, Info: %s" % (user[0], user[4]))
-                for _ in (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority", ".ssh/authorized_keys", ".ssh/id_dsa",
-                          ".ssh/id_rsa", ".ssh/known_hosts", ".ssh/identity.pub", ".ssh/identity", ".ssh/id_dsa.pub", ".ssh/id_rsa.pub", ".ssh/config",
-                          ".my.cnf", ".mysql_history"):
-                    if user[5] == "/":
+                    print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
+                for _ in COMMON_HOME_FILES:
+                    if user.group("home") == "/":
                         continue
-                    request_file({"category": "*NIX Password File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user[5], _), "software": "*NIX"})
+                    request_file({"category": "*NIX Password File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"})
 
         if "mysql-bin.index" in case["location"] and not args.skip_parsing:
             binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
