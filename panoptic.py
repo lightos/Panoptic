@@ -91,6 +91,15 @@ Examples:
 ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
 """
 
+class _(dict):
+    def __getattr__(self, name):
+        return self.get(name)
+    def __setattr__(self, name, value):
+        return self.__setitem__(name, value)
+
+# Knowledge base used for storing program wide settings
+kb = _()
+
 def get_cases(args):
     """
     Parse XML and return testing cases filtered by provided args
@@ -191,7 +200,7 @@ def get_revision():
 
     return retval[:7] if retval else None
 
-def use_revision():
+def check_revision():
     """
     Adapts default version string and banner to use revision number (if available)
     """
@@ -203,7 +212,7 @@ def use_revision():
 
     if revision:
         _ = VERSION
-        VERSION = "%s (%s)" % (VERSION, revision)
+        VERSION = "%s-%s" % (VERSION, revision)
         BANNER = BANNER.replace(_, VERSION)
 
 def update():
@@ -351,14 +360,12 @@ def main():
     Initializes and executes the program
     """
 
-    use_revision()
+    check_revision()
 
     print(BANNER)
 
     args = parse_args()
     found = False
-    kb = {}
-    lll = object()
     files = []
 
     if args.update:
@@ -409,7 +416,7 @@ def main():
             exit()
 
     if args.os:
-        kb["restrict_os"] = args.os
+        kb.restrict_os = args.os
 
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
 
@@ -471,12 +478,13 @@ def main():
 
     def request_file(case, replace_slashes=True):
         """
-        Request file from URL
+        Requests target for a file described in case
         """
+
         if args.replace_slash and replace_slashes:
             case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
 
-        if kb.get("restrict_os") and kb.get("restrict_os") != case["os"]:
+        if kb.restrict_os and kb.restrict_os != case["os"]:
             if args.verbose:
                 print("[*] Skipping '%s'" % case["location"])
 
@@ -495,14 +503,15 @@ def main():
             return None
 
         matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
+
         if matcher.quick_ratio() < HEURISTIC_RATIO:
             if not found:
                 print("[i] Possible file(s) found!")
                 print("[i] OS: %s" % case["os"])
 
-                if kb.get("restrict_os") is None:
+                if kb.restrict_os is None:
                     answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case["os"], default='Y', automatic=args.automatic)
-                    kb["restrict_os"] = answer.upper() != 'N' and case["os"]
+                    kb.restrict_os = answer.upper() != 'N' and case["os"]
 
             _ = "'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"])
             _ = _.replace("%s/%s/" % (case["os"], case["os"]), "%s/" % case["os"])
@@ -522,9 +531,9 @@ def main():
                 with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
                     content = html
 
-                    if kb.get("filter_output") is None:
+                    if kb.filter_output is None:
                         answer = ask_question("Do you want to filter retrieved files from original HTML page content? [Y/n]", default='Y', automatic=args.automatic)
-                        kb["filter_output"] = answer.upper() != 'N'
+                        kb.filter_output = answer.upper() != 'N'
 
                     if kb.get("filter_output"):
                         matcher = difflib.SequenceMatcher(None, html, original_response)
