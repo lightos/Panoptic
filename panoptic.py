@@ -402,6 +402,8 @@ def main():
     if not args.param:
         match = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params)
         if match:
+            import pdb
+            pbb.set_trace()
             args.param = match.group(1)
         else:
             print("[!] No usable GET/POST parameters found.")
