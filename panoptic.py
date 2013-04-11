@@ -59,6 +59,9 @@ CASES_FILE = "cases.xml"
 # Location of file containing user agents
 USER_AGENTS_FILE = "agents.txt"
 
+# Location of file containing common user files
+HOME_FILES_FILE = "home.txt"
+
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
 
@@ -571,7 +574,7 @@ def main():
                 if args.verbose:
                     print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
                 if not kb.home_files:
-                    with open("home.txt", "r") as f:
+                    with open(HOME_FILES_FILE, "r") as f:
                         kb.home_files = filter(None, (_.strip() for _ in f.readlines()))
                 for _ in kb.home_files:
                     if user.group("home") == "/":
