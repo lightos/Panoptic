@@ -60,7 +60,7 @@ CASES_FILE = "cases.xml"
 USER_AGENTS_FILE = "agents.txt"
 
 # Common files that can be found inside *NIX home user directories
-COMMON_HOME_FILES = (".bash_config", ".bash_history", ".bash_logout", ".ksh_history", ".Xauthority", ".ssh/authorized_keys", ".ssh/id_dsa", ".ssh/id_rsa", ".ssh/known_hosts", ".ssh/identity.pub", ".ssh/identity", ".ssh/id_dsa.pub", ".ssh/id_rsa.pub", ".ssh/config", ".my.cnf", ".mysql_history")
+COMMON_HOME_FILES = (".bash_config", ".bashrc", ".cshrc", ".zshrc", ".bash_history", ".bash_logout", ".aptitude/config", ".ksh_history", ".nano_history", ".gitconfig", ".subversion/servers", ".profile", ".psql_history", ".sqlite_history", ".Xauthority", ".ssh/authorized_keys", ".ssh/id_dsa", ".ssh/id_rsa", ".ssh/known_hosts", ".ssh/identity.pub", ".ssh/identity", ".ssh/id_dsa.pub", ".ssh/id_rsa.pub", ".ssh/config", ".my.cnf", ".mysql_history")
 
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
