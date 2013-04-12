@@ -33,6 +33,7 @@ import os
 import random
 import re
 import string
+import sys
 import time
 import xml.etree.ElementTree as ET
 
@@ -73,6 +74,9 @@ BANNER = """
 
 %s %s (%s)
 """ % (NAME, VERSION, URL)
+
+# Character used for progress rotator
+ROTATOR_CHARS = "|/-\\"
 
 # Location of Git repository
 GIT_REPOSITORY = "git://github.com/lightos/Panoptic.git"
@@ -481,6 +485,8 @@ def main():
         Requests target for a file described in case
         """
 
+        global ROTATOR_CHARS
+
         if args.replace_slash and replace_slashes:
             case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
 
@@ -495,6 +501,11 @@ def main():
 
         if args.verbose:
             print("[*] Trying '%s'" % case["location"])
+        else:
+            sys.stdout.write("\r%s\r" % ROTATOR_CHARS[0])
+            sys.stdout.flush()
+
+        ROTATOR_CHARS = ROTATOR_CHARS[1:] + ROTATOR_CHARS[0]
 
         request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
         html = get_page(**request_args)
