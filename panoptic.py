@@ -381,13 +381,18 @@ def main():
     if args.list:
         args.list = args.list.lower()
 
+        _ = ("category", "list", "os")
+        if args.list not in _:
+            print("[!] Valid values for option '--list' are: %s" % ", ".join(_))
+            exit()
+
         print("[i] Listing available filters for usage with option '--%s':\n" % args.list)
 
         try:
             for _ in set([_[args.list] for _ in cases]):
                 print(_ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _)
         except KeyError:
-            print("[!] Invalid option has been provided")
+            pass
         finally:
             exit()
 
