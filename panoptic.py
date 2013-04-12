@@ -379,12 +379,17 @@ def main():
     cases = get_cases(args)
 
     if args.list:
+        args.list = args.list.lower()
+
         print("[i] Listing available filters for usage with option '--%s':\n" % args.list)
 
-        for _ in set([_[args.list] for _ in cases]):
-            print(_ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _)
-
-        exit()
+        try:
+            for _ in set([_[args.list] for _ in cases]):
+                print(_ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _)
+        except KeyError:
+            print("[!] Invalid option has been provided")
+        finally:
+            exit()
 
     if args.ignore_proxy:
         _ = ProxyHandler({})
