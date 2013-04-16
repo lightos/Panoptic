@@ -375,7 +375,7 @@ def request_file(case, replace_slashes=True):
                         kb.filter_output = answer.upper() != 'N'
 
                 if kb.get("filter_output"):
-                    matcher = difflib.SequenceMatcher(None, html, original_response)
+                    matcher = difflib.SequenceMatcher(None, html, kb.original_response)
                     matching_blocks = matcher.get_matching_blocks()
 
                     if matching_blocks:
@@ -384,7 +384,7 @@ def request_file(case, replace_slashes=True):
                             content = content[start[2]:]
                         if len(matching_blocks) > 2:
                             end = matching_blocks[-2]
-                            if end[2] > 0 and end[0] + end[2] == len(html) and end[1] + end[2] == len(original_response):
+                            if end[2] > 0 and end[0] + end[2] == len(html) and end[1] + end[2] == len(kb.original_response):
                                 content = content[:-end[2]]
 
                 f.write(content)
@@ -622,7 +622,7 @@ def main():
     if args.data:
         request_args["data"] = args.data
 
-    original_response = get_page(**request_args)
+    kb.original_response = get_page(**request_args)
 
     print("[i] Checking invalid response...")
 
