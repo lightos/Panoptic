@@ -110,6 +110,10 @@ kb = _()
 args = None
 
 def print(*args, **kwargs):
+    """
+    Thread-safe version of print function
+    """
+
     with kb.print_lock:
         return __builtins__.print(*args, **kwargs)
 
@@ -394,6 +398,10 @@ def request_file(case, replace_slashes=True):
     return None
 
 def try_cases(cases):
+    """
+    Runs tests against given cases
+    """
+
     for case in cases:
         html = request_file(case)
 
