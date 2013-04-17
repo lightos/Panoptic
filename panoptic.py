@@ -68,6 +68,9 @@ HOME_FILES_FILE = "home.txt"
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
 
+# If content size is bigger than normal (and illegal) skip content retrieval (if --write-files not used) and mark it as found
+SKIP_RETRIEVE_THRESHOLD = 1000
+
 # ASCII eye taken from http://www.retrojunkie.com/asciiart/health/eyes.htm
 BANNER = """
  .-',--.`-.
@@ -714,8 +717,16 @@ def get_page(**kwargs):
         req = Request(url, post, headers)
         conn = urlopen(req)
 
+        if not args.write_files and kb.original_response and kb.invalid_response:
+            _ = conn.headers.get("Content-Length", "")
+            if _.isdigit():
+                _ = int(_)
+                if _ - max(len(kb.original_response), len(kb.invalid_response)) > SKIP_RETRIEVE_THRESHOLD:
+                    page = "".join(random.choice(string.letters) for i in xrange(_))
+
         # Get HTTP Response
-        page = conn.read()
+        if not page:
+            page = conn.read()
 
     except KeyboardInterrupt:
         raise
