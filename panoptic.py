@@ -713,8 +713,6 @@ def get_page(**kwargs):
 
         req = Request(url, post, headers)
         conn = urlopen(req)
-        import pdb
-        pdb.set_trace()
 
         # Get HTTP Response
         page = conn.read()
