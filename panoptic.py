@@ -640,6 +640,9 @@ def main():
     print("[i] Done!")
     print("[i] Searching for files...")
 
+    if args.threads > 1:
+        print("[i] Starting %d threads" % args.threads)
+
     threads = []
     for i in xrange(args.threads):
         thread = threading.Thread(target=try_cases, args=([cases[_] for _ in xrange(i, len(cases), args.threads)],))
