@@ -52,6 +52,16 @@
                 </os>
             </conf>
         </software>
+        <software value="Mono">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/mono/1.0/machine.config"/>
+                    <file value="/etc/mono/2.0/machine.config"/>
+                    <file value="/etc/mono/2.0/web.config"/>
+                    <file value="/etc/mono/config"/>
+                </os>
+            </conf>
+        </software>
     </category>
 
     <category value="Web Hosting Administration">
@@ -98,10 +108,12 @@
         <software value="MySQL">
             <log>
                 <os value="*NIX">
+                    <file value="/etc/mysql/conf.d/old_passwords.cnf"/>
                     <file value="/var/log/mysql/mysql-bin.log"/>
                     <file value="/var/log/mysql/mysql-bin.index"/>
                     <file value="/var/log/mysql/data/mysql-bin.index"/>
                     <file value="/var/log/mysql.log"/>
+                    <file value="/var/log/mysql.err"/>
                     <file value="/var/log/mysqlderror.log"/>
                     <file value="/var/log/mysql/mysql.log"/>
                     <file value="/var/log/mysql/mysql-slow.log"/>
@@ -606,6 +618,8 @@
                     <file value="/logs/access.log"/>
                     <file value="/etc/httpd/logs/access_log"/>
                     <file value="/etc/httpd/logs/access.log"/>
+                    <file value="/etc/httpd/logs/acces.log"/>
+                    <file value="/etc/httpd/logs/acces_log"/>
                     <file value="/etc/httpd/logs/error_log"/>
                     <file value="/etc/httpd/logs/error.log"/>
                     <file value="/usr/local/apache/logs/access_log"/>
@@ -724,6 +738,24 @@
                     <file value="/private/etc/httpd/httpd.conf"/>
                     <file value="/private/etc/httpd/httpd.conf.default"/>
                     <file value="/etc/apache2/vhosts.d/default_vhost.include"/>
+                    <file value="/etc/apache2/conf.d/charset"/>
+                    <file value="/etc/apache2/conf.d/security"/>
+                    <file value="/etc/apache2/envvars"/>
+                    <file value="/etc/apache2/mods-available/autoindex.conf"/>
+                    <file value="/etc/apache2/mods-available/deflate.conf"/>
+                    <file value="/etc/apache2/mods-available/dir.conf"/>
+                    <file value="/etc/apache2/mods-available/mem_cache.conf"/>
+                    <file value="/etc/apache2/mods-available/mime.conf"/>
+                    <file value="/etc/apache2/mods-available/proxy.conf"/>
+                    <file value="/etc/apache2/mods-available/setenvif.conf"/>
+                    <file value="/etc/apache2/mods-available/ssl.conf"/>
+                    <file value="/etc/apache2/mods-enabled/alias.conf"/>
+                    <file value="/etc/apache2/mods-enabled/deflate.conf"/>
+                    <file value="/etc/apache2/mods-enabled/dir.conf"/>
+                    <file value="/etc/apache2/mods-enabled/mime.conf"/>
+                    <file value="/etc/apache2/mods-enabled/negotiation.conf"/>
+                    <file value="/etc/apache2/mods-enabled/php5.conf"/>
+                    <file value="/etc/apache2/mods-enabled/status.conf"/>
                 </os>
                 <os value="Windows">
                     <file value="/Program Files/Apache Group/Apache/conf/httpd.conf"/>
@@ -869,6 +901,7 @@
                 <os value="*NIX">
                     <file value="/etc/smbpasswd"/>
                     <file value="/etc/smb.conf"/>
+                    <file value="/etc/samba/dhcp.conf"/>
                     <file value="/etc/samba/smb.conf"/>
                     <file value="/etc/samba/samba.conf"/>
                     <file value="/etc/samba/smb.conf.user"/>
@@ -877,6 +910,17 @@
                     <file value="/etc/samba/private/smbpasswd"/>
                     <file value="/usr/local/etc/smb.conf"/>
                     <file value="/usr/local/samba/lib/smb.conf.user"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Wicd">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/wicd/dhclient.conf.template.default"/>
+                    <file value="/etc/wicd/manager-settings.conf"/>
+                    <file value="/etc/wicd/wired-settings.conf"/>
+                    <file value="/etc/wicd/wireless-settings.conf"/>
                 </os>
             </conf>
         </software>
@@ -913,18 +957,69 @@
         </software>
     </category>
 
+    <category value="Antivirus">
+        <software value="ClamAV">
+            <log>
+                <os value="*NIX">
+                    <file value="/etc/clamav/clamd.conf"/>
+                    <file value="/etc/clamav/freshclam.conf"/>
+                </os>
+            </log>
+        </software>
+    </category>
+
     <category value="*NIX">
+        <software value="X11">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/X11/xorg.conf"/>
+                    <file value="/etc/X11/xorg.conf-vesa"/>
+                    <file value="/etc/X11/xorg.conf-vmware"/>
+                    <file value="/etc/X11/xorg.conf.BeforeVMwareToolsInstall"/>
+                    <file value="/etc/X11/xorg.conf.orig"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Bluetooth">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/bluetooth/input.conf"/>
+                    <file value="/etc/bluetooth/main.conf"/>
+                    <file value="/etc/bluetooth/network.conf"/>
+                    <file value="/etc/bluetooth/rfcomm.conf"/>
+                </os>
+            </conf>
+        </software>
+
         <software value="Proc">
             <other>
                 <os value="*NIX">
                     <file value="/proc/self/environ"/>
+                    <file value="/proc/self/mounts"/>
                     <file value="/proc/self/stat"/>
                     <file value="/proc/self/status"/>
                     <file value="/proc/self/cmdline"/>
+                    <file value="/proc/self/fd/0"/>
+                    <file value="/proc/self/fd/1"/>
                     <file value="/proc/self/fd/2"/>
+                    <file value="/proc/self/fd/3"/>
+                    <file value="/proc/self/fd/4"/>
+                    <file value="/proc/self/fd/5"/>
+                    <file value="/proc/self/fd/6"/>
                     <file value="/proc/self/fd/7"/>
+                    <file value="/proc/self/fd/8"/>
+                    <file value="/proc/self/fd/9"/>
+                    <file value="/proc/self/fd/10"/>
+                    <file value="/proc/self/fd/11"/>
+                    <file value="/proc/self/fd/12"/>
+                    <file value="/proc/self/fd/13"/>
+                    <file value="/proc/self/fd/14"/>
+                    <file value="/proc/self/fd/15"/>
                     <file value="/proc/version"/>
                     <file value="/proc/devices"/>
+                    <file value="/proc/cpuinfo"/>
+                    <file value="/proc/meminfo"/>
                     <file value="/proc/net/tcp"/>
                     <file value="/proc/net/udp"/>
                 </os>
@@ -934,9 +1029,11 @@
         <software value="Bash">
             <mix>
                 <os value="*NIX">
+                    <file value="/etc/bash_completion.d/debconf"/>
                     <file value="/root/.bash_logout"/>
                     <file value="/root/.bash_history"/>
                     <file value="/root/.bash_config"/>
+                    <file value="/root/.bashrc"/>
                     <file value="/etc/bash.bashrc"/>
                     <file value="/var/adm/SYSLOG"/>
                     <file value="/var/adm/sulog"/>
@@ -1022,6 +1119,8 @@
             </log>
             <conf>
                 <os value="*NIX">
+                    <file value="/etc/sensors.conf"/>
+                    <file value="/etc/sensors3.conf"/>
                     <file value="/etc/host.conf"/>
                 </os>
             </conf>
@@ -1048,13 +1147,20 @@
                     <file value="/etc/password.master"/>
                     <file value="/etc/profile"/>
                     <file value="/etc/resolv.conf"/>
+                    <file value="/etc/resolvconf/update-libc.d/sendmail"/>
+                    <file value="/etc/apt/apt.conf"/>
                     <file value="/etc/inetd.conf"/>
                     <file value="/etc/inittab"/>
                     <file value="/etc/issue"/>
                     <file value="/etc/issue.net"/>
                     <file value="/etc/login.defs"/>
                     <file value="/etc/sudoers"/>
+                    <file value="/etc/syslog.conf"/>
                     <file value="/etc/sysctl.conf"/>
+                    <file value="/etc/sysctl.d/10-console-messages.conf"/>
+                    <file value="/etc/sysctl.d/10-network-security.conf"/>
+                    <file value="/etc/sysctl.d/10-process-security.conf"/>
+                    <file value="/etc/sysctl.d/wine.sysctl.conf"/>
                     <file value="/etc/sysconfig/network-scripts/ifcfg-eth0"/>
                     <file value="/etc/redhat-release"/>
                     <file value="/etc/debian_version"/>
@@ -1067,10 +1173,46 @@
                     <file value="/etc/security/user"/>
                     <file value="/etc/security/environ"/>
                     <file value="/etc/security/limits"/>
+                    <file value="/etc/security/access.conf"/>
+                    <file value="/etc/security/group.conf"/>
+                    <file value="/etc/security/limits.conf"/>
+                    <file value="/etc/security/namespace.conf"/>
+                    <file value="/etc/security/opasswd"/>
+                    <file value="/etc/security/pam_env.conf"/>
+                    <file value="/etc/security/sepermit.conf"/>
+                    <file value="/etc/security/time.conf"/>
                     <file value="/root/.ksh_history"/>
-                    <file value="/root/.bash_logut"/>
                     <file value="/root/.Xauthority"/>
                     <file value="/usr/lib/security/mkuser.default"/>
+                    <file value="/etc/adduser.conf"/>
+                    <file value="/etc/avahi/avahi-daemon.conf"/>
+                    <file value="/etc/ca-certificates.conf"/>
+                    <file value="/etc/ca-certificates.conf.dpkg-old"/>
+                    <file value="/etc/casper.conf"/>
+                    <file value="/etc/chkrootkit.conf"/>
+                    <file value="/etc/debconf.conf"/>
+                    <file value="/etc/dns2tcpd.conf"/>
+                    <file value="/etc/e2fsck.conf"/>
+                    <file value="/etc/esound/esd.conf"/>
+                    <file value="/etc/etter.conf"/>
+                    <file value="/etc/fuse.conf"/>
+                    <file value="/etc/foremost.conf"/>
+                    <file value="/etc/hdparm.conf"/>
+                    <file value="/etc/kernel-img.conf"/>
+                    <file value="/etc/kernel-pkg.conf"/>
+                    <file value="/etc/ld.so.conf"/>
+                    <file value="/etc/ltrace.conf"/>
+                    <file value="/etc/mail/sendmail.conf"/>
+                    <file value="/etc/manpath.config"/>
+                    <file value="/etc/kbd/config"/>
+                    <file value="/etc/ldap/ldap.conf"/>
+                    <file value="/etc/logrotate.conf"/>
+                    <file value="/etc/mtools.conf"/>
+                    <file value="/etc/sensors.conf"/>
+                    <file value="/etc/smi.conf"/>
+                    <file value="/etc/updatedb.conf"/>
+                    <file value="/etc/pulse/client.conf"/>
+
                 </os>
             </other>
         </software>
@@ -1143,6 +1285,34 @@
             <conf>
                 <os value="*NIX">
                     <file value="/etc/openldap/ldap.conf"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="Printing">
+        <software value="CUPS">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/cups/acroread.conf"/>
+                    <file value="/etc/cups/cupsd.conf"/>
+                    <file value="/etc/cups/cupsd.conf.default"/>
+                    <file value="/etc/cups/pdftops.conf"/>
+                    <file value="/etc/cups/printers.conf"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="Virtualization">
+        <software value="VMWare">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/modprobe.d/vmware-tools.conf"/>
+                    <file value="/etc/updatedb.conf.BeforeVMwareToolsInstall"/>
+                    <file value="/etc/vmware-tools/config"/>
+                    <file value="/etc/vmware-tools/tpvmlp.conf"/>
+                    <file value="/etc/vmware-tools/vmware-tools-libraries.conf"/>
                 </os>
             </conf>
         </software>
