@@ -100,6 +100,17 @@ Examples:
 ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
 """
 
+class PROXY_TYPE:
+    HTTP = "HTTP"
+    HTTPS = "HTTPS"
+    SOCKS4 = "SOCKS4"
+    SOCKS5 = "SOCKS5"
+
+class HTTP_HEADER:
+    COOKIE = "Cookie"
+    USER_AGENT = "User-agent"
+    CONTENT_LENGTH = "Content-length"
+
 class AttribDict(dict):
     def __getattr__(self, name):
         return self.get(name)
@@ -179,6 +190,10 @@ def get_cases(args):
     return cases
 
 def load_list(filepath):
+    """
+    Loads list of items from a custom given filepath location
+    """
+
     items = []
     cases = []
 
@@ -619,11 +634,11 @@ def main():
 
         match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
         if match:
-            if match.group("type").upper() == "SOCKS4":
+            if match.group("type").upper() == PROXY_TYPE.SOCKS4:
                 socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
-            elif match.group("type").upper() == "SOCKS5":
+            elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
                 socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
-            elif match.group("type").upper() in ("HTTP", "HTTPS"):
+            elif match.group("type").upper() in (PROXY_TYPE.HTTP, PROXY_TYPE.HTTPS):
                 _ = ProxyHandler({match.group("type"): args.proxy})
                 opener = build_opener(_)
                 install_opener(opener)
@@ -728,10 +743,10 @@ def get_page(**kwargs):
 
     # Perform HTTP Request
     try:
-        headers["User-agent"] = user_agent
+        headers[HTTP_HEADER.USER_AGENT] = user_agent
 
         if cookie:
-            headers["Cookie"] = cookie
+            headers[HTTP_HEADER.COOKIE] = cookie
 
         if header:
             headers[header.split("=")[0]] = header.split("=", 1)[1]
@@ -740,7 +755,7 @@ def get_page(**kwargs):
         conn = urlopen(req)
 
         if not args.write_files and kb.original_response and kb.invalid_response:
-            _ = conn.headers.get("Content-Length", "")
+            _ = conn.headers.get(HTTP_HEADER.CONTENT_LENGTH, "")
             if _.isdigit():
                 _ = int(_)
                 if _ - max(len(kb.original_response), len(kb.invalid_response)) > SKIP_RETRIEVE_THRESHOLD:
