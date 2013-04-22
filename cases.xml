@@ -914,6 +914,27 @@
             </conf>
         </software>
 
+        <software value="DHCP">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/dhcp3/dhclient.conf"/>
+                    <file value="/etc/dhcp3/dhcpd.conf"/>
+                    <file value="/etc/dhcp/dhclient.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Miredo">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/miredo-server.conf"/>
+                    <file value="/etc/miredo.conf"/>
+                    <file value="/etc/miredo/miredo-server.conf"/>
+                    <file value="/etc/miredo/miredo.conf"/>
+                </os>
+            </conf>
+        </software>
+
         <software value="Wicd">
             <conf>
                 <os value="*NIX">
@@ -1122,69 +1143,25 @@
                     <file value="/etc/sensors.conf"/>
                     <file value="/etc/sensors3.conf"/>
                     <file value="/etc/host.conf"/>
-                </os>
-            </conf>
-            <other>
-                <os value="*NIX">
-                    <file value="/etc/passwd"/>
-                    <file value="/etc/passwd~"/>
-                    <file value="/etc/passwd-"/>
-                    <file value="/etc/shadow"/>
-                    <file value="/etc/shadow~"/>
-                    <file value="/etc/shadow-"/>
-                    <file value="/etc/fstab"/>
-                    <file value="/etc/motd"/>
-                    <file value="/etc/hosts"/>
-                    <file value="/etc/group"/>
-                    <file value="/etc/group-"/>
-                    <file value="/etc/alias"/>
-                    <file value="/etc/crontab"/>
-                    <file value="/etc/crypttab"/>
-                    <file value="/etc/exports"/>
-                    <file value="/etc/mtab"/>
-                    <file value="/etc/os-release"/>
                     <file value="/etc/pam.conf"/>
-                    <file value="/etc/password.master"/>
-                    <file value="/etc/profile"/>
                     <file value="/etc/resolv.conf"/>
-                    <file value="/etc/resolvconf/update-libc.d/sendmail"/>
                     <file value="/etc/apt/apt.conf"/>
                     <file value="/etc/inetd.conf"/>
-                    <file value="/etc/inittab"/>
-                    <file value="/etc/issue"/>
-                    <file value="/etc/issue.net"/>
-                    <file value="/etc/login.defs"/>
-                    <file value="/etc/sudoers"/>
                     <file value="/etc/syslog.conf"/>
                     <file value="/etc/sysctl.conf"/>
                     <file value="/etc/sysctl.d/10-console-messages.conf"/>
                     <file value="/etc/sysctl.d/10-network-security.conf"/>
                     <file value="/etc/sysctl.d/10-process-security.conf"/>
                     <file value="/etc/sysctl.d/wine.sysctl.conf"/>
-                    <file value="/etc/sysconfig/network-scripts/ifcfg-eth0"/>
-                    <file value="/etc/redhat-release"/>
-                    <file value="/etc/debian_version"/>
-                    <file value="/etc/fedora-release"/>
-                    <file value="/etc/mandrake-release"/>
-                    <file value="/etc/slackware-release"/>
-                    <file value="/etc/SUSE-release"/>
-                    <file value="/etc/security/group"/>
-                    <file value="/etc/security/passwd"/>
-                    <file value="/etc/security/user"/>
-                    <file value="/etc/security/environ"/>
-                    <file value="/etc/security/limits"/>
                     <file value="/etc/security/access.conf"/>
                     <file value="/etc/security/group.conf"/>
                     <file value="/etc/security/limits.conf"/>
                     <file value="/etc/security/namespace.conf"/>
-                    <file value="/etc/security/opasswd"/>
                     <file value="/etc/security/pam_env.conf"/>
                     <file value="/etc/security/sepermit.conf"/>
                     <file value="/etc/security/time.conf"/>
-                    <file value="/root/.ksh_history"/>
-                    <file value="/root/.Xauthority"/>
-                    <file value="/usr/lib/security/mkuser.default"/>
                     <file value="/etc/adduser.conf"/>
+                    <file value="/etc/deluser.conf"/>
                     <file value="/etc/avahi/avahi-daemon.conf"/>
                     <file value="/etc/ca-certificates.conf"/>
                     <file value="/etc/ca-certificates.conf.dpkg-old"/>
@@ -1212,7 +1189,54 @@
                     <file value="/etc/smi.conf"/>
                     <file value="/etc/updatedb.conf"/>
                     <file value="/etc/pulse/client.conf"/>
-
+                </os>
+            </conf>
+            <other>
+                <os value="*NIX">
+                    <file value="/etc/hostname"/>
+                    <file value="/etc/passwd"/>
+                    <file value="/etc/passwd~"/>
+                    <file value="/etc/passwd-"/>
+                    <file value="/etc/shadow"/>
+                    <file value="/etc/shadow~"/>
+                    <file value="/etc/shadow-"/>
+                    <file value="/etc/fstab"/>
+                    <file value="/etc/motd"/>
+                    <file value="/etc/hosts"/>
+                    <file value="/etc/group"/>
+                    <file value="/etc/group-"/>
+                    <file value="/etc/alias"/>
+                    <file value="/etc/crontab"/>
+                    <file value="/etc/crypttab"/>
+                    <file value="/etc/exports"/>
+                    <file value="/etc/mtab"/>
+                    <file value="/etc/hosts.allow"/>
+                    <file value="/etc/hosts.deny"/>
+                    <file value="/etc/os-release"/>
+                    <file value="/etc/password.master"/>
+                    <file value="/etc/profile"/>
+                    <file value="/etc/resolvconf/update-libc.d/sendmail"/>
+                    <file value="/etc/inittab"/>
+                    <file value="/etc/issue"/>
+                    <file value="/etc/issue.net"/>
+                    <file value="/etc/login.defs"/>
+                    <file value="/etc/sudoers"/>
+                    <file value="/etc/sysconfig/network-scripts/ifcfg-eth0"/>
+                    <file value="/etc/redhat-release"/>
+                    <file value="/etc/debian_version"/>
+                    <file value="/etc/fedora-release"/>
+                    <file value="/etc/mandrake-release"/>
+                    <file value="/etc/slackware-release"/>
+                    <file value="/etc/SUSE-release"/>
+                    <file value="/etc/security/group"/>
+                    <file value="/etc/security/passwd"/>
+                    <file value="/etc/security/user"/>
+                    <file value="/etc/security/environ"/>
+                    <file value="/etc/security/limits"/>
+                    <file value="/etc/security/opasswd"/>
+                    <file value="/root/.ksh_history"/>
+                    <file value="/root/.Xauthority"/>
+                    <file value="/usr/lib/security/mkuser.default"/>
                 </os>
             </other>
         </software>
@@ -1299,6 +1323,25 @@
                     <file value="/etc/cups/cupsd.conf.default"/>
                     <file value="/etc/cups/pdftops.conf"/>
                     <file value="/etc/cups/printers.conf"/>
+                </os>
+            </conf>
+        </software>
+    </category>
+
+    <category value="Versioning">
+        <software value="CVS">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/cvs-cron.conf"/>
+                    <file value="/etc/cvs-pserver.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="SVN">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/subversion/config"/>
                 </os>
             </conf>
         </software>
