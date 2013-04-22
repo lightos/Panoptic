@@ -253,7 +253,7 @@ def update():
     Do the program update
     """
 
-    print("[i] Doing program update...")
+    print("[i] Checking for updates...")
 
     process = Popen("git pull %s HEAD" % GIT_REPOSITORY, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = process.communicate()
@@ -458,7 +458,7 @@ def try_cases(cases):
                 print("[i] Extracting MySQL binary logs from '%s'" % case.location)
 
             for _ in binlogs:
-                request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (case.location[:location], _), "software": "MySQL"}, False))
+                request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (case.location[:location], _), "software": "MySQL"}), False)
 
 def parse_args():
     """
