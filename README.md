@@ -22,6 +22,7 @@ Panoptic is an open source penetration testing tool that automates the process o
       -a/--auto             avoid user interaction by using default options
       -w/--write-files      write content of retrieved files to output folder
       -x/--skip-parsing     skip special tests if *NIX passwd file is found
+      --load=LISTFILE       load and try user provided list from a file
       --ignore-proxy        ignore system default HTTP proxy
       --proxy=PROXY         set proxy (e.g. "socks5://192.168.5.92")
       --user-agent=UA       set HTTP User-Agent header value
@@ -30,9 +31,10 @@ Panoptic is an open source penetration testing tool that automates the process o
       --header=HEADER       set a custom HTTP header (e.g. "Max-Forwards=10")
       --prefix=PREFIX       set prefix for file path (e.g. "../")
       --postfix=POSTFIX     set postfix for file path (e.g. "%00")
-      --multiplier=MULTI..  set multiplication number for prefix (e.g. 10)
+      --multiplier=MULTI..  set multiplication number for prefix (default: 1)
       --bad-string=STRING   set a string occurring when file is not found
       --replace-slash=RE..  set replacement for char / in paths (e.g. "/././")
+      --threads=THREADS     set number of threads (default: 1)
       --update              update Panoptic from official repository
 
 ### Examples
