@@ -618,8 +618,6 @@
                     <file value="/logs/access.log"/>
                     <file value="/etc/httpd/logs/access_log"/>
                     <file value="/etc/httpd/logs/access.log"/>
-                    <file value="/etc/httpd/logs/acces.log"/>
-                    <file value="/etc/httpd/logs/acces_log"/>
                     <file value="/etc/httpd/logs/error_log"/>
                     <file value="/etc/httpd/logs/error.log"/>
                     <file value="/usr/local/apache/logs/access_log"/>
