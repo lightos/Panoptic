@@ -1133,6 +1133,14 @@
                     <file value="/var/log/messages.1"/>
                     <file value="/var/log/user.log"/>
                     <file value="/var/log/user.log.1"/>
+                    <file value="/var/log/auth.log"/>
+                    <file value="/var/log/pm-powersave.log"/>
+                    <file value="/var/log/Xorg.0.log"/>
+                    <file value="/var/log/daemon.log"/>
+                    <file value="/var/log/kern.log"/>
+                    <file value="/var/log/mail.log"/>
+                    <file value="/var/log/ufw.log"/>
+                    <file value="/var/log/boot.log"/>
                     <file value="/tmp/access.log"/>
                 </os>
             </log>
@@ -1158,6 +1166,7 @@
                     <file value="/etc/security/pam_env.conf"/>
                     <file value="/etc/security/sepermit.conf"/>
                     <file value="/etc/security/time.conf"/>
+                    <file value="/etc/ssh/sshd_config"/>
                     <file value="/etc/adduser.conf"/>
                     <file value="/etc/deluser.conf"/>
                     <file value="/etc/avahi/avahi-daemon.conf"/>
@@ -1183,10 +1192,10 @@
                     <file value="/etc/ldap/ldap.conf"/>
                     <file value="/etc/logrotate.conf"/>
                     <file value="/etc/mtools.conf"/>
-                    <file value="/etc/sensors.conf"/>
                     <file value="/etc/smi.conf"/>
                     <file value="/etc/updatedb.conf"/>
                     <file value="/etc/pulse/client.conf"/>
+                    <file value="/usr/share/adduser/adduser.conf"/>
                 </os>
             </conf>
             <other>
@@ -1356,6 +1365,12 @@
                     <file value="/etc/vmware-tools/vmware-tools-libraries.conf"/>
                 </os>
             </conf>
+            <log>
+                <os value="*NIX">
+                    <file value="/var/log/vmware/hostd.log"/>
+                    <file value="/var/log/vmware/hostd-1.log"/>
+                </os>
+            </log>
         </software>
     </category>
 </cases>
