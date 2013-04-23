@@ -208,6 +208,17 @@
                     <file value="/home/postgres/data/pg_ident.conf"/>
                     <file value="/home/postgres/data/pg_hba.conf"/>
                 </os>
+                <os value="Windows">
+                    <file value="/Program Files/PostgreSQL/8.3/data/pg_hba.conf"/>
+                    <file value="/Program Files/PostgreSQL/8.3/data/pg_ident.conf"/>
+                    <file value="/Program Files/PostgreSQL/8.3/data/postgresql.conf"/>
+                    <file value="/Program Files/PostgreSQL/8.4/data/pg_hba.conf"/>
+                    <file value="/Program Files/PostgreSQL/8.4/data/pg_ident.conf"/>
+                    <file value="/Program Files/PostgreSQL/8.4/data/postgresql.conf"/>
+                    <file value="/Program Files/PostgreSQL/9.0/data/pg_hba.conf"/>
+                    <file value="/Program Files/PostgreSQL/9.0/data/pg_ident.conf"/>
+                    <file value="/Program Files/PostgreSQL/9.0/data/postgresql.conf"/>
+                </os>
             </conf>
         </software>
     </category>
@@ -922,6 +933,46 @@
             </conf>
         </software>
 
+        <software value="Polipo">
+            <conf>
+                <os value="Windows">
+                    <file value="/Program Files/Vidalia Bundle/Polipo/polipo.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Tor">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/tor/tor-tsocks.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="stunnel">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/stunnel/stunnel.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="tsocks">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/tsocks.conf"/>
+                </os>
+            </conf>
+        </software>
+
+        <software value="Tinyproxy">
+            <conf>
+                <os value="*NIX">
+                    <file value="/etc/tinyproxy/tinyproxy.conf"/>
+                </os>
+            </conf>
+        </software>
+
         <software value="Miredo">
             <conf>
                 <os value="*NIX">
@@ -1296,6 +1347,19 @@
                     <file value="/boot.ini"/>
                 </os>
             </conf>
+            <log>
+                <os value="Windows">
+                    <file value="/WINDOWS/Debug/NetSetup.LOG"/>
+                    <file value="/WINDOWS/comsetup.log"/>
+                    <file value="/WINDOWS/repair/setup.log"/>
+                    <file value="/WINDOWS/setupact.log"/>
+                    <file value="/WINDOWS/setupapi.log"/>
+                    <file value="/WINDOWS/setuperr.log"/>
+                    <file value="/WINDOWS/updspapi.log"/>
+                    <file value="/WINDOWS/wmsetup.log"/>
+                    <file value="/WINDOWS/ODBC.INI"/>
+                </os>
+            </log>
         </software>
     </category>
 
@@ -1332,6 +1396,17 @@
                     <file value="/etc/cups/printers.conf"/>
                 </os>
             </conf>
+        </software>
+    </category>
+
+    <category value="Desktop applications">
+        <software value="Macromedia Flash">
+            <log>
+                <os value="Windows">
+                    <file value="/WINDOWS/system32/Macromed/Flash/FlashInstall.log"/>
+                    <file value="/WINDOWS/system32/Macromed/Flash/install.log"/>
+                </os>
+            </log>
         </software>
     </category>
 
