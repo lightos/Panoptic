@@ -178,6 +178,10 @@
                     <file value="/var/log/postgresql.log"/>
                     <file value="/var/log/pgsql/pgsql.log"/>
                     <file value="/var/log/postgresql/postgresql-8.1-main.log"/>
+                    <file value="/var/log/postgresql/postgresql-8.3-main.log"/>
+                    <file value="/var/log/postgresql/postgresql-8.4-main.log"/>
+                    <file value="/var/log/postgresql/postgresql-9.0-main.log"/>
+                    <file value="/var/log/postgresql/postgresql-9.1-main.log"/>
                     <file value="/var/log/pgsql8.log"/>
                     <file value="/var/log/postgresql/postgres.log"/>
                     <file value="/var/log/pgsql_log"/>
@@ -218,6 +222,9 @@
                     <file value="/Program Files/PostgreSQL/9.0/data/pg_hba.conf"/>
                     <file value="/Program Files/PostgreSQL/9.0/data/pg_ident.conf"/>
                     <file value="/Program Files/PostgreSQL/9.0/data/postgresql.conf"/>
+                    <file value="/Program Files/PostgreSQL/9.1/data/pg_hba.conf"/>
+                    <file value="/Program Files/PostgreSQL/9.1/data/pg_ident.conf"/>
+                    <file value="/Program Files/PostgreSQL/9.1/data/postgresql.conf"/>
                 </os>
             </conf>
         </software>
@@ -1272,7 +1279,6 @@
                     <file value="/var/adm/aculog"/>
                     <file value="/var/adm/vold.log"/>
                     <file value="/var/adm/log/asppp.log"/>
-                    <file value="/var/log/syslog"/>
                     <file value="/var/log/POPlog"/>
                     <file value="/var/log/authlog"/>
                     <file value="/var/lp/logs/lpsched"/>
@@ -1303,10 +1309,17 @@
                     <file value="/var/log/pm-powersave.log"/>
                     <file value="/var/log/Xorg.0.log"/>
                     <file value="/var/log/daemon.log"/>
+                    <file value="/var/log/daemon.log.1"/>
                     <file value="/var/log/kern.log"/>
+                    <file value="/var/log/kern.log.1"/>
                     <file value="/var/log/mail.log"/>
+                    <file value="/var/log/mail.err"/>
+                    <file value="/var/log/mail.info"/>
+                    <file value="/var/log/mail.warn"/>
                     <file value="/var/log/ufw.log"/>
                     <file value="/var/log/boot.log"/>
+                    <file value="/var/log/syslog"/>
+                    <file value="/var/log/syslog.1"/>
                     <file value="/tmp/access.log"/>
                 </os>
             </log>
