@@ -1254,6 +1254,7 @@
                     <file value="/etc/hostname"/>
                     <file value="/etc/networks"/>
                     <file value="/etc/timezone"/>
+                    <file value="/etc/modules"/>
                     <file value="/etc/passwd"/>
                     <file value="/etc/passwd~"/>
                     <file value="/etc/passwd-"/>
@@ -1275,6 +1276,7 @@
                     <file value="/etc/os-release"/>
                     <file value="/etc/password.master"/>
                     <file value="/etc/profile"/>
+                    <file value="/etc/default/grub"/>
                     <file value="/etc/resolvconf/update-libc.d/sendmail"/>
                     <file value="/etc/inittab"/>
                     <file value="/etc/issue"/>
@@ -1294,6 +1296,8 @@
                     <file value="/etc/security/environ"/>
                     <file value="/etc/security/limits"/>
                     <file value="/etc/security/opasswd"/>
+                    <file value="/boot/grub/grub.cfg"/>
+                    <file value="/boot/grub/menu.lst"/>
                     <file value="/root/.ksh_history"/>
                     <file value="/root/.Xauthority"/>
                     <file value="/usr/lib/security/mkuser.default"/>
