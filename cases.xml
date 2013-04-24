@@ -1252,6 +1252,8 @@
             <other>
                 <os value="*NIX">
                     <file value="/etc/hostname"/>
+                    <file value="/etc/networks"/>
+                    <file value="/etc/timezone"/>
                     <file value="/etc/passwd"/>
                     <file value="/etc/passwd~"/>
                     <file value="/etc/passwd-"/>
