@@ -1344,6 +1344,11 @@
         <software value="Windows">
             <conf>
                 <os value="Windows">
+                    <file value="/WINDOWS/system32/drivers/etc/hosts"/>
+                    <file value="/WINDOWS/system32/drivers/etc/lmhosts.sam"/>
+                    <file value="/WINDOWS/system32/drivers/etc/networks"/>
+                    <file value="/WINDOWS/system32/drivers/etc/protocol"/>
+                    <file value="/WINDOWS/system32/drivers/etc/services"/>
                     <file value="/boot.ini"/>
                 </os>
             </conf>
@@ -1357,6 +1362,7 @@
                     <file value="/WINDOWS/setuperr.log"/>
                     <file value="/WINDOWS/updspapi.log"/>
                     <file value="/WINDOWS/wmsetup.log"/>
+                    <file value="/WINDOWS/WindowsUpdate.log"/>
                     <file value="/WINDOWS/ODBC.INI"/>
                 </os>
             </log>
