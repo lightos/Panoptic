@@ -610,7 +610,7 @@ def main():
     if args.list:
         args.list = args.list.lower()
 
-        _ = ("category", "list", "os")
+        _ = ("category", "software", "os")
         if args.list not in _:
             print("[!] Valid values for option '--list' are: %s" % ", ".join(_))
             exit()
