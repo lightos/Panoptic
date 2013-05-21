@@ -795,6 +795,68 @@
             </conf>
         </software>
 
+        <software value="Tomcat">
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/local/jakarta/tomcat/conf/jakarta.conf"/>
+                    <file value="/usr/local/jakarta/tomcat/conf/server.xml"/>
+                    <file value="/usr/local/jakarta/tomcat/conf/context.xml"/>
+                    <file value="/usr/local/jakarta/tomcat/conf/workers.properties"/>
+                    <file value="/usr/local/jakarta/tomcat/conf/logging.properties"/>
+                    <file value="/usr/local/jakarta/dist/tomcat/conf/jakarta.conf"/>
+                    <file value="/usr/local/jakarta/dist/tomcat/conf/server.xml"/>
+                    <file value="/usr/local/jakarta/dist/tomcat/conf/context.xml"/>
+                    <file value="/usr/local/jakarta/dist/tomcat/conf/workers.properties"/>
+                    <file value="/usr/local/jakarta/dist/tomcat/conf/logging.properties"/>
+                    <file value="/usr/share/tomcat6/conf/server.xml"/>
+                    <file value="/usr/share/tomcat6/conf/context.xml"/>
+                    <file value="/usr/share/tomcat6/conf/workers.properties"/>
+                    <file value="/usr/share/tomcat6/conf/logging.properties"/>
+                    <file value="/var/log/tomcat6/catalina.out"/>
+                    <file value="/var/cpanel/tomcat.options"/>
+                </os>
+            </conf>
+            <log>
+                <os value="*NIX">
+                    <file value="/usr/local/jakarta/tomcat/logs/catalina.out"/>
+                    <file value="/usr/local/jakarta/tomcat/logs/catalina.err"/>
+                    <file value="/opt/tomcat/logs/catalina.out"/>
+                    <file value="/opt/tomcat/logs/catalina.err"/>
+                    <file value="/usr/share/logs/catalina.out"/>
+                    <file value="/usr/share/logs/catalina.err"/>
+                    <file value="/usr/share/tomcat/logs/catalina.out"/>
+                    <file value="/usr/share/tomcat/logs/catalina.err"/>
+                    <file value="/usr/share/tomcat6/logs/catalina.out"/>
+                    <file value="/usr/share/tomcat6/logs/catalina.err"/>
+                    <file value="/usr/local/apache/logs/mod_jk.log"/>
+                    <file value="/usr/local/jakarta/tomcat/logs/mod_jk.log"/>
+                    <file value="/usr/local/jakarta/dist/tomcat/logs/mod_jk.log"/>
+                </os>
+            </log>
+        </software>
+
+        <software value="JBoss">
+            <conf>
+                <os value="*NIX">
+                    <file value="/usr/local/jboss/server/default/conf/jboss-minimal.xml"/>
+                    <file value="/usr/local/jboss/server/default/conf/jboss-service.xml"/>
+                    <file value="/usr/local/jboss/server/default/conf/jndi.properties"/>
+                    <file value="/usr/local/jboss/server/default/conf/log4j.xml"/>
+                    <file value="/usr/local/jboss/server/default/conf/login-config.xml"/>
+                    <file value="/usr/local/jboss/server/default/conf/standardjaws.xml"/>
+                    <file value="/usr/local/jboss/server/default/conf/standardjboss.xml"/>
+                    <file value="/usr/local/jboss/server/default/conf/server.log.properties"/>
+                    <file value="/usr/local/jboss/server/default/deploy/jboss-logging.xml"/>
+                </os>
+            </conf>
+            <log>
+                <os value="*NIX">
+                    <file value="/usr/local/jboss/server/default/log/server.log"/>
+                    <file value="/usr/local/jboss/server/default/log/boot.log"/>
+                </os>
+            </log>
+        </software>
+
         <software value="lighthttpd">
             <log>
                 <os value="*NIX">
@@ -882,12 +944,6 @@
                     <file value="/usr/local/logs/access.log"/>
                 </os>
             </log>
-        </software>
-
-        <software value="General">
-            <conf>
-
-            </conf>
         </software>
     </category>
 
