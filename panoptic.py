@@ -30,6 +30,7 @@ Search and retrieve content of common log and config files through LFI vulnerabi
 """
 
 import difflib
+import ConfigParser
 import os
 import random
 import re
@@ -185,7 +186,15 @@ def get_cases(args):
         for variable in re.findall(r"\{[^}]+\}", case.location):
             case.location = case.location.replace(variable, replacements.get(variable.strip("{}"), variable))
 
-        cases.append(case)
+        match = re.search(r"\[([^\]]+)\]", case.location)
+        if match and kb.through:
+            original = case.location
+            for replacement in kb.versioned_locations[match.group(1)]:
+                case = AttribDict(case)
+                case.location = original.replace(match.group(0), replacement)
+                cases.append(case)
+        else:
+            cases.append(case)
 
     return cases
 
@@ -560,6 +569,9 @@ def parse_args():
     parser.add_option("--threads", dest="threads", type="int", default=1,
                 help="set number of threads (default: 1)")
 
+    parser.add_option("--through", dest="through",
+                help="include testing of versioned locations")
+
     parser.add_option("--update", dest="update", action="store_true",
                 help="update Panoptic from official repository")
 
@@ -594,6 +606,7 @@ def main():
     kb.found = False
     kb.print_lock = threading.Lock()
     kb.value_lock = threading.Lock()
+    kb.versioned_locations = {}
 
     check_revision()
 
@@ -604,6 +617,17 @@ def main():
     if args.update:
         update()
         exit()
+
+    with open("versions.ini") as f:
+        section = None
+        for line in f.xreadlines():
+            line = line.strip()
+            if re.match(r"\[.+\]", line):
+                section = line.strip("[]")
+            elif line:
+                if section not in kb.versioned_locations:
+                    kb.versioned_locations[section] = []
+                kb.versioned_locations[section].append(line)
 
     cases = get_cases(args) if not args.list_file else load_list(args.list_file)
 
