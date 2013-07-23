@@ -425,7 +425,7 @@ def request_file(case, replace_slashes=True):
                         kb.filter_output = answer.upper() != 'N'
 
                 if kb.get("filter_output"):
-                    matcher = difflib.SequenceMatcher(None, html, kb.original_response)
+                    matcher = difflib.SequenceMatcher(None, html or "", kb.original_response or "")
                     matching_blocks = matcher.get_matching_blocks()
 
                     if matching_blocks:
