@@ -793,6 +793,9 @@ def get_page(**kwargs):
         raise
 
     except Exception, e:
+        if hasattr(e, "read"):
+            page = page or e.read()
+
         if verbose:
             if hasattr(e, "msg"):
                 print("[!] Error msg '%s'" % e.msg)
