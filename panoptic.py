@@ -698,7 +698,7 @@ def main():
 
     print("[i] Checking invalid response...")
 
-    request_args = prepare_request(INVALID_FILENAME)
+    request_args = prepare_request("%s%s%s" % (args.prefix, INVALID_FILENAME, args.postfix))
     kb.invalid_response = get_page(**request_args)
 
     print("[i] Done!")
