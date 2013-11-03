@@ -448,6 +448,12 @@ def try_cases(cases):
     Runs tests against given cases
     """
 
+    passwd_files = ["/etc/passwd", "/etc/security/passwd"]
+
+    if args.replace_slash:
+        for i, v in enumerate(passwd_files):
+            passwd_files[i] = v.replace("/", args.replace_slash)
+
     for case in cases:
         html = request_file(case)
 
@@ -457,7 +463,8 @@ def try_cases(cases):
             kb.found = True
 
         # If --skip-file-parsing is not set.
-        if case.location in ("/etc/passwd", "/etc/security/passwd") and not args.skip_parsing:
+
+        if case.location in passwd_files and not args.skip_parsing:
             users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
             if args.verbose:
