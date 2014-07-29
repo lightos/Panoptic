@@ -26,7 +26,7 @@ SOFTWARE.
 """
 Panoptic
 
-Search and retrieve content of common log and config files through LFI vulnerability
+Search and retrieve content of common log and config files through path traversal vulnerability
 """
 
 import difflib
@@ -89,16 +89,16 @@ GIT_REPOSITORY = "git://github.com/lightos/Panoptic.git"
 
 EXAMPLES = """
 Examples:
-./panoptic.py --url "http://localhost/lfi.php?file=test.txt"
-./panoptic.py --url "http://localhost/lfi.php?file=test.txt&id=1" --param file
-./panoptic.py --url "http://localhost/lfi.php" --data "file=test.txt&id=1" --param file
+./panoptic.py --url "http://localhost/include.php?file=test.txt"
+./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
+./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
 
 ./panoptic.py --list software
 ./panoptic.py --list category
 ./panoptic.py --list os
 
-./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --os Windows
-./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
+./panoptic.py -u "http://localhost/include.php?file=test.txt" --os Windows
+./panoptic.py -u "http://localhost/include.php?file=test.txt" --software WAMP
 """
 
 class PROXY_TYPE:

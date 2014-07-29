@@ -3,7 +3,7 @@ Panoptic
 
 ![Logo](http://i.imgur.com/PPGy8UE.jpg)
 
-Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through LFI vulnerability. Official introductionary post can be found [here](http://websec.ca/blog/view/panoptic). Also, you can find a sample run [here](https://gist.github.com/stamparm/5335273).
+Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through path traversal vulnerability. Official introductionary post can be found [here](http://websec.ca/blog/view/panoptic). Also, you can find a sample run [here](https://gist.github.com/stamparm/5335273).
 
 ### Help Menu
     Usage: panoptic.py --url TARGET [options]
@@ -38,14 +38,14 @@ Panoptic is an open source penetration testing tool that automates the process o
       --update              update Panoptic from official repository
 
 ### Examples
-    ./panoptic.py --url "http://localhost/lfi.php?file=test.txt"
-    ./panoptic.py --url "http://localhost/lfi.php?file=test.txt&id=1" --param file
-    ./panoptic.py --url "http://localhost/lfi.php" --data "file=test.txt&id=1" --param file
+    ./panoptic.py --url "http://localhost/include.php?file=test.txt"
+    ./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
+    ./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
     
     ./panoptic.py --list software
     ./panoptic.py --list category
     ./panoptic.py --list os
     
-    ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --os Windows
-    ./panoptic.py -u "http://localhost/lfi.php?file=test.txt" --software WAMP
+    ./panoptic.py -u "http://localhost/include.php?file=test.txt" --os Windows
+    ./panoptic.py -u "http://localhost/include.php?file=test.txt" --software WAMP
 
