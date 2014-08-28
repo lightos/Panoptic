@@ -69,7 +69,8 @@ HOME_FILES_FILE = "home.txt"
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
 
-# If content size is bigger than normal (and illegal) skip content retrieval (if --write-files not used) and mark it as found
+# If content size is bigger than normal (and illegal) skip content
+# retrieval (if --write-files not used) and mark it as found
 SKIP_RETRIEVE_THRESHOLD = 1000
 
 # ASCII eye taken from http://www.retrojunkie.com/asciiart/health/eyes.htm
@@ -101,20 +102,25 @@ Examples:
 ./panoptic.py -u "http://localhost/include.php?file=test.txt" --software WAMP
 """
 
+
 class PROXY_TYPE:
     HTTP = "HTTP"
     HTTPS = "HTTPS"
     SOCKS4 = "SOCKS4"
     SOCKS5 = "SOCKS5"
 
+
 class HTTP_HEADER:
     COOKIE = "Cookie"
     USER_AGENT = "User-agent"
     CONTENT_LENGTH = "Content-length"
 
+
 class AttribDict(dict):
+
     def __getattr__(self, name):
         return self.get(name)
+
     def __setattr__(self, name, value):
         return self.__setitem__(name, value)
 
@@ -124,6 +130,7 @@ kb = AttribDict()
 # Variable used to store command parsed arguments
 args = None
 
+
 def print(*args, **kwargs):
     """
     Thread-safe version of print function
@@ -131,6 +138,7 @@ def print(*args, **kwargs):
 
     with kb.print_lock:
         return __builtins__.print(*args, **kwargs)
+
 
 def get_cases(args):
     """
@@ -180,11 +188,12 @@ def get_cases(args):
         case.category = _(element, "category").value
         case.software = _(element, "software").value
         case.type = _(element, "log") is not None and "log"\
-                    or _(element, "conf") is not None and "conf"\
-                    or _(element, "other") is not None and "other"
+            or _(element, "conf") is not None and "conf"\
+            or _(element, "other") is not None and "other"
 
         for variable in re.findall(r"\{[^}]+\}", case.location):
-            case.location = case.location.replace(variable, replacements.get(variable.strip("{}"), variable))
+            case.location = case.location.replace(
+                variable, replacements.get(variable.strip("{}"), variable))
 
         match = re.search(r"\[([^\]]+)\]", case.location)
         if match and kb.through:
@@ -197,6 +206,7 @@ def get_cases(args):
             cases.append(case)
 
     return cases
+
 
 def load_list(filepath):
     """
@@ -214,6 +224,7 @@ def load_list(filepath):
         cases.append(case)
 
     return cases
+
 
 def get_revision():
     """
@@ -241,7 +252,8 @@ def get_revision():
                 content = f.read()
                 filepath = None
                 if content.startswith("ref: "):
-                    filepath = os.path.join(_, ".git", content.replace("ref: ", "")).strip()
+                    filepath = os.path.join(
+                        _, ".git", content.replace("ref: ", "")).strip()
                 else:
                     match = re.match(r"(?i)[0-9a-f]{32}", content)
                     retval = match.group(0) if match else None
@@ -250,12 +262,14 @@ def get_revision():
             break
 
     if not retval:
-        process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
+        process = Popen(
+            "git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, _ = process.communicate()
         match = re.search(r"(?i)[0-9a-f]{32}", stdout or "")
         retval = match.group(0) if match else None
 
     return retval[:7] if retval else None
+
 
 def check_revision():
     """
@@ -272,6 +286,7 @@ def check_revision():
         VERSION = "%s-%s" % (VERSION, revision)
         BANNER = BANNER.replace(_, VERSION)
 
+
 def update():
     """
     Do the program update
@@ -279,19 +294,25 @@ def update():
 
     print("[i] Checking for updates...")
 
-    process = Popen("git pull %s HEAD" % GIT_REPOSITORY, shell=True, stdout=PIPE, stderr=PIPE)
+    process = Popen("git pull %s HEAD" %
+                    GIT_REPOSITORY, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = process.communicate()
     success = not process.returncode
 
     if success:
         updated = "Already" not in stdout
-        process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
+        process = Popen(
+            "git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, _ = process.communicate()
-        revision = stdout[:7] if stdout and re.search(r"(?i)[0-9a-f]{32}", stdout) else "-"
-        print("[i] %s the latest revision '%s'" % ("Already at" if not updated else "Updated to", revision))
+        revision = stdout[:7] if stdout and re.search(
+            r"(?i)[0-9a-f]{32}", stdout) else "-"
+        print("[i] %s the latest revision '%s'" %
+              ("Already at" if not updated else "Updated to", revision))
     else:
-        print("[!] Problem occurred while updating program (%s)" % repr(stderr.strip()))
+        print("[!] Problem occurred while updating program (%s)" %
+              repr(stderr.strip()))
         print("[i] Please make sure that you have a 'git' package installed")
+
 
 def ask_question(question, default=None, automatic=False):
     """
@@ -311,15 +332,17 @@ def ask_question(question, default=None, automatic=False):
 
     return answer
 
+
 def prepare_request(payload):
     """
     Prepares HTTP (GET or POST) request with proper payload
     """
 
     _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
-                            r"\1=%s" % payload, kb.request_params)
+               r"\1=%s" % payload, kb.request_params)
 
-    request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
+    request_args = {"url": "%s://%s%s" %
+                    (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
 
     if args.data:
         request_args["data"] = _
@@ -339,6 +362,7 @@ def prepare_request(payload):
 
     return request_args
 
+
 def clean_response(response, filepath):
     """
     Cleans response from occurrences of filepath
@@ -349,6 +373,7 @@ def clean_response(response, filepath):
 
     return re.sub(regex, "", response, re.I)
 
+
 def request_file(case, replace_slashes=True):
     """
     Requests target for a file described in case
@@ -357,7 +382,8 @@ def request_file(case, replace_slashes=True):
     global ROTATOR_CHARS
 
     if args.replace_slash and replace_slashes:
-        case.location = case.location.replace("/", args.replace_slash.replace("\\", "\\\\"))
+        case.location = case.location.replace(
+            "/", args.replace_slash.replace("\\", "\\\\"))
 
     if kb.restrict_os and kb.restrict_os != case.os:
         if args.verbose:
@@ -377,13 +403,15 @@ def request_file(case, replace_slashes=True):
 
     ROTATOR_CHARS = ROTATOR_CHARS[1:] + ROTATOR_CHARS[0]
 
-    request_args = prepare_request("%s%s%s" % (args.prefix, case.location, args.postfix))
+    request_args = prepare_request(
+        "%s%s%s" % (args.prefix, case.location, args.postfix))
     html = get_page(**request_args)
 
     if not html or args.bad_string and html.find(args.bad_string) != -1:
         return None
 
-    matcher = difflib.SequenceMatcher(None, clean_response(html, case.location), clean_response(kb.invalid_response, INVALID_FILENAME))
+    matcher = difflib.SequenceMatcher(None, clean_response(
+        html, case.location), clean_response(kb.invalid_response, INVALID_FILENAME))
 
     if matcher.quick_ratio() < HEURISTIC_RATIO:
         with kb.value_lock:
@@ -394,7 +422,8 @@ def request_file(case, replace_slashes=True):
                     print("[i] OS: %s" % case.os)
 
                     if kb.restrict_os is None:
-                        answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case.os, default='Y', automatic=args.automatic)
+                        answer = ask_question(
+                            "Do you want to restrict further scans to '%s'? [Y/n]" % case.os, default='Y', automatic=args.automatic)
                         kb.restrict_os = answer.upper() != 'N' and case.os
 
         _ = "/".join(_ for _ in (case.os, case.category, case.type) if _)
@@ -421,11 +450,13 @@ def request_file(case, replace_slashes=True):
 
                 with kb.value_lock:
                     if kb.filter_output is None:
-                        answer = ask_question("Do you want to filter retrieved files from original HTML page content? [Y/n]", default='Y', automatic=args.automatic)
+                        answer = ask_question(
+                            "Do you want to filter retrieved files from original HTML page content? [Y/n]", default='Y', automatic=args.automatic)
                         kb.filter_output = answer.upper() != 'N'
 
                 if kb.get("filter_output"):
-                    matcher = difflib.SequenceMatcher(None, html or "", kb.original_response or "")
+                    matcher = difflib.SequenceMatcher(
+                        None, html or "", kb.original_response or "")
                     matching_blocks = matcher.get_matching_blocks()
 
                     if matching_blocks:
@@ -442,6 +473,7 @@ def request_file(case, replace_slashes=True):
         return html
 
     return None
+
 
 def try_cases(cases):
     """
@@ -465,131 +497,143 @@ def try_cases(cases):
         # If --skip-file-parsing is not set.
 
         if case.location in passwd_files and not args.skip_parsing:
-            users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
+            users = re.finditer(
+                "(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
             if args.verbose:
                 print("[*] Extracting home folders from '%s'" % case.location)
 
             for user in users:
                 if args.verbose:
-                    print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
+                    print("[*] User: %s, Info: %s" %
+                          (user.group("username"), user.group("info")))
                 if not kb.home_files:
                     with open(HOME_FILES_FILE, "r") as f:
-                        kb.home_files = filter(None, (_.strip() for _ in f.readlines()))
+                        kb.home_files = filter(
+                            None, (_.strip() for _ in f.readlines()))
                 for _ in kb.home_files:
                     if user.group("home") == "/":
                         continue
-                    request_file(AttribDict({"category": "*NIX User File", "type": "conf", "os": case.os, "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"}))
+                    request_file(AttribDict({"category": "*NIX User File", "type": "conf", "os":
+                                             case.os, "location": "%s/%s" % (user.group("home"), _), "software": "*NIX"}))
 
         if "mysql-bin.index" in case.location and not args.skip_parsing:
-            binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
+            binlogs = re.findall(
+                "\\.\\\\(?P<binlog>mysql-bin\\.\\d{0,6})", html)
             location = case.location.rfind("/") + 1
 
             if args.verbose:
-                print("[i] Extracting MySQL binary logs from '%s'" % case.location)
+                print("[i] Extracting MySQL binary logs from '%s'" %
+                      case.location)
 
             for _ in binlogs:
-                request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (case.location[:location], _), "software": "MySQL"}), False)
+                request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (
+                    case.location[:location], _), "software": "MySQL"}), False)
+
 
 def parse_args():
     """
     Parses command line arguments
     """
 
-    OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
+    # Override epilog formatting
+    OptionParser.format_epilog = lambda self, formatter: self.epilog
 
-    parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
+    parser = OptionParser(
+        usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
 
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                help="display extra output information")
+                      help="display extra output information")
 
     # Required
     parser.add_option("-u", "--url", dest="url",
-                help="set target URL")
+                      help="set target URL")
     # Optional
     parser.add_option("-p", "--param", dest="param",
-                help="set parameter name to test for (e.g. \"page\")")
+                      help="set parameter name to test for (e.g. \"page\")")
 
     parser.add_option("-d", "--data", dest="data",
-                help="set data for HTTP POST request (e.g. \"page=default\")")
+                      help="set data for HTTP POST request (e.g. \"page=default\")")
 
     parser.add_option("-t", "--type", dest="type",
-                help="set type of file to look for (\"conf\" or \"log\")")
+                      help="set type of file to look for (\"conf\" or \"log\")")
 
     parser.add_option("-o", "--os", dest="os",
-                help="set filter name for OS (e.g. \"*NIX\")")
+                      help="set filter name for OS (e.g. \"*NIX\")")
 
     parser.add_option("-s", "--software", dest="software",
-                help="set filter name for software (e.g. \"PHP\")")
+                      help="set filter name for software (e.g. \"PHP\")")
 
     parser.add_option("-c", "--category", dest="category",
-                help="set filter name for category (e.g. \"FTP\")")
+                      help="set filter name for category (e.g. \"FTP\")")
 
     parser.add_option("-l", "--list", dest="list", metavar="GROUP",
-                help="list available filters for group (e.g. \"software\")")
+                      help="list available filters for group (e.g. \"software\")")
 
     parser.add_option("-a", "--auto", dest="automatic", action="store_true",
-                help="avoid user interaction by using default options")
+                      help="avoid user interaction by using default options")
 
     parser.add_option("-w", "--write-files", dest="write_files", action="store_true",
-                help="write content of retrieved files to output folder")
+                      help="write content of retrieved files to output folder")
 
     parser.add_option("-x", "--skip-parsing", dest="skip_parsing", action="store_true",
-                help="skip special tests if *NIX passwd file is found")
+                      help="skip special tests if *NIX passwd file is found")
 
     parser.add_option("--load", dest="list_file", metavar="LISTFILE",
-                help="load and try user provided list from a file")
+                      help="load and try user provided list from a file")
 
     parser.add_option("--ignore-proxy", dest="ignore_proxy", action="store_true",
-                help="ignore system default HTTP proxy")
+                      help="ignore system default HTTP proxy")
 
     parser.add_option("--proxy", dest="proxy",
-                help="set proxy (e.g. \"socks5://192.168.5.92\")")
+                      help="set proxy (e.g. \"socks5://192.168.5.92\")")
 
     parser.add_option("--user-agent", dest="user_agent", metavar="UA",
-                help="set HTTP User-Agent header value")
+                      help="set HTTP User-Agent header value")
 
     parser.add_option("--random-agent", dest="random_agent", action="store_true",
-                help="choose random HTTP User-Agent header value")
+                      help="choose random HTTP User-Agent header value")
 
     parser.add_option("--cookie", dest="cookie",
-                help="set HTTP Cookie header value (e.g. \"sid=foobar\")")
+                      help="set HTTP Cookie header value (e.g. \"sid=foobar\")")
 
     parser.add_option("--header", dest="header",
-                help="set a custom HTTP header (e.g. \"Max-Forwards=10\")")
+                      help="set a custom HTTP header (e.g. \"Max-Forwards=10\")")
 
     parser.add_option("--prefix", dest="prefix", default="",
-                help="set prefix for file path (e.g. \"../\")")
+                      help="set prefix for file path (e.g. \"../\")")
 
     parser.add_option("--postfix", dest="postfix", default="",
-                help="set postfix for file path (e.g. \"%00\")")
+                      help="set postfix for file path (e.g. \"%00\")")
 
     parser.add_option("--multiplier", dest="multiplier", type="int", default=1,
-                help="set multiplication number for prefix (default: 1)")
+                      help="set multiplication number for prefix (default: 1)")
 
     parser.add_option("--bad-string", dest="bad_string", metavar="STRING",
-                help="set a string occurring when file is not found")
+                      help="set a string occurring when file is not found")
 
     parser.add_option("--replace-slash", dest="replace_slash",
-                help="set replacement for char / in paths (e.g. \"/././\")")
+                      help="set replacement for char / in paths (e.g. \"/././\")")
 
     parser.add_option("--threads", dest="threads", type="int", default=1,
-                help="set number of threads (default: 1)")
+                      help="set number of threads (default: 1)")
 
     parser.add_option("--through", dest="through",
-                help="include testing of versioned locations")
+                      help="include testing of versioned locations")
 
     parser.add_option("--update", dest="update", action="store_true",
-                help="update Panoptic from official repository")
+                      help="update Panoptic from official repository")
 
     parser.formatter.store_option_strings(parser)
     parser.formatter.store_option_strings = lambda _: None
 
     for option, value in parser.formatter.option_strings.items():
-        value = re.sub(r"\A(-\w+) (\w+), (--[\w-]+=(\2))\Z", r"\g<1>/\g<3>", value)
+        value = re.sub(
+            r"\A(-\w+) (\w+), (--[\w-]+=(\2))\Z", r"\g<1>/\g<3>", value)
         value = value.replace(", ", '/')
         if len(value) > MAX_HELP_OPTION_LENGTH:
-            value = ("%%.%ds.." % (MAX_HELP_OPTION_LENGTH - parser.formatter.indent_increment)) % value
+            value = ("%%.%ds.." % (
+                MAX_HELP_OPTION_LENGTH - parser.formatter.indent_increment)) % value
         parser.formatter.option_strings[option] = value
 
     args = parser.parse_args()[0]
@@ -601,6 +645,7 @@ def parse_args():
         args.prefix = args.prefix * args.multiplier
 
     return args
+
 
 def main():
     """
@@ -636,17 +681,20 @@ def main():
                     kb.versioned_locations[section] = []
                 kb.versioned_locations[section].append(line)
 
-    cases = get_cases(args) if not args.list_file else load_list(args.list_file)
+    cases = get_cases(args) if not args.list_file else load_list(
+        args.list_file)
 
     if args.list:
         args.list = args.list.lower()
 
         _ = ("category", "software", "os")
         if args.list not in _:
-            print("[!] Valid values for option '--list' are: %s" % ", ".join(_))
+            print("[!] Valid values for option '--list' are: %s" %
+                  ", ".join(_))
             exit()
 
-        print("[i] Listing available filters for usage with option '--%s':\n" % args.list)
+        print(
+            "[i] Listing available filters for usage with option '--%s':\n" % args.list)
 
         try:
             for _ in set([_[args.list] for _ in cases]):
@@ -663,12 +711,15 @@ def main():
     elif args.proxy:
         from thirdparty.socks import socks
 
-        match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
+        match = re.search(
+            r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
         if match:
             if match.group("type").upper() == PROXY_TYPE.SOCKS4:
-                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
+                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group(
+                    "address"), int(match.group("port")), True)
             elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
-                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
+                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group(
+                    "address"), int(match.group("port")), True)
             elif match.group("type").upper() in (PROXY_TYPE.HTTP, PROXY_TYPE.HTTPS):
                 _ = ProxyHandler({match.group("type"): args.proxy})
                 opener = build_opener(_)
@@ -682,7 +733,8 @@ def main():
     kb.request_params = args.data if args.data else kb.parsed_target_url.query
 
     if not args.param:
-        match = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", kb.request_params)
+        match = re.match(
+            "(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", kb.request_params)
         if match:
             args.param = match.group("param")
         else:
@@ -705,7 +757,8 @@ def main():
 
     print("[i] Checking invalid response...")
 
-    request_args = prepare_request("%s%s%s" % (args.prefix, INVALID_FILENAME, args.postfix))
+    request_args = prepare_request(
+        "%s%s%s" % (args.prefix, INVALID_FILENAME, args.postfix))
     kb.invalid_response = get_page(**request_args)
 
     print("[i] Done!")
@@ -716,7 +769,8 @@ def main():
 
     threads = []
     for i in xrange(args.threads):
-        thread = threading.Thread(target=try_cases, args=([cases[_] for _ in xrange(i, len(cases), args.threads)],))
+        thread = threading.Thread(target=try_cases, args=(
+            [cases[_] for _ in xrange(i, len(cases), args.threads)],))
         thread.daemon = True
         thread.start()
         threads.append(thread)
@@ -738,6 +792,7 @@ def main():
 
     print("  \n[i] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
+
 
 def get_page(**kwargs):
     """
@@ -767,7 +822,8 @@ def get_page(**kwargs):
         user_agent = "%s %s" % (NAME, VERSION)
 
     if post is None:
-        parsed_url = parsed_url._replace(query=urlencode(parse_qsl(parsed_url.query)))
+        parsed_url = parsed_url._replace(
+            query=urlencode(parse_qsl(parsed_url.query)))
         url = urlunsplit(parsed_url)
     else:
         post = urlencode(parse_qsl(post), "POST")
@@ -790,7 +846,8 @@ def get_page(**kwargs):
             if _.isdigit():
                 _ = int(_)
                 if _ - max(len(kb.original_response), len(kb.invalid_response)) > SKIP_RETRIEVE_THRESHOLD:
-                    page = "".join(random.choice(string.letters) for i in xrange(_))
+                    page = "".join(random.choice(string.letters)
+                                   for i in xrange(_))
 
         # Get HTTP Response
         if not page:
