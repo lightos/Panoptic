@@ -101,20 +101,25 @@ Examples:
 ./panoptic.py -u "http://localhost/include.php?file=test.txt" --software WAMP
 """
 
+
 class PROXY_TYPE:
     HTTP = "HTTP"
     HTTPS = "HTTPS"
     SOCKS4 = "SOCKS4"
     SOCKS5 = "SOCKS5"
 
+
 class HTTP_HEADER:
     COOKIE = "Cookie"
     USER_AGENT = "User-agent"
     CONTENT_LENGTH = "Content-length"
 
+
 class AttribDict(dict):
+
     def __getattr__(self, name):
         return self.get(name)
+
     def __setattr__(self, name, value):
         return self.__setitem__(name, value)
 
@@ -124,6 +129,7 @@ kb = AttribDict()
 # Variable used to store command parsed arguments
 args = None
 
+
 def print(*args, **kwargs):
     """
     Thread-safe version of print function
@@ -131,6 +137,7 @@ def print(*args, **kwargs):
 
     with kb.print_lock:
         return __builtins__.print(*args, **kwargs)
+
 
 def get_cases(args):
     """
@@ -180,8 +187,8 @@ def get_cases(args):
         case.category = _(element, "category").value
         case.software = _(element, "software").value
         case.type = _(element, "log") is not None and "log"\
-                    or _(element, "conf") is not None and "conf"\
-                    or _(element, "other") is not None and "other"
+            or _(element, "conf") is not None and "conf"\
+            or _(element, "other") is not None and "other"
 
         for variable in re.findall(r"\{[^}]+\}", case.location):
             case.location = case.location.replace(variable, replacements.get(variable.strip("{}"), variable))
@@ -197,6 +204,7 @@ def get_cases(args):
             cases.append(case)
 
     return cases
+
 
 def load_list(filepath):
     """
@@ -214,6 +222,7 @@ def load_list(filepath):
         cases.append(case)
 
     return cases
+
 
 def get_revision():
     """
@@ -257,6 +266,7 @@ def get_revision():
 
     return retval[:7] if retval else None
 
+
 def check_revision():
     """
     Adapts default version string and banner to use revision number (if available)
@@ -271,6 +281,7 @@ def check_revision():
         _ = VERSION
         VERSION = "%s-%s" % (VERSION, revision)
         BANNER = BANNER.replace(_, VERSION)
+
 
 def update():
     """
@@ -293,6 +304,7 @@ def update():
         print("[!] Problem occurred while updating program (%s)" % repr(stderr.strip()))
         print("[i] Please make sure that you have a 'git' package installed")
 
+
 def ask_question(question, default=None, automatic=False):
     """
     Asks a given question and returns result
@@ -311,13 +323,14 @@ def ask_question(question, default=None, automatic=False):
 
     return answer
 
+
 def prepare_request(payload):
     """
     Prepares HTTP (GET or POST) request with proper payload
     """
 
     _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
-                            r"\1=%s" % payload, kb.request_params)
+               r"\1=%s" % payload, kb.request_params)
 
     request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
 
@@ -339,6 +352,7 @@ def prepare_request(payload):
 
     return request_args
 
+
 def clean_response(response, filepath):
     """
     Cleans response from occurrences of filepath
@@ -348,6 +362,7 @@ def clean_response(response, filepath):
     regex = re.sub(r"[^A-Za-z0-9]", "(.|&\w+;|%[0-9A-Fa-f]{2})", filepath)
 
     return re.sub(regex, "", response, re.I)
+
 
 def request_file(case, replace_slashes=True):
     """
@@ -443,6 +458,7 @@ def request_file(case, replace_slashes=True):
 
     return None
 
+
 def try_cases(cases):
     """
     Runs tests against given cases
@@ -491,6 +507,7 @@ def try_cases(cases):
             for _ in binlogs:
                 request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (case.location[:location], _), "software": "MySQL"}), False)
 
+
 def parse_args():
     """
     Parses command line arguments
@@ -501,86 +518,86 @@ def parse_args():
     parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
 
     parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                help="display extra output information")
+                      help="display extra output information")
 
     # Required
     parser.add_option("-u", "--url", dest="url",
-                help="set target URL")
+                      help="set target URL")
     # Optional
     parser.add_option("-p", "--param", dest="param",
-                help="set parameter name to test for (e.g. \"page\")")
+                      help="set parameter name to test for (e.g. \"page\")")
 
     parser.add_option("-d", "--data", dest="data",
-                help="set data for HTTP POST request (e.g. \"page=default\")")
+                      help="set data for HTTP POST request (e.g. \"page=default\")")
 
     parser.add_option("-t", "--type", dest="type",
-                help="set type of file to look for (\"conf\" or \"log\")")
+                      help="set type of file to look for (\"conf\" or \"log\")")
 
     parser.add_option("-o", "--os", dest="os",
-                help="set filter name for OS (e.g. \"*NIX\")")
+                      help="set filter name for OS (e.g. \"*NIX\")")
 
     parser.add_option("-s", "--software", dest="software",
-                help="set filter name for software (e.g. \"PHP\")")
+                      help="set filter name for software (e.g. \"PHP\")")
 
     parser.add_option("-c", "--category", dest="category",
-                help="set filter name for category (e.g. \"FTP\")")
+                      help="set filter name for category (e.g. \"FTP\")")
 
     parser.add_option("-l", "--list", dest="list", metavar="GROUP",
-                help="list available filters for group (e.g. \"software\")")
+                      help="list available filters for group (e.g. \"software\")")
 
     parser.add_option("-a", "--auto", dest="automatic", action="store_true",
-                help="avoid user interaction by using default options")
+                      help="avoid user interaction by using default options")
 
     parser.add_option("-w", "--write-files", dest="write_files", action="store_true",
-                help="write content of retrieved files to output folder")
+                      help="write content of retrieved files to output folder")
 
     parser.add_option("-x", "--skip-parsing", dest="skip_parsing", action="store_true",
-                help="skip special tests if *NIX passwd file is found")
+                      help="skip special tests if *NIX passwd file is found")
 
     parser.add_option("--load", dest="list_file", metavar="LISTFILE",
-                help="load and try user provided list from a file")
+                      help="load and try user provided list from a file")
 
     parser.add_option("--ignore-proxy", dest="ignore_proxy", action="store_true",
-                help="ignore system default HTTP proxy")
+                      help="ignore system default HTTP proxy")
 
     parser.add_option("--proxy", dest="proxy",
-                help="set proxy (e.g. \"socks5://192.168.5.92\")")
+                      help="set proxy (e.g. \"socks5://192.168.5.92\")")
 
     parser.add_option("--user-agent", dest="user_agent", metavar="UA",
-                help="set HTTP User-Agent header value")
+                      help="set HTTP User-Agent header value")
 
     parser.add_option("--random-agent", dest="random_agent", action="store_true",
-                help="choose random HTTP User-Agent header value")
+                      help="choose random HTTP User-Agent header value")
 
     parser.add_option("--cookie", dest="cookie",
-                help="set HTTP Cookie header value (e.g. \"sid=foobar\")")
+                      help="set HTTP Cookie header value (e.g. \"sid=foobar\")")
 
     parser.add_option("--header", dest="header",
-                help="set a custom HTTP header (e.g. \"Max-Forwards=10\")")
+                      help="set a custom HTTP header (e.g. \"Max-Forwards=10\")")
 
     parser.add_option("--prefix", dest="prefix", default="",
-                help="set prefix for file path (e.g. \"../\")")
+                      help="set prefix for file path (e.g. \"../\")")
 
     parser.add_option("--postfix", dest="postfix", default="",
-                help="set postfix for file path (e.g. \"%00\")")
+                      help="set postfix for file path (e.g. \"%00\")")
 
     parser.add_option("--multiplier", dest="multiplier", type="int", default=1,
-                help="set multiplication number for prefix (default: 1)")
+                      help="set multiplication number for prefix (default: 1)")
 
     parser.add_option("--bad-string", dest="bad_string", metavar="STRING",
-                help="set a string occurring when file is not found")
+                      help="set a string occurring when file is not found")
 
     parser.add_option("--replace-slash", dest="replace_slash",
-                help="set replacement for char / in paths (e.g. \"/././\")")
+                      help="set replacement for char / in paths (e.g. \"/././\")")
 
     parser.add_option("--threads", dest="threads", type="int", default=1,
-                help="set number of threads (default: 1)")
+                      help="set number of threads (default: 1)")
 
     parser.add_option("--through", dest="through",
-                help="include testing of versioned locations")
+                      help="include testing of versioned locations")
 
     parser.add_option("--update", dest="update", action="store_true",
-                help="update Panoptic from official repository")
+                      help="update Panoptic from official repository")
 
     parser.formatter.store_option_strings(parser)
     parser.formatter.store_option_strings = lambda _: None
@@ -601,6 +618,7 @@ def parse_args():
         args.prefix = args.prefix * args.multiplier
 
     return args
+
 
 def main():
     """
@@ -738,6 +756,7 @@ def main():
 
     print("  \n[i] File search complete.")
     print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
+
 
 def get_page(**kwargs):
     """
