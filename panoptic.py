@@ -329,7 +329,7 @@ def prepare_request(payload):
     Prepares HTTP (GET or POST) request with proper payload
     """
 
-    _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]*)" % args.param,
+    _ = re.sub(r"(?P<param>%s)=(?P<value>[^=&]*)" % args.param,
                r"\1=%s" % (payload or ""), kb.request_params)
 
     request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
@@ -700,10 +700,19 @@ def main():
     kb.request_params = args.data if args.data else kb.parsed_target_url.query
 
     if not args.param:
-        match = re.match("(?P<param>[^=&]+)={1}(?P<value>[^=&]+)", kb.request_params)
+        match = re.match("(?P<param>[^=&]+)=(?P<value>[^=&]+)", kb.request_params)
         if match:
             args.param = match.group("param")
         else:
+            found = False
+
+            for match in re.finditer("(?P<param>[^=&]+)=(?P<value>[^=&]*)", kb.request_params):
+                found = True
+                print("[x] Parameter with empty value found ('%s')" % match.group("param"))
+
+            if found:
+                print("[!] Please always use non-empty (valid) parameter values")
+
             print("[!] No usable GET/POST parameters found.")
             exit()
 
@@ -824,15 +833,15 @@ def get_page(**kwargs):
 
         if verbose:
             if hasattr(e, "msg"):
-                print("[!] Error msg '%s'" % e.msg)
+                print("[x] Error msg '%s'" % e.msg)
             if hasattr(e, "reason"):
-                print("[!] Error reason '%s'" % e.reason)
+                print("[x] Error reason '%s'" % e.reason)
             if hasattr(e, "message"):
-                print("[!] Error message '%s'" % e.message)
+                print("[x] Error message '%s'" % e.message)
             if hasattr(e, "code"):
-                print("[!] HTTP error code '%d'" % e.code)
+                print("[x] HTTP error code '%d'" % e.code)
             if hasattr(e, "info"):
-                print("[!] Response headers '%s'" % e.info())
+                print("[x] Response headers '%s'" % e.info())
 
     return page
 
