@@ -329,7 +329,7 @@ def prepare_request(payload):
     Prepares HTTP (GET or POST) request with proper payload
     """
 
-    _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]+)" % args.param,
+    _ = re.sub(r"(?P<param>%s)={1}(?P<value>[^=&]*)" % args.param,
                r"\1=%s" % (payload or ""), kb.request_params)
 
     request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
