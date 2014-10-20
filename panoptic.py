@@ -383,8 +383,9 @@ def request_file(case, replace_slashes=True):
     if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
         args.prefix = args.prefix[:-1]
 
+    _ = "%s%s%s" % (args.prefix, case.location, args.postfix)
     if args.verbose:
-        print("[*] Trying '%s'" % case.location)
+        print("[*] Trying '%s'" % _)
     else:
         with kb.print_lock:
             sys.stdout.write("\r%s\r" % ROTATOR_CHARS[0])
@@ -392,7 +393,7 @@ def request_file(case, replace_slashes=True):
 
     ROTATOR_CHARS = ROTATOR_CHARS[1:] + ROTATOR_CHARS[0]
 
-    request_args = prepare_request("%s%s%s" % (args.prefix, case.location, args.postfix))
+    request_args = prepare_request(_)
     html = get_page(**request_args)
 
     if not html or args.bad_string and html.find(args.bad_string) != -1:
