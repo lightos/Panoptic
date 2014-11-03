@@ -14,6 +14,7 @@
 .nano_history
 .profile
 .psql_history
+.sh_history
 .sqlite_history
 .ssh/authorized_keys
 .ssh/config
@@ -28,4 +29,6 @@
 .tconn/tconn.conf
 .vidalia/vidalia.conf
 .Xauthority
+.zhistory
+.zsh_history
 .zshrc
