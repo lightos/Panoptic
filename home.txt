@@ -12,6 +12,7 @@
 .ksh_history
 .my.cnf
 .mysql_history
+.mysql_secret
 .nano_history
 .profile
 .psql_history
