@@ -562,7 +562,7 @@ def parse_args():
                       help="ignore system default HTTP proxy")
 
     parser.add_option("--proxy", dest="proxy",
-                      help="set proxy (e.g. \"socks5://192.168.5.92\")")
+                      help="set proxy (e.g. \"socks5://192.168.5.92:9050\")")
 
     parser.add_option("--user-agent", dest="user_agent", metavar="UA",
                       help="set HTTP User-Agent header value")
@@ -611,6 +611,9 @@ def parse_args():
         parser.formatter.option_strings[option] = value
 
     args = parser.parse_args()[0]
+
+    if args.url and not args.url.lower().startswith("http"):
+        args.url = "http://%s" % args.url
 
     if not any((args.url, args.list, args.update)):
         parser.error("missing argument for target url. Use '-h' for help.")
@@ -680,18 +683,21 @@ def main():
         opener = build_opener(_)
         install_opener(opener)
     elif args.proxy:
-        from thirdparty.socks import socks
-
         match = re.search(r"(?P<type>[^:]+)://(?P<address>[^:]+):(?P<port>\d+)", args.proxy, re.I)
         if match:
-            if match.group("type").upper() == PROXY_TYPE.SOCKS4:
-                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
-            elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
-                socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
-            elif match.group("type").upper() in (PROXY_TYPE.HTTP, PROXY_TYPE.HTTPS):
+            if match.group("type").upper() in (PROXY_TYPE.HTTP, PROXY_TYPE.HTTPS):
                 _ = ProxyHandler({match.group("type"): args.proxy})
                 opener = build_opener(_)
                 install_opener(opener)
+            else:
+                from thirdparty.socks import socks
+                if match.group("type").upper() == PROXY_TYPE.SOCKS4:
+                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
+                elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
+                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
+        else:
+            print("[!] Wrong proxy format (proper example: \"http://127.0.0.1:8080\")")
+            exit()
 
     if args.random_agent:
         with open(USER_AGENTS_FILE, 'r') as f:
@@ -730,6 +736,12 @@ def main():
         request_args["data"] = args.data
 
     kb.original_response = get_page(**request_args)
+
+    if not kb.original_response:
+        print("[!] Something seems to be wrong with connection settings")
+        if not args.verbose:
+            print("[i] Please rerun with switch '-v'")
+        exit()
 
     print("[i] Checking invalid response...")
 
@@ -837,7 +849,7 @@ def get_page(**kwargs):
                 print("[x] Error msg '%s'" % e.msg)
             if hasattr(e, "reason"):
                 print("[x] Error reason '%s'" % e.reason)
-            if hasattr(e, "message"):
+            if getattr(e, "message"):
                 print("[x] Error message '%s'" % e.message)
             if hasattr(e, "code"):
                 print("[x] HTTP error code '%d'" % e.code)
