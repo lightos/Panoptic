@@ -299,10 +299,10 @@ def update():
         process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, _ = process.communicate()
         revision = stdout[:7] if stdout and re.search(r"(?i)[0-9a-f]{32}", stdout) else "-"
-        print("[i] %s the latest revision '%s'" % ("Already at" if not updated else "Updated to", revision))
+        print("[i] %s the latest revision '%s'." % ("Already at" if not updated else "Updated to", revision))
     else:
-        print("[!] Problem occurred while updating program (%s)" % repr(stderr.strip()))
-        print("[i] Please make sure that you have a 'git' package installed")
+        print("[!] Problem occurred while updating program (%s)." % repr(stderr.strip()))
+        print("[i] Please make sure that you have a 'git' package installed.")
 
 
 def ask_question(question, default=None, automatic=False):
@@ -376,7 +376,7 @@ def request_file(case, replace_slashes=True):
 
     if kb.restrict_os and kb.restrict_os != case.os:
         if args.verbose:
-            print("[*] Skipping '%s'" % case.location)
+            print("[*] Skipping '%s'." % case.location)
 
         return None
 
@@ -385,7 +385,7 @@ def request_file(case, replace_slashes=True):
 
     _ = "%s%s%s" % (args.prefix, case.location, args.postfix)
     if args.verbose:
-        print("[*] Trying '%s'" % _)
+        print("[*] Trying '%s'." % _)
     else:
         with kb.print_lock:
             sys.stdout.write("\r%s\r" % ROTATOR_CHARS[0])
@@ -420,7 +420,7 @@ def request_file(case, replace_slashes=True):
         else:
             _ = "'%s'" % case.location
 
-        print("[+] Found %s" % _)
+        print("[+] Found %s." % _)
 
         if args.verbose:
             kb.files.append(_)
@@ -485,7 +485,7 @@ def try_cases(cases):
             users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
             if args.verbose:
-                print("[*] Extracting home folders from '%s'" % case.location)
+                print("[*] Extracting home folders from '%s'." % case.location)
 
             for user in users:
                 if args.verbose:
@@ -503,7 +503,7 @@ def try_cases(cases):
             location = case.location.rfind("/") + 1
 
             if args.verbose:
-                print("[i] Extracting MySQL binary logs from '%s'" % case.location)
+                print("[i] Extracting MySQL binary logs from '%s'." % case.location)
 
             for _ in binlogs:
                 request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (case.location[:location], _), "software": "MySQL"}), False)
@@ -616,7 +616,7 @@ def parse_args():
         args.url = "http://%s" % args.url
 
     if not any((args.url, args.list, args.update)):
-        parser.error("missing argument for target url. Use '-h' for help.")
+        parser.error("Missing argument for target url. Use '-h' for help.")
 
     if args.prefix:
         args.prefix = args.prefix * args.multiplier
@@ -701,7 +701,7 @@ def main():
                 elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
                     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
         else:
-            print("[!] Wrong proxy format (proper example: \"http://127.0.0.1:8080\")")
+            print("[!] Wrong proxy format (proper example: \"http://127.0.0.1:8080\").")
             exit()
 
     if args.random_agent:
@@ -720,10 +720,10 @@ def main():
 
             for match in re.finditer("(?P<param>[^=&]+)=(?P<value>[^=&]*)", kb.request_params):
                 found = True
-                print("[x] Parameter with empty value found ('%s')" % match.group("param"))
+                print("[x] Parameter with empty value found ('%s')." % match.group("param"))
 
             if found:
-                print("[!] Please always use non-empty (valid) parameter values")
+                print("[!] Please always use non-empty (valid) parameter values.")
 
             print("[!] No usable GET/POST parameters found.")
             exit()
@@ -743,9 +743,9 @@ def main():
     kb.original_response = get_page(**request_args)
 
     if not kb.original_response:
-        print("[!] Something seems to be wrong with connection settings")
+        print("[!] Something seems to be wrong with connection settings.")
         if not args.verbose:
-            print("[i] Please rerun with switch '-v'")
+            print("[i] Please rerun with switch '-v'.")
         exit()
 
     print("[i] Checking invalid response...")
@@ -757,7 +757,7 @@ def main():
     print("[i] Searching for files...")
 
     if args.threads > 1:
-        print("[i] Starting %d threads" % args.threads)
+        print("[i] Starting %d threads." % args.threads)
 
     threads = []
     for i in xrange(args.threads):
@@ -807,7 +807,7 @@ def get_page(**kwargs):
     try:
         parsed_url = urlsplit(url)
     except:
-        raise Exception("[!] Unable to parse URL: %s" % url)
+        raise Exception("[!] Unable to parse URL: %s." % url)
 
     if user_agent is None:
         user_agent = "%s %s" % (NAME, VERSION)
@@ -851,15 +851,15 @@ def get_page(**kwargs):
 
         if verbose:
             if hasattr(e, "msg"):
-                print("[x] Error msg '%s'" % e.msg)
+                print("[x] Error msg '%s'." % e.msg)
             if hasattr(e, "reason"):
-                print("[x] Error reason '%s'" % e.reason)
+                print("[x] Error reason '%s'." % e.reason)
             if getattr(e, "message"):
-                print("[x] Error message '%s'" % e.message)
+                print("[x] Error message '%s'." % e.message)
             if hasattr(e, "code"):
-                print("[x] HTTP error code '%d'" % e.code)
+                print("[x] HTTP error code '%d'." % e.code)
             if hasattr(e, "info"):
-                print("[x] Response headers '%s'" % e.info())
+                print("[x] Response headers '%s'." % e.info())
 
     return page
 
@@ -867,4 +867,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("[!] Ctrl-C pressed")
+        print("[!] Ctrl-C pressed.")
