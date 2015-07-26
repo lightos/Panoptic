@@ -660,6 +660,11 @@ def main():
 
     cases = get_cases(args) if not args.list_file else load_list(args.list_file)
 
+    if not cases:
+        print("[!] No available test cases with the specified attributes.\n"
+              "[!] Please verify available options with --list.")
+        exit()
+
     if args.list:
         args.list = args.list.lower()
 
