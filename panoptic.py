@@ -2,7 +2,7 @@
 from __future__ import print_function
 
 """
-Copyright (c) 2013 Roberto Christopher Salgado Bjerre, Miroslav Stampar.
+Copyright (c) 2013-2015 Roberto Christopher Salgado Bjerre, Miroslav Stampar.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"),
