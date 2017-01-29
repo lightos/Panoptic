@@ -36,6 +36,7 @@ import random
 import re
 import string
 import sys
+import ssl
 import threading
 import time
 import xml.etree.ElementTree as ET
@@ -349,6 +350,7 @@ def prepare_request(payload):
         request_args["user_agent"] = args.user_agent
 
     request_args["verbose"] = args.verbose
+    request_args["invalid_ssl"] = args.invalid_ssl
 
     return request_args
 
@@ -554,6 +556,9 @@ def parse_args():
 
     parser.add_option("-x", "--skip-parsing", dest="skip_parsing", action="store_true",
                       help="skip special tests if *NIX passwd file is found")
+
+    parser.add_option("-i", "--invalid-ssl", dest="invalid_ssl", action="store_true",
+                      help="allows testing sites that use invalid ssl certificates")
 
     parser.add_option("--load", dest="list_file", metavar="LISTFILE",
                       help="load and try user provided list from a file")
@@ -795,6 +800,7 @@ def get_page(**kwargs):
     header = kwargs.get("header", None)
     cookie = kwargs.get("cookie", None)
     user_agent = kwargs.get("user_agent", None)
+    invalid_ssl = kwargs.get("invalid_ssl", None)
     verbose = kwargs.get("verbose", False)
 
     headers = {}
@@ -818,6 +824,11 @@ def get_page(**kwargs):
     else:
         post = urlencode(parse_qsl(post), "POST")
 
+    if invalid_ssl:
+        invalid_ssl = ssl.create_default_context()
+        invalid_ssl.check_hostname = False
+        invalid_ssl.verify_mode = ssl.CERT_NONE
+
     # Perform HTTP Request
     try:
         headers[HTTP_HEADER.USER_AGENT] = user_agent
@@ -829,7 +840,7 @@ def get_page(**kwargs):
             headers[header.split("=")[0]] = header.split("=", 1)[1]
 
         req = Request(url, post, headers)
-        conn = urlopen(req)
+        conn = urlopen(req, context=invalid_ssl)
 
         if not args.write_files and kb.original_response and kb.invalid_response:
             _ = conn.headers.get(HTTP_HEADER.CONTENT_LENGTH, "")
