@@ -429,12 +429,12 @@ def request_file(case, replace_slashes=True):
 
         # If --write-file is set
         if args.write_files:
-            _ = os.path.join("output", kb.parsed_target_url.netloc)
+            _ = os.path.join("output", kb.parsed_target_url.netloc.replace(":", "_"))
 
             if not os.path.exists(_):
                 os.makedirs(_)
 
-            with open(os.path.join(_, "%s.txt" % case.location.replace(args.replace_slash if args.replace_slash else "/", "_")), "w") as f:
+            with open(os.path.join(_, "%s.txt" % case.location.replace(args.replace_slash if args.replace_slash else "/", "_").replace(":", "_")), "w") as f:
                 content = html
 
                 with kb.value_lock:
