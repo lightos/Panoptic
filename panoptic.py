@@ -85,6 +85,10 @@ BANNER = """
 # Character used for progress rotator
 ROTATOR_CHARS = "|/-\\"
 
+# Function to get the directory of the script being run:
+def get_current_path():
+    return os.path.dirname(os.path.abspath(__file__))
+
 # Location of Git repository
 GIT_REPOSITORY = "git://github.com/lightos/Panoptic.git"
 
@@ -145,7 +149,7 @@ def get_cases(args):
     Parse XML and return testing cases filtered by provided args
     """
 
-    tree = ET.parse(CASES_FILE)
+    tree = ET.parse(os.path.join(get_current_path(),CASES_FILE))
     root = tree.getroot()
 
     def _(parent, element):
@@ -493,7 +497,7 @@ def try_cases(cases):
                 if args.verbose:
                     print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
                 if not kb.home_files:
-                    with open(HOME_FILES_FILE, "r") as f:
+                    with open(os.path.join(get_current_path(),HOME_FILES_FILE), "r") as f:
                         kb.home_files = filter(None, (_.strip() for _ in f.readlines()))
                 for _ in kb.home_files:
                     if user.group("home") == "/":
@@ -651,8 +655,7 @@ def main():
     if args.update:
         update()
         exit()
-
-    with open("versions.ini") as f:
+    with open(os.path.join(get_current_path(), "versions.ini")) as f:
         section = None
         for line in f.xreadlines():
             line = line.strip()
@@ -710,7 +713,7 @@ def main():
             exit()
 
     if args.random_agent:
-        with open(USER_AGENTS_FILE, 'r') as f:
+        with open(os.path.join(get_current_path(),USER_AGENTS_FILE), 'r') as f:
             args.user_agent = random.sample(f.readlines(), 1)[0]
 
     kb.parsed_target_url = urlsplit(args.url)
