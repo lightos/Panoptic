@@ -87,7 +87,7 @@ ROTATOR_CHARS = "|/-\\"
 
 # Function to get the directory of the script being run:
 def get_current_path():
-    return os.path.dirname(os.path.abspath(__file__))
+    return os.path.dirname(os.path.realpath(__file__))
 
 # Location of Git repository
 GIT_REPOSITORY = "git://github.com/lightos/Panoptic.git"
