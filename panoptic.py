@@ -91,6 +91,8 @@ Examples:
   ./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
   ./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
   ./panoptic.py --url "http://localhost/files/view/test.txt" --path-based --prefix "..%252f"
+  ./panoptic.py --url "http://localhost/param.php?file=test&type=txt" --param file --ext-param type
+  ./panoptic.py --url "http://localhost/include.php?file=test.txt" --auto --through
 
   ./panoptic.py --list software
   ./panoptic.py --list category
@@ -414,6 +416,21 @@ def prepare_request(payload):
         # Standard query parameter-based processing
         _ = re.sub(r"(?P<param>%s)=(?P<value>[^=&]*)" % args.param,
                 r"\1=%s" % (payload or ""), kb.request_params)
+        
+        # Extension parameter handling
+        if args.ext_param and payload:
+            # Extract extension from payload if it exists
+            ext = ""
+            if '.' in payload:
+                ext = payload.split('.')[-1]
+                # Remove extension from payload to avoid duplicating it
+                payload_without_ext = payload.rsplit('.', 1)[0]
+                # Update main parameter with payload without extension
+                _ = re.sub(r"(?P<param>%s)=(?P<value>[^=&]*)" % args.param,
+                    r"\1=%s" % (payload_without_ext or ""), _)
+                # Set the extension parameter value
+                _ = re.sub(r"(?P<param>%s)=(?P<value>[^=&]*)" % args.ext_param,
+                    r"\1=%s" % ext, _)
 
         request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
 
@@ -662,6 +679,8 @@ def parse_args():
     parser.add_argument("-i", "--invalid-ssl", dest="invalid_ssl",
                         action="store_true",
                         help="Ignore SSL certificate validation errors")
+    parser.add_argument("-a", "--auto", dest="automatic", action="store_true",
+                        help="Avoid user interaction by using default options")
     parser.add_argument("--load", dest="list_file", metavar="LISTFILE",
                         help="Test custom file list from FILE instead of built-in cases")
     parser.add_argument("--prefix", dest="prefix", default="",
@@ -677,8 +696,10 @@ def parse_args():
     parser.add_argument("--threads", dest="threads", type=int,
                         default=1,  
                         help="Number of simultaneous testing threads (default: %(default)s)")
-    parser.add_argument("--through", dest="through",
+    parser.add_argument("--through", dest="through", action="store_true",
                         help="Test all versions of files (may significantly increase scan time)")
+    parser.add_argument("--ext-param", dest="ext_param",
+                        help="Name of parameter containing file extension (e.g. 'type')")
     parser.add_argument("--update", dest="update", action="store_true",
                         help="Update tool to latest version from GitHub repository")
 
@@ -706,6 +727,7 @@ def main():
     kb.print_lock = threading.Lock()
     kb.value_lock = threading.Lock()
     kb.versioned_locations = {}
+    kb.through = False
 
     check_revision()
 
@@ -731,6 +753,10 @@ def main():
                 if section not in kb.versioned_locations:
                     kb.versioned_locations[section] = []
                 kb.versioned_locations[section].append(line)
+    
+    # Set kb.through based on args.through
+    if args.through:
+        kb.through = True
 
     cases = get_cases(args) if not args.list_file else load_list(args.list_file)
 
@@ -813,6 +839,13 @@ def main():
                 print_func("[!] No usable GET/POST parameters found.")
                 print_func("[!] If this is a path-based URL (e.g. /files/view/file.txt), use --path-based")
                 sys.exit()
+    
+    # Validate extension parameter if provided
+    if args.ext_param:
+        # Make sure the extension parameter exists in the query parameters
+        if not re.search(r"(?P<param>%s)=(?P<value>[^=&]*)" % args.ext_param, kb.request_params):
+            print_func("[!] Extension parameter '%s' not found in URL or POST data." % args.ext_param)
+            sys.exit()
 
     if args.os:
         kb.restrict_os = args.os
