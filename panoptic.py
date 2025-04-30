@@ -28,6 +28,7 @@ Panoptic
 Search and retrieve content of common log and config files through path traversal vulnerability
 """
 
+import argparse
 import difflib
 import os
 import random
@@ -39,10 +40,10 @@ import threading
 import time
 import xml.etree.ElementTree as ET
 
+from argparse import RawDescriptionHelpFormatter
+from subprocess import Popen, PIPE
 from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 from urllib.request import build_opener, install_opener, urlopen, ProxyHandler, Request
-from optparse import OptionParser
-from subprocess import Popen, PIPE
 
 NAME = "Panoptic"
 VERSION = "v1.0"
@@ -86,17 +87,18 @@ GIT_REPOSITORY = "git://github.com/lightos/Panoptic.git"
 
 EXAMPLES = """
 Examples:
-./panoptic.py --url "http://localhost/include.php?file=test.txt"
-./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
-./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
-./panoptic.py --url "http://localhost/files/view/test.txt" --path-based --prefix "..%252f"
+  ./panoptic.py --url "http://localhost/include.php?file=test.txt"
+  ./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
+  ./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
+  ./panoptic.py --url "http://localhost/files/view/test.txt" --path-based --prefix "..%252f"
 
-./panoptic.py --list software
-./panoptic.py --list category
-./panoptic.py --list os
+  ./panoptic.py --list software
+  ./panoptic.py --list category
+  ./panoptic.py --list os
 
-./panoptic.py -u "http://localhost/include.php?file=test.txt" --os Windows
-./panoptic.py -u "http://localhost/include.php?file=test.txt" --software WAMP
+  ./panoptic.py -u "http://localhost/include.php?file=test.txt" --os "*NIX"
+  ./panoptic.py -u "http://localhost/include.php?file=test.txt" --software WAMP
+ 
 """
 
 
@@ -420,14 +422,16 @@ def prepare_request(payload):
         else:
             request_args["url"] += "?%s" % _
 
-    if args.header:
-        request_args["header"] = args.header
 
-    if args.cookie:
-        request_args["cookie"] = args.cookie
-
-    if args.user_agent:
-        request_args["user_agent"] = args.user_agent
+    header_val = getattr(args, 'header', None)
+    if header_val:
+        request_args["header"] = header_val
+    cookie_val = getattr(args, 'cookie', None)
+    if cookie_val:
+        request_args["cookie"] = cookie_val
+    ua_val = getattr(args, 'user_agent', None)
+    if ua_val:
+        request_args["user_agent"] = ua_val
 
     request_args["verbose"] = args.verbose
     request_args["invalid_ssl"] = args.invalid_ssl
@@ -596,122 +600,87 @@ def try_cases(cases):
 
 
 def parse_args():
-    """
-    Parses command line arguments
-    """
+    """Parses command line arguments using argparse."""
+    parser = argparse.ArgumentParser(
+        description="Panoptic – probe a URL for local files via path traversal vulnerability",
+        epilog=EXAMPLES,
+        formatter_class=CustomFormatter,
+    )
+    # Connection / Proxy settings
+    conn = parser.add_argument_group("Connection / Proxy")
+    conn.add_argument("-u", "--url", dest="url",
+                     help="Target URL vulnerable to path traversal")
+    conn.add_argument("--proxy", help="Route requests through proxy (e.g. 'socks5://127.0.0.1:9050')")
+    conn.add_argument("--ignore-proxy", action="store_true",
+                     help="Bypass system proxy settings")
+    conn.add_argument("--random-agent", action="store_true", dest="random_agent",
+                     help="Choose random User-Agent")
+    # Custom HTTP headers
+    conn.add_argument("--header", dest="header", default=None,
+                     help="Add custom HTTP header (e.g. 'X-Forwarded-For: 127.0.0.1')")
+    conn.add_argument("--cookie", dest="cookie", default=None,
+                     help="Add HTTP Cookie header (e.g. 'sid=foobar; auth=1')")
+    conn.add_argument("--user-agent", dest="user_agent", default=None,
+                     help="Set specific User-Agent string (overrides --random-agent)")
+    # Filtering / Listing
+    filt = parser.add_argument_group("Filtering / Listing")
+    filt.add_argument("-l", "--list", dest="list", metavar="GROUP",
+                      choices=["software", "category", "os"],
+                      help="Show available values for specified group")
+    filt.add_argument("-o", "--os", dest="os",
+                      help="Only test files for specific OS (e.g. '*NIX' or 'Windows')")
+    filt.add_argument("-s", "--software", dest="software",
+                      help="Only test files for specific software (e.g. 'PHP')")
+    filt.add_argument("-c", "--category", dest="category",
+                      help="Only test files for specific category (e.g. 'FTP')")
+    # General options
+    parser.add_argument("-p", "--param", dest="param",
+                        help="Name of vulnerable parameter to test (e.g. 'file')")
+    parser.add_argument("-P", "--path-based", dest="path_based", action="store_true",
+                        help="Target file paths directly instead of using query parameters")
+    parser.add_argument("-d", "--data", dest="data",
+                        help="Send parameters via POST instead of GET (e.g. 'file=test.txt')")
+    parser.add_argument("-t", "--type", dest="type",
+                        help="Filter files by type ('conf' or 'log' or 'other')")
+    parser.add_argument("-v", "--verbose", action="store_true", dest="verbose",
+                        default=False, help="Show detailed information during scanning")
+    parser.add_argument("-w", "--write-files", dest="write_files",
+                        action="store_true",
+                        help="Save discovered files to local output directory")
+    parser.add_argument("-x", "--skip-parsing", dest="skip_parsing",
+                        action="store_true",
+                        help="Don't extract users from passwd files (faster)")
+    parser.add_argument("-i", "--invalid-ssl", dest="invalid_ssl",
+                        action="store_true",
+                        help="Ignore SSL certificate validation errors")
+    parser.add_argument("--load", dest="list_file", metavar="LISTFILE",
+                        help="Test custom file list from FILE instead of built-in cases")
+    parser.add_argument("--prefix", dest="prefix", default="",
+                        help="Add this prefix to file paths (e.g. '../' for traversal)")
+    parser.add_argument("--postfix", dest="postfix", default="",
+                        help="Add this suffix to file paths (e.g. '%%00' for null-byte bypass)")
+    parser.add_argument("--multiplier", dest="multiplier", type=int,
+                        default=1, help="Repeat prefix N times (e.g. '../../../' with --multiplier 3)")
+    parser.add_argument("--bad-string", dest="bad_string", metavar="STRING",
+                        help="Skip paths if this string appears in response")
+    parser.add_argument("--replace-slash", dest="replace_slash",
+                        help="Use alternative character(s) for '/' (e.g. '/././' for bypass)")
+    parser.add_argument("--threads", dest="threads", type=int,
+                        default=1,  
+                        help="Number of simultaneous testing threads (default: %(default)s)")
+    parser.add_argument("--through", dest="through",
+                        help="Test all versions of files (may significantly increase scan time)")
+    parser.add_argument("--update", dest="update", action="store_true",
+                        help="Update tool to latest version from GitHub repository")
 
-    OptionParser.format_epilog = lambda self, formatter: self.epilog  # Override epilog formatting
-
-    parser = OptionParser(usage="usage: %prog --url TARGET [options]", epilog=EXAMPLES)
-
-    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
-                      help="display extra output information")
-
-    # Required
-    parser.add_option("-u", "--url", dest="url",
-                      help="set target URL")
-    # Optional
-    parser.add_option("-p", "--param", dest="param",
-                      help="set parameter name to test for (e.g. \"page\")")
-
-    parser.add_option("--path-based", dest="path_based", action="store_true",
-                      help="use path-based URL format instead of query parameter (e.g. \"/files/view/test.txt\")")
-
-    parser.add_option("-d", "--data", dest="data",
-                      help="set data for HTTP POST request (e.g. \"page=default\")")
-
-    parser.add_option("-t", "--type", dest="type",
-                      help="set type of file to look for (\"conf\" or \"log\")")
-
-    parser.add_option("-o", "--os", dest="os",
-                      help="set filter name for OS (e.g. \"*NIX\")")
-
-    parser.add_option("-s", "--software", dest="software",
-                      help="set filter name for software (e.g. \"PHP\")")
-
-    parser.add_option("-c", "--category", dest="category",
-                      help="set filter name for category (e.g. \"FTP\")")
-
-    parser.add_option("-l", "--list", dest="list", metavar="GROUP",
-                      help="list available filters for group (e.g. \"software\")")
-
-    parser.add_option("-a", "--auto", dest="automatic", action="store_true",
-                      help="avoid user interaction by using default options")
-
-    parser.add_option("-w", "--write-files", dest="write_files", action="store_true",
-                      help="write content of retrieved files to output folder")
-
-    parser.add_option("-x", "--skip-parsing", dest="skip_parsing", action="store_true",
-                      help="skip special tests if *NIX passwd file is found")
-
-    parser.add_option("-i", "--invalid-ssl", dest="invalid_ssl", action="store_true",
-                      help="allows testing sites that use invalid ssl certificates")
-
-    parser.add_option("--load", dest="list_file", metavar="LISTFILE",
-                      help="load and try user provided list from a file")
-
-    parser.add_option("--ignore-proxy", dest="ignore_proxy", action="store_true",
-                      help="ignore system default HTTP proxy")
-
-    parser.add_option("--proxy", dest="proxy",
-                      help="set proxy (e.g. \"socks5://192.168.5.92:9050\")")
-
-    parser.add_option("--user-agent", dest="user_agent", metavar="UA",
-                      help="set HTTP User-Agent header value")
-
-    parser.add_option("--random-agent", dest="random_agent", action="store_true",
-                      help="choose random HTTP User-Agent header value")
-
-    parser.add_option("--cookie", dest="cookie",
-                      help="set HTTP Cookie header value (e.g. \"sid=foobar\")")
-
-    parser.add_option("--header", dest="header",
-                      help="set a custom HTTP header (e.g. \"Max-Forwards=10\")")
-
-    parser.add_option("--prefix", dest="prefix", default="",
-                      help="set prefix for file path (e.g. \"../\")")
-
-    parser.add_option("--postfix", dest="postfix", default="",
-                      help="set postfix for file path (e.g. \"%00\")")
-
-    parser.add_option("--multiplier", dest="multiplier", type="int", default=1,
-                      help="set multiplication number for prefix (default: 1)")
-
-    parser.add_option("--bad-string", dest="bad_string", metavar="STRING",
-                      help="set a string occurring when file is not found")
-
-    parser.add_option("--replace-slash", dest="replace_slash",
-                      help="set replacement for char / in paths (e.g. \"/././\")")
-
-    parser.add_option("--threads", dest="threads", type="int", default=1,
-                      help="set number of threads (default: 1)")
-
-    parser.add_option("--through", dest="through",
-                      help="include testing of versioned locations")
-
-    parser.add_option("--update", dest="update", action="store_true",
-                      help="update Panoptic from official repository")
-
-    parser.formatter.store_option_strings(parser)
-    parser.formatter.store_option_strings = lambda _: None
-
-    for option, value in parser.formatter.option_strings.items():
-        value = re.sub(r"\A(-\w+) (\w+), (--[\w-]+=(\2))\Z", r"\g<1>/\g<3>", value)
-        value = value.replace(", ", '/')
-        if len(value) > MAX_HELP_OPTION_LENGTH:
-            value = ("%%.%ds.." % (MAX_HELP_OPTION_LENGTH - parser.formatter.indent_increment)) % value
-        parser.formatter.option_strings[option] = value
-
-    args = parser.parse_args()[0]
-
+    args = parser.parse_args()
+    # Normalize URL
     if args.url and not args.url.lower().startswith("http"):
-        args.url = "http://%s" % args.url
-
-    if not any((args.url, args.list, args.update)):
-        parser.error("Missing argument for target url. Use '-h' for help.")
-
+        args.url = f"http://{args.url}"
+    # Prefix multiplier
     if args.prefix:
         args.prefix = args.prefix * args.multiplier
+    # (Moved global validation to main)
 
     return args
 
@@ -734,6 +703,10 @@ def main():
     print_func(BANNER)
 
     args = parse_args()
+    # Validate that at least one action is specified
+    if not any((args.url, args.list, args.update)):
+        print_func("[!] Missing required argument: specify --url, --list, or --update")
+        sys.exit(1)
 
     if args.update:
         update()
@@ -996,6 +969,25 @@ def get_page(**kwargs):
                 print_func("[x] Response headers '%s'." % e.info())
 
     return page
+
+# Custom argparse formatter to improve help text alignment
+class CustomFormatter(RawDescriptionHelpFormatter):
+    """Argparse formatter that shifts help text to column 35 and sets width."""
+    def __init__(self, prog):
+        super().__init__(prog, max_help_position=35, width=100)
+    def _format_action_invocation(self, action):
+        """Group short and long flags with slash and format arguments."""
+        # no option strings, fallback
+        if not action.option_strings:
+            return super()._format_action_invocation(action)
+        # flags without arguments
+        if action.nargs in (0, None):
+            return '/'.join(action.option_strings)
+        # combine first and last option, then the argument placeholder
+        opts = action.option_strings
+        name = f"{opts[0]}/{opts[-1]}"
+        args_str = self._format_args(action, action.dest)
+        return f"{name} {args_str}"
 
 if __name__ == "__main__":
     try:
