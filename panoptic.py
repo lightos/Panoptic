@@ -804,11 +804,34 @@ def main():
                 opener = build_opener(_)
                 install_opener(opener)
             else:
-                from thirdparty.socks import socks  # pylint: disable=import-outside-toplevel
-                if match.group("type").upper() == PROXY_TYPE.SOCKS4:
-                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
-                elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
-                    socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
+                try:
+                    import socket
+                    from thirdparty.socks import socks
+                    proxy_address = match.group("address")
+                    proxy_port = int(match.group("port"))
+                    
+                    # Just test if we can connect to the proxy itself
+                    test_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    test_socket.settimeout(5)
+                    
+                    try:
+                        test_socket.connect((proxy_address, proxy_port))
+                        test_socket.close()
+                    except (socket.timeout, socket.error) as e:
+                        print_func(f"[!] Cannot connect to proxy at {proxy_address}:{proxy_port}")
+                        print_func("[!] Proxy connection error: {}".format(str(e)))
+                        print_func("[!] Please ensure the proxy is running and accessible.")
+                        sys.exit(1)
+                        
+                    # Now configure the SOCKS proxy
+                    if match.group("type").upper() == PROXY_TYPE.SOCKS4:
+                        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, proxy_address, proxy_port, True)
+                    elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
+                        socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, proxy_address, proxy_port, True)
+                except Exception as e:
+                    print_func(f"[!] Error setting up proxy: {e}")
+                    print_func("[!] Cannot continue without a functioning proxy. Exiting.")
+                    sys.exit(1)
         else:
             print_func("[!] Wrong proxy format (proper example: \"http://127.0.0.1:8080\").")
             sys.exit()
