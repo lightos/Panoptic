@@ -471,10 +471,19 @@ def request_file(case, replace_slashes=True):
 
         return None
 
-    if args.prefix and args.prefix[len(args.prefix) - 1] == "/":
+    # Only remove single trailing slash, not double slash which is needed for LFI bypass
+    if args.prefix and args.prefix.endswith("/") and not args.prefix.endswith("//"):
         args.prefix = args.prefix[:-1]
 
-    _ = "%s%s%s" % (args.prefix, case.location, args.postfix)
+    # For LFI filtering bypass, ensure we don't have double slashes
+    if args.prefix and case.location:
+        if args.prefix.endswith("//") and case.location.startswith("/"):
+            # If prefix ends with // and location starts with /, remove the leading / from location
+            _ = "%s%s%s" % (args.prefix, case.location[1:], args.postfix)
+        else:
+            _ = "%s%s%s" % (args.prefix, case.location, args.postfix)
+    else:
+        _ = "%s%s%s" % (args.prefix, case.location, args.postfix)
     if args.verbose:
         print_func("[*] Trying '%s'." % _)
     else:
