@@ -29,7 +29,6 @@ Search and retrieve content of common log and config files through path traversa
 """
 
 import difflib
-import configparser as ConfigParser
 import os
 import random
 import re
@@ -44,7 +43,6 @@ from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
 from urllib.request import build_opener, install_opener, urlopen, ProxyHandler, Request
 from optparse import OptionParser
 from subprocess import Popen, PIPE
-from sys import exit
 
 NAME = "Panoptic"
 VERSION = "v1.0"
@@ -146,15 +144,15 @@ def get_cases(args):
 
     tree = ET.parse(CASES_FILE)
     root = tree.getroot()
-    
+
     # Create a map of child->parent for ElementTree elements
     # Map each ElementTree element to its parent to enable filtering of XML nodes
     parent_map = {c: p for p in root.iter() for c in p}
-    
+
     # Create a map to store attributes of each element
     # This will include both XML attributes and text content for each element
     attr_map = {}
-    
+
     def _(element):
         # Store the attributes in our map
         attr_map[element] = {}
@@ -162,23 +160,23 @@ def get_cases(args):
             attr_map[element][key] = value
         for child in list(element):
             _(child)
-    
+
     # Process all elements
     _(root)
-    
+
     # Helper to get attribute value for an element
     def get_attr(element, name):
         # First, try to get the attribute directly from the element's attributes
         if element is not None and name in element.attrib:
             return element.attrib.get(name)
-        
+
         # If not found in direct attributes, try the attr_map
         return attr_map.get(element, {}).get(name)
-                  
+
     for element in root.findall(".//os") + root.findall(".//software") + root.findall(".//category") + root.findall(".//file"):
         if element.text:
             attr_map[element]['value'] = element.text.strip()
-    
+
     # Filter based on attributes
     for attr in ("os", "software", "category"):
         if getattr(args, attr):
@@ -192,7 +190,7 @@ def get_cases(args):
                         parent = parent_map.get(element)
                         if parent is not None:
                             parent.remove(element)
-    
+
     # Filter based on type
     if args.type:
         for _ in (_ for _ in ("conf", "log", "other") if _.lower() != args.type.lower()):
@@ -200,7 +198,7 @@ def get_cases(args):
                 parent = parent_map.get(element)
                 if parent is not None:
                     parent.remove(element)
-    
+
     # Helper: find nearest ancestor element matching given tag
     def find_parent_with_tag(element, tag):
         current = element
@@ -220,15 +218,15 @@ def get_cases(args):
     for element in root.findall(".//file"):
         case = AttribDict()
         case.location = get_attr(element, 'value')
-        
+
         os_parent = find_parent_with_tag(element, "os")
         category_parent = find_parent_with_tag(element, "category")
         software_parent = find_parent_with_tag(element, "software")
-        
+
         case.os = get_attr(os_parent, 'value') if os_parent is not None else None
         case.category = get_attr(category_parent, 'value') if category_parent is not None else None
         case.software = get_attr(software_parent, 'value') if software_parent is not None else None
-        
+
         # Determine type
         if find_parent_with_tag(element, "log") is not None:
             case.type = "log"
@@ -381,19 +379,19 @@ def prepare_request(payload):
     """
     Prepares HTTP (GET or POST) request with proper payload
     """
-    
+
     # Handle path-based URL format if specified
     if args.path_based:
         # Extract the base path from the URL (everything up to the last /)
         path = kb.parsed_target_url.path
         last_slash = path.rfind('/')
-        
+
         if last_slash >= 0:
             base_path = path[:last_slash]
             # For the first request, store the original filename
             if not hasattr(kb, "original_filename"):
                 kb.original_filename = path[last_slash+1:]
-                
+
             # Construct a URL with the payload replacing the filename
             url = "%s://%s%s/%s" % (
                 kb.parsed_target_url.scheme or "http",
@@ -401,7 +399,7 @@ def prepare_request(payload):
                 base_path,
                 payload or kb.original_filename
             )
-            
+
             request_args = {"url": url}
         else:
             # Fallback if we can't find a slash in the path
@@ -615,7 +613,7 @@ def parse_args():
     # Optional
     parser.add_option("-p", "--param", dest="param",
                       help="set parameter name to test for (e.g. \"page\")")
-                      
+
     parser.add_option("--path-based", dest="path_based", action="store_true",
                       help="use path-based URL format instead of query parameter (e.g. \"/files/view/test.txt\")")
 
@@ -739,7 +737,7 @@ def main():
 
     if args.update:
         update()
-        exit()
+        sys.exit()
 
     with open("versions.ini") as f:
         section = None
@@ -757,7 +755,7 @@ def main():
     if not cases:
         print_func("[!] No available test cases with the specified attributes.\n"
               "[!] Please verify available options with --list.")
-        exit()
+        sys.exit()
 
     if args.list:
         args.list = args.list.lower()
@@ -765,7 +763,7 @@ def main():
         _ = ("category", "software", "os")
         if args.list not in _:
             print_func("[!] Valid values for option '--list' are: %s" % ", ".join(_))
-            exit()
+            sys.exit()
 
         print_func("[i] Listing available filters for usage with option '--%s':\n" % args.list)
 
@@ -776,15 +774,15 @@ def main():
                 attr_value = getattr(case, args.list, None)
                 if attr_value:
                     values.add(attr_value)
-            
+
             # Output the collected values
             for value in values:
                 print_func(value if re.search(r"\A[A-Za-z0-9]+\Z", value) else '"%s"' % value)
-                
+
         except (KeyError, AttributeError) as e:
             print_func("[!] Error listing values: %s" % str(e))
         finally:
-            exit()
+            sys.exit()
 
     if args.ignore_proxy:
         _ = ProxyHandler({})
@@ -798,14 +796,14 @@ def main():
                 opener = build_opener(_)
                 install_opener(opener)
             else:
-                from thirdparty.socks import socks
+                from thirdparty.socks import socks  # pylint: disable=import-outside-toplevel
                 if match.group("type").upper() == PROXY_TYPE.SOCKS4:
                     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS4, match.group("address"), int(match.group("port")), True)
                 elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
                     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
         else:
             print_func("[!] Wrong proxy format (proper example: \"http://127.0.0.1:8080\").")
-            exit()
+            sys.exit()
 
     if args.random_agent:
         with open(USER_AGENTS_FILE, 'r') as f:
@@ -832,7 +830,7 @@ def main():
             if not args.path_based:
                 print_func("[!] No usable GET/POST parameters found.")
                 print_func("[!] If this is a path-based URL (e.g. /files/view/file.txt), use --path-based")
-                exit()
+                sys.exit()
 
     if args.os:
         kb.restrict_os = args.os
@@ -852,8 +850,8 @@ def main():
         print_func("[!] Something seems to be wrong with connection settings.")
         if not args.verbose:
             print_func("[i] Please rerun with switch '-v'.")
-        exit()
-    
+        sys.exit()
+
     # Decode response bytes to text if necessary
     if isinstance(kb.original_response, bytes):
         kb.original_response = kb.original_response.decode('utf-8', errors='replace')
@@ -862,7 +860,7 @@ def main():
 
     request_args = prepare_request("%s%s%s" % (args.prefix, INVALID_FILENAME, args.postfix))
     kb.invalid_response = get_page(**request_args)
-    
+
     # Decode invalid response bytes to text if necessary
     if isinstance(kb.invalid_response, bytes):
         kb.invalid_response = kb.invalid_response.decode('utf-8', errors='replace')
