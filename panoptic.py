@@ -92,6 +92,9 @@ Examples:
 ./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
 ./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
 
+# For path-based URL format (where file is in the path, not a parameter)
+./panoptic.py --url "http://localhost/files/view/test.txt" --path-based
+
 ./panoptic.py --list software
 ./panoptic.py --list category
 ./panoptic.py --list os
@@ -372,16 +375,46 @@ def prepare_request(payload):
     """
     Prepares HTTP (GET or POST) request with proper payload
     """
-
-    _ = re.sub(r"(?P<param>%s)=(?P<value>[^=&]*)" % args.param,
-               r"\1=%s" % (payload or ""), kb.request_params)
-
-    request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
-
-    if args.data:
-        request_args["data"] = _
+    
+    # Handle path-based URL format if specified
+    if args.path_based:
+        # Extract the base path from the URL (everything up to the last /)
+        path = kb.parsed_target_url.path
+        last_slash = path.rfind('/')
+        
+        if last_slash >= 0:
+            base_path = path[:last_slash]
+            # For the first request, store the original filename
+            if not hasattr(kb, "original_filename"):
+                kb.original_filename = path[last_slash+1:]
+                
+            # Construct a URL with the payload replacing the filename
+            url = "%s://%s%s/%s" % (
+                kb.parsed_target_url.scheme or "http",
+                kb.parsed_target_url.netloc,
+                base_path,
+                payload or kb.original_filename
+            )
+            
+            request_args = {"url": url}
+        else:
+            # Fallback if we can't find a slash in the path
+            request_args = {"url": "%s://%s/%s" % (
+                kb.parsed_target_url.scheme or "http",
+                kb.parsed_target_url.netloc,
+                payload or ""
+            )}
     else:
-        request_args["url"] += "?%s" % _
+        # Standard query parameter-based processing
+        _ = re.sub(r"(?P<param>%s)=(?P<value>[^=&]*)" % args.param,
+                r"\1=%s" % (payload or ""), kb.request_params)
+
+        request_args = {"url": "%s://%s%s" % (kb.parsed_target_url.scheme or "http", kb.parsed_target_url.netloc, kb.parsed_target_url.path)}
+
+        if args.data:
+            request_args["data"] = _
+        else:
+            request_args["url"] += "?%s" % _
 
     if args.header:
         request_args["header"] = args.header
@@ -394,6 +427,10 @@ def prepare_request(payload):
 
     request_args["verbose"] = args.verbose
     request_args["invalid_ssl"] = args.invalid_ssl
+
+    # Show the URL in verbose mode
+    if args.verbose and payload:
+        print_func("[*] Request URL: %s" % request_args["url"])
 
     return request_args
 
@@ -572,6 +609,9 @@ def parse_args():
     # Optional
     parser.add_option("-p", "--param", dest="param",
                       help="set parameter name to test for (e.g. \"page\")")
+                      
+    parser.add_option("--path-based", dest="path_based", action="store_true",
+                      help="use path-based URL format instead of query parameter (e.g. \"/files/view/test.txt\")")
 
     parser.add_option("-d", "--data", dest="data",
                       help="set data for HTTP POST request (e.g. \"page=default\")")
@@ -759,7 +799,8 @@ def main():
     kb.parsed_target_url = urlsplit(args.url)
     kb.request_params = args.data if args.data else kb.parsed_target_url.query
 
-    if not args.param:
+    # For path-based URLs, we don't need a parameter
+    if not args.path_based and not args.param:
         match = re.match("(?P<param>[^=&]+)=(?P<value>[^=&]+)", kb.request_params)
         if match:
             args.param = match.group("param")
@@ -773,8 +814,10 @@ def main():
             if found:
                 print_func("[!] Please always use non-empty (valid) parameter values.")
 
-            print_func("[!] No usable GET/POST parameters found.")
-            exit()
+            if not args.path_based:
+                print_func("[!] No usable GET/POST parameters found.")
+                print_func("[!] If this is a path-based URL (e.g. /files/view/file.txt), use --path-based")
+                exit()
 
     if args.os:
         kb.restrict_os = args.os
