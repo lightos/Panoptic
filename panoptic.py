@@ -170,9 +170,13 @@ def get_cases(args):
     
     # Helper to get attribute value for an element
     def get_attr(element, name):
+        # First, try to get the attribute directly from the element's attributes
+        if element is not None and name in element.attrib:
+            return element.attrib.get(name)
+        
+        # If not found in direct attributes, try the attr_map
         return attr_map.get(element, {}).get(name)
-    
-    # Set 'value' attribute from text content for relevant elements
+                  
     for element in root.findall(".//os") + root.findall(".//software") + root.findall(".//category") + root.findall(".//file"):
         if element.text:
             attr_map[element]['value'] = element.text.strip()
@@ -180,12 +184,16 @@ def get_cases(args):
     # Filter based on attributes
     for attr in ("os", "software", "category"):
         if getattr(args, attr):
+            user_value = getattr(args, attr).lower()
             for element in root.findall(".//%s" % attr):
                 value = get_attr(element, 'value')
-                if value and value.lower() != getattr(args, attr).lower():
-                    parent = parent_map.get(element)
-                    if parent is not None:
-                        parent.remove(element)
+                if value:
+                    value_lower = value.lower()
+                    # For all attributes, use exact matching only (not substring)
+                    if value_lower != user_value:
+                        parent = parent_map.get(element)
+                        if parent is not None:
+                            parent.remove(element)
     
     # Filter based on type
     if args.type:
@@ -764,10 +772,19 @@ def main():
         print_func("[i] Listing available filters for usage with option '--%s':\n" % args.list)
 
         try:
-            for _ in set([_[args.list] for _ in cases]):
-                print_func(_ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _)
-        except KeyError:
-            pass
+            # Collect all unique values for the requested attribute
+            values = set()
+            for case in cases:
+                attr_value = getattr(case, args.list, None)
+                if attr_value:
+                    values.add(attr_value)
+            
+            # Output the collected values
+            for value in values:
+                print_func(value if re.search(r"\A[A-Za-z0-9]+\Z", value) else '"%s"' % value)
+                
+        except (KeyError, AttributeError) as e:
+            print_func("[!] Error listing values: %s" % str(e))
         finally:
             exit()
 
