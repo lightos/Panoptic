@@ -91,9 +91,7 @@ Examples:
 ./panoptic.py --url "http://localhost/include.php?file=test.txt"
 ./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
 ./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
-
-# For path-based URL format (where file is in the path, not a parameter)
-./panoptic.py --url "http://localhost/files/view/test.txt" --path-based
+./panoptic.py --url "http://localhost/files/view/test.txt" --path-based --prefix "..%252f"
 
 ./panoptic.py --list software
 ./panoptic.py --list category
@@ -504,7 +502,7 @@ def request_file(case, replace_slashes=True):
                         answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case.os, default='Y', automatic=args.automatic)
                         kb.restrict_os = answer.upper() != 'N' and case.os
 
-        _ = "/".join(_ for _ in (case.os, case.category, case.type) if _)
+        _ = "/".join(_ for _ in (case.os, case.category, case.software, case.type) if _)
         if _:
             _ = "'%s' (%s)" % (case.location, _)
             _ = _.replace("%s/%s/" % (case.os, case.os), "%s/" % case.os)
