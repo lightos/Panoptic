@@ -1,5 +1,4 @@
-#!/usr/bin/env python
-from __future__ import print_function
+#!/usr/bin/env python3
 
 """
 Copyright (c) 2013-2015 Roberto Christopher Salgado Bjerre, Miroslav Stampar.
@@ -30,7 +29,7 @@ Search and retrieve content of common log and config files through path traversa
 """
 
 import difflib
-import ConfigParser
+import configparser as ConfigParser
 import os
 import random
 import re
@@ -41,19 +40,18 @@ import threading
 import time
 import xml.etree.ElementTree as ET
 
-from urllib import urlencode
-from urllib2 import build_opener, install_opener, urlopen, ProxyHandler, Request
-from urlparse import urlsplit, urlunsplit, parse_qsl
+from urllib.parse import urlencode, urlsplit, urlunsplit, parse_qsl
+from urllib.request import build_opener, install_opener, urlopen, ProxyHandler, Request
 from optparse import OptionParser
 from subprocess import Popen, PIPE
 from sys import exit
 
 NAME = "Panoptic"
-VERSION = "v0.1"
+VERSION = "v1.0"
 URL = "https://github.com/lightos/Panoptic/"
 
 # Used for retrieving response for a dummy filename
-INVALID_FILENAME = "".join(random.sample(string.letters, 10))
+INVALID_FILENAME = "".join(random.sample(string.ascii_letters, 10))
 
 # Maximum length of left option column in help listing
 MAX_HELP_OPTION_LENGTH = 20
@@ -131,13 +129,13 @@ kb = AttribDict()
 args = None
 
 
-def print(*args, **kwargs):
+def print_func(*args, **kwargs):
     """
     Thread-safe version of print function
     """
 
     with kb.print_lock:
-        return __builtins__.print(*args, **kwargs)
+        return print(*args, **kwargs)
 
 
 def get_cases(args):
@@ -147,33 +145,62 @@ def get_cases(args):
 
     tree = ET.parse(CASES_FILE)
     root = tree.getroot()
-
-    def _(parent, element):
-        element.parent = parent
+    
+    # Create a map of child->parent for ElementTree elements
+    # Map each ElementTree element to its parent to enable filtering of XML nodes
+    parent_map = {c: p for p in root.iter() for c in p}
+    
+    # Create a map to store attributes of each element
+    # This will include both XML attributes and text content for each element
+    attr_map = {}
+    
+    def _(element):
+        # Store the attributes in our map
+        attr_map[element] = {}
         for key, value in element.attrib.items():
-            setattr(element, key, value)
-        for child in element.getchildren():
-            _(element, child)
-
-    _(None, root)
-
+            attr_map[element][key] = value
+        for child in list(element):
+            _(child)
+    
+    # Process all elements
+    _(root)
+    
+    # Helper to get attribute value for an element
+    def get_attr(element, name):
+        return attr_map.get(element, {}).get(name)
+    
+    # Set 'value' attribute from text content for relevant elements
+    for element in root.findall(".//os") + root.findall(".//software") + root.findall(".//category") + root.findall(".//file"):
+        if element.text:
+            attr_map[element]['value'] = element.text.strip()
+    
+    # Filter based on attributes
     for attr in ("os", "software", "category"):
         if getattr(args, attr):
             for element in root.findall(".//%s" % attr):
-                if element.value.lower() != getattr(args, attr).lower():
-                    element.parent.remove(element)
-
+                value = get_attr(element, 'value')
+                if value and value.lower() != getattr(args, attr).lower():
+                    parent = parent_map.get(element)
+                    if parent is not None:
+                        parent.remove(element)
+    
+    # Filter based on type
     if args.type:
         for _ in (_ for _ in ("conf", "log", "other") if _.lower() != args.type.lower()):
             for element in root.findall(".//%s" % _):
-                element.parent.remove(element)
-
-    def _(element, tag):
-        while element.parent is not None:
-            if element.parent.tag == tag:
-                return element.parent
-            else:
-                element = element.parent
+                parent = parent_map.get(element)
+                if parent is not None:
+                    parent.remove(element)
+    
+    # Helper: find nearest ancestor element matching given tag
+    def find_parent_with_tag(element, tag):
+        current = element
+        while parent_map.get(current) is not None:
+            parent = parent_map.get(current)
+            if parent.tag == tag:
+                return parent
+            current = parent
+        return None
 
     cases = []
     replacements = {}
@@ -183,13 +210,25 @@ def get_cases(args):
 
     for element in root.findall(".//file"):
         case = AttribDict()
-        case.location = element.value
-        case.os = _(element, "os").value
-        case.category = _(element, "category").value
-        case.software = _(element, "software").value
-        case.type = _(element, "log") is not None and "log"\
-            or _(element, "conf") is not None and "conf"\
-            or _(element, "other") is not None and "other"
+        case.location = get_attr(element, 'value')
+        
+        os_parent = find_parent_with_tag(element, "os")
+        category_parent = find_parent_with_tag(element, "category")
+        software_parent = find_parent_with_tag(element, "software")
+        
+        case.os = get_attr(os_parent, 'value') if os_parent is not None else None
+        case.category = get_attr(category_parent, 'value') if category_parent is not None else None
+        case.software = get_attr(software_parent, 'value') if software_parent is not None else None
+        
+        # Determine type
+        if find_parent_with_tag(element, "log") is not None:
+            case.type = "log"
+        elif find_parent_with_tag(element, "conf") is not None:
+            case.type = "conf"
+        elif find_parent_with_tag(element, "other") is not None:
+            case.type = "other"
+        else:
+            case.type = None
 
         for variable in re.findall(r"\{[^}]+\}", case.location):
             case.location = case.location.replace(variable, replacements.get(variable.strip("{}"), variable))
@@ -198,9 +237,9 @@ def get_cases(args):
         if match and kb.through:
             original = case.location
             for replacement in kb.versioned_locations[match.group(1)]:
-                case = AttribDict(case)
-                case.location = original.replace(match.group(0), replacement)
-                cases.append(case)
+                case_copy = AttribDict(case)
+                case_copy.location = original.replace(match.group(0), replacement)
+                cases.append(case_copy)
         else:
             cases.append(case)
 
@@ -262,6 +301,7 @@ def get_revision():
     if not retval:
         process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, _ = process.communicate()
+        stdout = stdout.decode('utf-8') if stdout else ""
         match = re.search(r"(?i)[0-9a-f]{32}", stdout or "")
         retval = match.group(0) if match else None
 
@@ -289,21 +329,24 @@ def update():
     Do the program update
     """
 
-    print("[i] Checking for updates...")
+    print_func("[i] Checking for updates...")
 
     process = Popen("git pull %s HEAD" % GIT_REPOSITORY, shell=True, stdout=PIPE, stderr=PIPE)
     stdout, stderr = process.communicate()
+    stdout = stdout.decode('utf-8') if stdout else ""
+    stderr = stderr.decode('utf-8') if stderr else ""
     success = not process.returncode
 
     if success:
         updated = "Already" not in stdout
         process = Popen("git rev-parse --verify HEAD", shell=True, stdout=PIPE, stderr=PIPE)
         stdout, _ = process.communicate()
+        stdout = stdout.decode('utf-8') if stdout else ""
         revision = stdout[:7] if stdout and re.search(r"(?i)[0-9a-f]{32}", stdout) else "-"
-        print("[i] %s the latest revision '%s'." % ("Already at" if not updated else "Updated to", revision))
+        print_func("[i] %s the latest revision '%s'." % ("Already at" if not updated else "Updated to", revision))
     else:
-        print("[!] Problem occurred while updating program (%s)." % repr(stderr.strip()))
-        print("[i] Please make sure that you have a 'git' package installed.")
+        print_func("[!] Problem occurred while updating program (%s)." % repr(stderr.strip()))
+        print_func("[i] Please make sure that you have a 'git' package installed.")
 
 
 def ask_question(question, default=None, automatic=False):
@@ -315,12 +358,12 @@ def ask_question(question, default=None, automatic=False):
 
     if automatic:
         answer = default
-        print("%s%s" % (question, answer))
+        print_func("%s%s" % (question, answer))
     else:
         with kb.print_lock:
-            answer = raw_input(question)
+            answer = input(question)
 
-    print
+    print_func("")
 
     return answer
 
@@ -361,7 +404,8 @@ def clean_response(response, filepath):
     """
 
     response = response.replace(filepath, "")
-    regex = re.sub(r"[^A-Za-z0-9]", "(.|&\w+;|%[0-9A-Fa-f]{2})", filepath)
+    # Build regex to escape special characters in filepath for matching
+    regex = re.sub(r"[^A-Za-z0-9]", r"(.|&\\w+;|%[0-9A-Fa-f]{2})", filepath)
 
     return re.sub(regex, "", response, re.I)
 
@@ -378,7 +422,7 @@ def request_file(case, replace_slashes=True):
 
     if kb.restrict_os and kb.restrict_os != case.os:
         if args.verbose:
-            print("[*] Skipping '%s'." % case.location)
+            print_func("[*] Skipping '%s'." % case.location)
 
         return None
 
@@ -387,7 +431,7 @@ def request_file(case, replace_slashes=True):
 
     _ = "%s%s%s" % (args.prefix, case.location, args.postfix)
     if args.verbose:
-        print("[*] Trying '%s'." % _)
+        print_func("[*] Trying '%s'." % _)
     else:
         with kb.print_lock:
             sys.stdout.write("\r%s\r" % ROTATOR_CHARS[0])
@@ -406,10 +450,10 @@ def request_file(case, replace_slashes=True):
     if matcher.quick_ratio() < HEURISTIC_RATIO:
         with kb.value_lock:
             if not kb.found:
-                print("[i] Possible file(s) found!")
+                print_func("[i] Possible file(s) found!")
 
                 if case.os:
-                    print("[i] OS: %s" % case.os)
+                    print_func("[i] OS: %s" % case.os)
 
                     if kb.restrict_os is None:
                         answer = ask_question("Do you want to restrict further scans to '%s'? [Y/n]" % case.os, default='Y', automatic=args.automatic)
@@ -422,7 +466,7 @@ def request_file(case, replace_slashes=True):
         else:
             _ = "'%s'" % case.location
 
-        print("[+] Found %s." % _)
+        print_func("[+] Found %s." % _)
 
         if args.verbose:
             kb.files.append(_)
@@ -481,20 +525,19 @@ def try_cases(cases):
         if not kb.found:
             kb.found = True
 
-        # If --skip-file-parsing is not set.
-
+        # If skip_parsing flag not set, parse passwd for users and attempt home directory files
         if case.location in passwd_files and not args.skip_parsing:
             users = re.finditer("(?P<username>[^:\n]+):(?P<password>[^:]*):(?P<uid>\d+):(?P<gid>\d*):(?P<info>[^:]*):(?P<home>[^:]+):[/a-z]*", html)
 
             if args.verbose:
-                print("[*] Extracting home folders from '%s'." % case.location)
+                print_func("[*] Extracting home folders from '%s'." % case.location)
 
             for user in users:
                 if args.verbose:
-                    print("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
+                    print_func("[*] User: %s, Info: %s" % (user.group("username"), user.group("info")))
                 if not kb.home_files:
                     with open(HOME_FILES_FILE, "r") as f:
-                        kb.home_files = filter(None, (_.strip() for _ in f.readlines()))
+                        kb.home_files = list(filter(None, [_.strip() for _ in f.readlines()]))
                 for _ in kb.home_files:
                     if user.group("home") == "/":
                         continue
@@ -505,7 +548,7 @@ def try_cases(cases):
             location = case.location.rfind("/") + 1
 
             if args.verbose:
-                print("[i] Extracting MySQL binary logs from '%s'." % case.location)
+                print_func("[i] Extracting MySQL binary logs from '%s'." % case.location)
 
             for _ in binlogs:
                 request_file(AttribDict({"category": "Databases", "type": "log", "os": case.os, "location": "%s%s" % (case.location[:location], _), "software": "MySQL"}), False)
@@ -644,7 +687,7 @@ def main():
 
     check_revision()
 
-    print(BANNER)
+    print_func(BANNER)
 
     args = parse_args()
 
@@ -654,7 +697,7 @@ def main():
 
     with open("versions.ini") as f:
         section = None
-        for line in f.xreadlines():
+        for line in f:
             line = line.strip()
             if re.match(r"\[.+\]", line):
                 section = line.strip("[]")
@@ -666,7 +709,7 @@ def main():
     cases = get_cases(args) if not args.list_file else load_list(args.list_file)
 
     if not cases:
-        print("[!] No available test cases with the specified attributes.\n"
+        print_func("[!] No available test cases with the specified attributes.\n"
               "[!] Please verify available options with --list.")
         exit()
 
@@ -675,14 +718,14 @@ def main():
 
         _ = ("category", "software", "os")
         if args.list not in _:
-            print("[!] Valid values for option '--list' are: %s" % ", ".join(_))
+            print_func("[!] Valid values for option '--list' are: %s" % ", ".join(_))
             exit()
 
-        print("[i] Listing available filters for usage with option '--%s':\n" % args.list)
+        print_func("[i] Listing available filters for usage with option '--%s':\n" % args.list)
 
         try:
             for _ in set([_[args.list] for _ in cases]):
-                print(_ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _)
+                print_func(_ if re.search(r"\A[A-Za-z0-9]+\Z", _) else '"%s"' % _)
         except KeyError:
             pass
         finally:
@@ -706,7 +749,7 @@ def main():
                 elif match.group("type").upper() == PROXY_TYPE.SOCKS5:
                     socks.setdefaultproxy(socks.PROXY_TYPE_SOCKS5, match.group("address"), int(match.group("port")), True)
         else:
-            print("[!] Wrong proxy format (proper example: \"http://127.0.0.1:8080\").")
+            print_func("[!] Wrong proxy format (proper example: \"http://127.0.0.1:8080\").")
             exit()
 
     if args.random_agent:
@@ -725,19 +768,19 @@ def main():
 
             for match in re.finditer("(?P<param>[^=&]+)=(?P<value>[^=&]*)", kb.request_params):
                 found = True
-                print("[x] Parameter with empty value found ('%s')." % match.group("param"))
+                print_func("[x] Parameter with empty value found ('%s')." % match.group("param"))
 
             if found:
-                print("[!] Please always use non-empty (valid) parameter values.")
+                print_func("[!] Please always use non-empty (valid) parameter values.")
 
-            print("[!] No usable GET/POST parameters found.")
+            print_func("[!] No usable GET/POST parameters found.")
             exit()
 
     if args.os:
         kb.restrict_os = args.os
 
-    print("[i] Starting scan at: %s\n" % time.strftime("%X"))
-    print("[i] Checking original response...")
+    print_func("[i] Starting scan at: %s\n" % time.strftime("%X"))
+    print_func("[i] Checking original response...")
 
     request_args = prepare_request(None)
     request_args["url"] = args.url
@@ -748,46 +791,56 @@ def main():
     kb.original_response = get_page(**request_args)
 
     if not kb.original_response:
-        print("[!] Something seems to be wrong with connection settings.")
+        print_func("[!] Something seems to be wrong with connection settings.")
         if not args.verbose:
-            print("[i] Please rerun with switch '-v'.")
+            print_func("[i] Please rerun with switch '-v'.")
         exit()
+    
+    # Decode response bytes to text if necessary
+    if isinstance(kb.original_response, bytes):
+        kb.original_response = kb.original_response.decode('utf-8', errors='replace')
 
-    print("[i] Checking invalid response...")
+    print_func("[i] Checking invalid response...")
 
     request_args = prepare_request("%s%s%s" % (args.prefix, INVALID_FILENAME, args.postfix))
     kb.invalid_response = get_page(**request_args)
+    
+    # Decode invalid response bytes to text if necessary
+    if isinstance(kb.invalid_response, bytes):
+        kb.invalid_response = kb.invalid_response.decode('utf-8', errors='replace')
 
-    print("[i] Done!")
-    print("[i] Searching for files...")
+    print_func("[i] Done!")
+    print_func("[i] Searching for files...")
 
     if args.threads > 1:
-        print("[i] Starting %d threads." % args.threads)
+        print_func("[i] Starting %d threads." % args.threads)
 
+    # Launch worker threads for concurrent scanning
     threads = []
-    for i in xrange(args.threads):
-        thread = threading.Thread(target=try_cases, args=([cases[_] for _ in xrange(i, len(cases), args.threads)],))
+    for i in range(args.threads):
+        thread = threading.Thread(target=try_cases, args=([cases[_] for _ in range(i, len(cases), args.threads)],))
         thread.daemon = True
         thread.start()
         threads.append(thread)
 
+    # Wait for all threads to complete
     alive = True
     while alive:
         alive = False
         for thread in threads:
-            if thread.isAlive():
+            if thread.is_alive():
                 alive = True
                 time.sleep(0.1)
 
     if not kb.found:
-        print("[i] No files found!")
+        print_func("[i] No files found!")
     elif args.verbose:
-        print("\n[i] Files found:")
+        print_func("\n[i] Files found:")
         for _ in kb.files:
-            print("[o] %s" % _)
+            print_func("[o] %s" % _)
 
-    print("  \n[i] File search complete.")
-    print("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
+    print_func("  \n[i] File search complete.")
+    print_func("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
 
 
 def get_page(**kwargs):
@@ -822,7 +875,7 @@ def get_page(**kwargs):
         parsed_url = parsed_url._replace(query=urlencode(parse_qsl(parsed_url.query)))
         url = urlunsplit(parsed_url)
     else:
-        post = urlencode(parse_qsl(post), "POST")
+        post = urlencode(parse_qsl(post)).encode('utf-8')
 
     if invalid_ssl:
         invalid_ssl = ssl.create_default_context()
@@ -842,35 +895,49 @@ def get_page(**kwargs):
         req = Request(url, post, headers)
         conn = urlopen(req, context=invalid_ssl)
 
+        # Skip retrieving overly large content to avoid performance issues
         if not args.write_files and kb.original_response and kb.invalid_response:
             _ = conn.headers.get(HTTP_HEADER.CONTENT_LENGTH, "")
             if _.isdigit():
                 _ = int(_)
                 if _ - max(len(kb.original_response), len(kb.invalid_response)) > SKIP_RETRIEVE_THRESHOLD:
-                    page = "".join(random.choice(string.letters) for i in xrange(_))
+                    page = ''.join(random.choice(string.ascii_letters) for i in range(_))
 
         # Get HTTP Response
         if not page:
             page = conn.read()
+            # Try to decode to str if it's bytes
+            if isinstance(page, bytes):
+                try:
+                    page = page.decode('utf-8')
+                except UnicodeDecodeError:
+                    # If we can't decode as UTF-8, try with latin-1 (which never fails)
+                    page = page.decode('latin-1')
 
     except KeyboardInterrupt:
         raise
 
-    except Exception, e:
+    except Exception as e:
         if hasattr(e, "read"):
-            page = page or e.read()
+            error_page = e.read()
+            if isinstance(error_page, bytes):
+                try:
+                    error_page = error_page.decode('utf-8')
+                except UnicodeDecodeError:
+                    error_page = error_page.decode('latin-1')
+            page = page or error_page
 
         if verbose:
             if hasattr(e, "msg"):
-                print("[x] Error msg '%s'." % e.msg)
+                print_func("[x] Error msg '%s'." % e.msg)
             if hasattr(e, "reason"):
-                print("[x] Error reason '%s'." % e.reason)
-            if getattr(e, "message"):
-                print("[x] Error message '%s'." % e.message)
+                print_func("[x] Error reason '%s'." % e.reason)
+            if getattr(e, "message", None):
+                print_func("[x] Error message '%s'." % e.message)
             if hasattr(e, "code"):
-                print("[x] HTTP error code '%d'." % e.code)
+                print_func("[x] HTTP error code '%d'." % e.code)
             if hasattr(e, "info"):
-                print("[x] Response headers '%s'." % e.info())
+                print_func("[x] Response headers '%s'." % e.info())
 
     return page
 
@@ -878,4 +945,4 @@ if __name__ == "__main__":
     try:
         main()
     except KeyboardInterrupt:
-        print("[!] Ctrl-C pressed.")
+        print_func("[!] Ctrl-C pressed.")

@@ -5,6 +5,9 @@ Panoptic
 
 Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through path traversal vulnerability. Official introductionary post can be found [here](http://websec.ca/blog/view/panoptic). Also, you can find a sample run [here](https://gist.github.com/stamparm/5335273).
 
+### Requirements
+* Python 3.x
+
 ### Help Menu
     Usage: panoptic.py --url TARGET [options]
 
