@@ -556,7 +556,7 @@ def request_file(case, replace_slashes=True):
             if not os.path.exists(_):
                 os.makedirs(_)
 
-            with open(os.path.join(_, "%s.txt" % case.location.replace(args.replace_slash if args.replace_slash else "/", "_").replace(":", "_")), "w") as f:
+            with open(os.path.join(_, "%s.txt" % case.location.replace(args.replace_slash if args.replace_slash else "/", "_").replace(":", "_")), "w", encoding="utf-8") as f:
                 content = html
 
                 with kb.value_lock:
