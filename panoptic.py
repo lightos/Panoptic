@@ -41,6 +41,7 @@ import threading
 import time
 import xml.etree.ElementTree as ET
 
+from base64 import b64encode
 from urllib import urlencode
 from urllib2 import build_opener, install_opener, urlopen, ProxyHandler, Request
 from urlparse import urlsplit, urlunsplit, parse_qsl
@@ -533,6 +534,9 @@ def parse_args():
     parser.add_option("-d", "--data", dest="data",
                       help="set data for HTTP POST request (e.g. \"page=default\")")
 
+    parser.add_option("-e", "--encode", dest="encode",
+                      help="set data values with base64 encoded, csv (e.g. \"encode=user,email,password\"")
+
     parser.add_option("-t", "--type", dest="type",
                       help="set type of file to look for (\"conf\" or \"log\")")
 
@@ -819,7 +823,16 @@ def get_page(**kwargs):
         user_agent = "%s %s" % (NAME, VERSION)
 
     if post is None:
-        parsed_url = parsed_url._replace(query=urlencode(parse_qsl(parsed_url.query)))
+        if args.encode:
+            to_encode = args.encode.split(',')
+            q = []
+            for k, v in parse_qsl(parsed_url.query):
+                if k in to_encode:
+                    v = b64encode(v).replace('=', '')
+                q.append((k, v))
+        else:
+            q = parse_qsl(parsed_url.query)
+        parsed_url = parsed_url._replace(query=urlencode(q))
         url = urlunsplit(parsed_url)
     else:
         post = urlencode(parse_qsl(post), "POST")
