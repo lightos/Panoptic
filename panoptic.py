@@ -854,8 +854,11 @@ def main():
             sys.exit()
 
     if args.random_agent:
+        # Load all non-empty agent strings and pick one randomly (strip newline)
         with open(USER_AGENTS_FILE, 'r') as f:
-            args.user_agent = random.sample(f.readlines(), 1)[0]
+            agents = [line.strip() for line in f if line.strip()]
+        args.user_agent = random.choice(agents)
+        print_func("[i] Using random User-Agent: %s" % args.user_agent)
 
     kb.parsed_target_url = urlsplit(args.url)
     kb.request_params = args.data if args.data else kb.parsed_target_url.query
@@ -894,6 +897,8 @@ def main():
     print_func("[i] Checking original response...")
 
     request_args = prepare_request(None)
+    if args.verbose:
+        print_func("[i] Prepared request args: %s" % request_args)
     request_args["url"] = args.url
 
     if args.data:
@@ -903,7 +908,11 @@ def main():
 
     if not kb.original_response:
         print_func("[!] Something seems to be wrong with connection settings.")
-        if not args.verbose:
+        if args.verbose:
+            print_func("[i] Request URL: %s" % request_args.get("url"))
+            if getattr(args, 'user_agent', None):
+                print_func("[i] Using User-Agent: %s" % args.user_agent)
+        else:
             print_func("[i] Please rerun with switch '-v'.")
         sys.exit()
 
@@ -968,6 +977,9 @@ def get_page(**kwargs):
     invalid_ssl = kwargs.get("invalid_ssl", None)
     verbose = kwargs.get("verbose", False)
 
+    # Debug: log get_page inputs when verbose
+    if verbose:
+        print_func("[*] get_page called with url=%s data=%s header=%s cookie=%s user_agent=%s invalid_ssl=%s" % (url, post, header, cookie, user_agent, invalid_ssl))
     headers = {}
     parsed_url = None
     page = None
