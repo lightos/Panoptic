@@ -25,7 +25,7 @@ SOFTWARE.
 """
 Panoptic
 
-Search and retrieve content of common log and config files through path traversal vulnerability
+Search and retrieve content of common log and config files via path traversal vulnerability
 """
 
 import argparse
@@ -92,7 +92,7 @@ Examples:
   ./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
   ./panoptic.py --url "http://localhost/files/view/test.txt" --path-based --prefix "..%252f"
   ./panoptic.py --url "http://localhost/param.php?file=test&type=txt" --param file --ext-param type
-  ./panoptic.py --url "http://localhost/include.php?file=test.txt" --auto --through
+  ./panoptic.py --url "http://localhost/include.php?file=test.txt" --auto --all-versions
 
   ./panoptic.py --list software
   ./panoptic.py --list category
@@ -245,7 +245,7 @@ def get_cases(args):
             case.location = case.location.replace(variable, replacements.get(variable.strip("{}"), variable))
 
         match = re.search(r"\[([^\]]+)\]", case.location)
-        if match and kb.through:
+        if match and kb.all_versions:
             original = case.location
             for replacement in kb.versioned_locations[match.group(1)]:
                 case_copy = AttribDict(case)
@@ -698,8 +698,8 @@ def parse_args():
     parser.add_argument("--threads", dest="threads", type=int,
                         default=1,  
                         help="Number of simultaneous testing threads (default: %(default)s)")
-    parser.add_argument("--through", dest="through", action="store_true",
-                        help="Test all versions of files (may significantly increase scan time)")
+    parser.add_argument("--all-versions", dest="all_versions", action="store_true",
+                        help="Test all versioned file paths (may significantly increase scan time)")
     parser.add_argument("--ext-param", dest="ext_param",
                         help="Name of parameter containing file extension (e.g. 'type')")
     parser.add_argument("--update", dest="update", action="store_true",
@@ -731,7 +731,7 @@ def main():
     kb.print_lock = threading.Lock()
     kb.value_lock = threading.Lock()
     kb.versioned_locations = {}
-    kb.through = False
+    kb.all_versions = False
     kb.total_found = 0
 
     check_revision()
@@ -766,9 +766,9 @@ def main():
                     kb.versioned_locations[section] = []
                 kb.versioned_locations[section].append(line)
     
-    # Set kb.through based on args.through
-    if args.through:
-        kb.through = True
+    # Set versioned testing flag
+    if args.all_versions:
+        kb.all_versions = True
 
     cases = get_cases(args) if not args.list_file else load_list(args.list_file)
 
