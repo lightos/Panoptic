@@ -538,6 +538,8 @@ def request_file(case, replace_slashes=True):
             _ = "'%s'" % case.location
 
         print_func("[+] Found %s." % _)
+        with kb.value_lock:
+            kb.total_found += 1
 
         if args.verbose:
             kb.files.append(_)
@@ -728,6 +730,7 @@ def main():
     kb.value_lock = threading.Lock()
     kb.versioned_locations = {}
     kb.through = False
+    kb.total_found = 0
 
     check_revision()
 
@@ -934,6 +937,7 @@ def main():
             print_func("[o] %s" % _)
 
     print_func("  \n[i] File search complete.")
+    print_func("[i] Total files found: %d" % kb.total_found)
     print_func("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
 
 
