@@ -704,6 +704,8 @@ def parse_args():
                         help="Name of parameter containing file extension (e.g. 'type')")
     parser.add_argument("--update", dest="update", action="store_true",
                         help="Update tool to latest version from GitHub repository")
+    parser.add_argument("--list-all-files", dest="list_all_files", action="store_true",
+                        help="List all file paths in the XML and exit")
 
     args = parser.parse_args()
     # Normalize URL
@@ -737,6 +739,13 @@ def main():
     print_func(BANNER)
 
     args = parse_args()
+    # If list-all-files flag is used, list all file paths and exit
+    if args.list_all_files:
+        tree = ET.parse(CASES_FILE)
+        root = tree.getroot()
+        for file_elem in root.findall(".//file"):
+            print_func(file_elem.get("value"))
+        sys.exit()
     # Validate that at least one action is specified
     if not any((args.url, args.list, args.update)):
         print_func("[!] Missing required argument: specify --url, --list, or --update")
