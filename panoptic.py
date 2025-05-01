@@ -55,14 +55,19 @@ INVALID_FILENAME = "".join(random.sample(string.ascii_letters, 10))
 # Maximum length of left option column in help listing
 MAX_HELP_OPTION_LENGTH = 20
 
+SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
+
 # Location of file containing test cases
-CASES_FILE = "cases.xml"
+CASES_FILE = os.path.join(SCRIPT_DIR, "cases.xml")
 
 # Location of file containing user agents
-USER_AGENTS_FILE = "agents.txt"
+USER_AGENTS_FILE = os.path.join(SCRIPT_DIR, "agents.txt")
 
 # Location of file containing common user files
-HOME_FILES_FILE = "home.txt"
+HOME_FILES_FILE = os.path.join(SCRIPT_DIR, "home.txt")
+
+# Add absolute path for versions.ini
+VERSIONS_FILE = os.path.join(SCRIPT_DIR, "versions.ini")
 
 # Used for heuristic comparison of responses
 HEURISTIC_RATIO = 0.9
@@ -755,7 +760,7 @@ def main():
         update()
         sys.exit()
 
-    with open("versions.ini") as f:
+    with open(VERSIONS_FILE) as f:
         section = None
         for line in f:
             line = line.strip()
