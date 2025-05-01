@@ -139,11 +139,22 @@ args = None
 
 def print_func(*args, **kwargs):
     """
-    Thread-safe version of print function
+    Thread-safe print: outputs to console and, if enabled, to a log file.
     """
 
     with kb.print_lock:
-        return print(*args, **kwargs)
+        sep = kwargs.get('sep', ' ')
+        end = kwargs.get('end', '\n')
+        # Build the full message
+        msg = sep.join(str(a) for a in args) + end
+        # Write to console
+        sys.stdout.write(msg)
+        sys.stdout.flush()
+        # Also write to log file if one was successfully opened
+        fp = getattr(kb, 'log_fp', None)
+        if fp:
+            fp.write(msg)
+            fp.flush()
 
 
 def get_cases(args):
@@ -634,11 +645,15 @@ def try_cases(cases):
 
 def parse_args():
     """Parses command line arguments using argparse."""
+    # Disable automatic help so we can customize the help text capitalization
     parser = argparse.ArgumentParser(
         description="Panoptic – probe a URL for local files via path traversal vulnerability",
         epilog=EXAMPLES,
         formatter_class=CustomFormatter,
+        add_help=False
     )
+    # Add custom help option with uppercase description for consistency
+    parser.add_argument("-h", "--help", action="help", help="Show this help message and exit")
     # Connection / Proxy settings
     conn = parser.add_argument_group("Connection / Proxy")
     conn.add_argument("-u", "--url", dest="url",
@@ -711,6 +726,8 @@ def parse_args():
                         help="Update tool to latest version from GitHub repository")
     parser.add_argument("--list-all-files", dest="list_all_files", action="store_true",
                         help="List all file paths in the XML and exit")
+    parser.add_argument("--log-file", dest="log_file", metavar="LOGFILE",
+                        help="Save console output to this file")
 
     args = parser.parse_args()
     # Normalize URL
@@ -739,11 +756,19 @@ def main():
     kb.all_versions = False
     kb.total_found = 0
 
+    # Parse CLI args first, so we can enable logging before any output
+    args = parse_args()
+    # If logging to file was requested, open the log file before printing
+    if args.log_file:
+        try:
+            kb.log_fp = open(args.log_file, "w", encoding="utf-8")
+        except Exception as e:
+            print_func("[!] Could not open log file '%s': %s" % (args.log_file, e))
+            sys.exit(1)
+    # After args, apply revision and show banner
     check_revision()
-
     print_func(BANNER)
 
-    args = parse_args()
     # If list-all-files flag is used, list all file paths and exit
     if args.list_all_files:
         tree = ET.parse(CASES_FILE)
@@ -962,6 +987,10 @@ def main():
     print_func("  \n[i] File search complete.")
     print_func("[i] Total files found: %d" % kb.total_found)
     print_func("\n[i] Finishing scan at: %s\n" % time.strftime("%X"))
+    # Close the log file if it was successfully opened
+    fp = getattr(kb, 'log_fp', None)
+    if fp:
+        fp.close()
 
 
 def get_page(**kwargs):

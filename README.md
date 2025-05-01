@@ -55,38 +55,39 @@ Use these common invocation patterns:
 Usage: panoptic.py --url TARGET [options]
 
 Options:
-  -h/--help             show this help message and exit
-  -v/--verbose          display extra output information
-  -u/--url=URL          set target URL
-  -p/--param=PARAM      set parameter name to test for (e.g. "page")
-  -d/--data=DATA        set data for HTTP POST request (e.g. "page=default")
-  -t/--type=TYPE        set type of file to look for ("conf" or "log")
-  -o/--os=OS            set filter name for OS (e.g. "*NIX")
-  -s/--software=SOFT..  set filter name for software (e.g. "PHP")
-  -c/--category=CATE..  set filter name for category (e.g. "FTP")
-  -l/--list=GROUP       list available filters for group (e.g. "software")
-  -a/--auto             avoid user interaction by using default options
-  -w/--write-files      write content of retrieved files to output folder
-  -x/--skip-parsing     skip special tests if *NIX passwd file is found
-  -P/--path-based       target file paths directly instead of using query parameters
-  -i/--invalid-ssl      ignore SSL certificate validation errors
-  --load=LISTFILE       load and try user provided list from a file
-  --ignore-proxy        ignore system default HTTP proxy
-  --proxy=PROXY         set proxy (e.g. "socks5://192.168.5.92")
-  --user-agent=UA       set HTTP User-Agent header value
-  --random-agent        choose random HTTP User-Agent header value
-  --cookie=COOKIE       set HTTP Cookie header value (e.g. "sid=foobar")
-  --header=HEADER       set a custom HTTP header (e.g. "Max-Forwards=10")
-  --prefix=PREFIX       set prefix for file path (e.g. "../")
-  --postfix=POSTFIX     set postfix for file path (e.g. "%00")
-  --multiplier=MULTI..  set multiplication number for prefix (default: 1)
-  --bad-string=STRING   set a string occurring when file is not found
-  --replace-slash=RE..  set replacement for char / in paths (e.g. "/././")
-  --threads=THREADS     set number of threads (default: 1)
-  --all-versions        test all versioned file paths (may significantly increase scan time)
-  --ext-param=PARAM     name of parameter containing file extension (e.g. "type")
-  --update              update Panoptic from official repository
-  --list-all-files      list all file paths in the XML and exit
+  -h/--help             Show this help message and exit
+  -v/--verbose          Display extra output information
+  -u/--url=URL          Set target URL
+  -p/--param=PARAM      Set parameter name to test for (e.g. "page")
+  -d/--data=DATA        Set data for HTTP POST request (e.g. "page=default")
+  -t/--type=TYPE        Set type of file to look for ("conf" or "log")
+  -o/--os=OS            Set filter name for OS (e.g. "*NIX")
+  -s/--software=SOFT..  Set filter name for software (e.g. "PHP")
+  -c/--category=CATE..  Set filter name for category (e.g. "FTP")
+  -l/--list=GROUP       List available filters for group (e.g. "software")
+  -a/--auto             Avoid user interaction by using default options
+  -w/--write-files      Write content of retrieved files to output folder
+  -x/--skip-parsing     Skip special tests if *NIX passwd file is found
+  -P/--path-based       Target file paths directly instead of using query parameters
+  -i/--invalid-ssl      Ignore SSL certificate validation errors
+  --load=LISTFILE       Load and try user provided list from a file
+  --ignore-proxy        Ignore system default HTTP proxy
+  --proxy=PROXY         Set proxy (e.g. "socks5://192.168.5.92")
+  --user-agent=UA       Set HTTP User-Agent header value
+  --random-agent        Choose random HTTP User-Agent header value
+  --cookie=COOKIE       Set HTTP Cookie header value (e.g. "sid=foobar")
+  --header=HEADER       Set a custom HTTP header (e.g. "Max-Forwards=10")
+  --prefix=PREFIX       Set prefix for file path (e.g. "../")
+  --postfix=POSTFIX     Set postfix for file path (e.g. "%00")
+  --multiplier=MULTI..  Set multiplication number for prefix (default: 1)
+  --bad-string=STRING   Set a string occurring when file is not found
+  --replace-slash=RE..  Set replacement for char / in paths (e.g. "/././")
+  --threads=THREADS     Set number of threads (default: 1)
+  --all-versions        Test all versioned file paths (may significantly increase scan time)
+  --ext-param=PARAM     Name of parameter containing file extension (e.g. "type")
+  --update              Update Panoptic from official repository
+  --list-all-files      List all file paths in the XML and exit
+  --log-file            Save console output to this file
 ```
 
 ## Examples
