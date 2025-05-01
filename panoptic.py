@@ -88,7 +88,7 @@ BANNER = """
 ROTATOR_CHARS = "|/-\\"
 
 # Location of Git repository
-GIT_REPOSITORY = "git://github.com/lightos/Panoptic.git"
+GIT_REPOSITORY = "https://github.com/lightos/Panoptic.git"
 
 EXAMPLES = """
 Examples:
