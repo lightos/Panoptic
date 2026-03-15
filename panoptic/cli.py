@@ -276,8 +276,9 @@ async def run(argv: list[str] | None = None) -> None:
         _file_config = load_config(args.get("config_file"))
         _config = merge_config({k: v for k, v in args.items() if v is not None}, _file_config)
         values = list_values(args["list"], config=_config)
+        print(f"Available {args['list']} values ({len(values)}):")
         for val in sorted(values):
-            print(val)
+            print(f"  {val}")
         return
 
     # Load config and merge
