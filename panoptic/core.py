@@ -250,7 +250,7 @@ class Scanner:
             self.invalid_response = inv_resp.text
             self.invalid_status_code = inv_resp.status_code
 
-            text_out.write_info(f"Scanning {len(cases)} file paths with {self.config.concurrency} workers...")
+            text_out.write_info(f"Scanning {len(cases)} file paths with {self.config.concurrency} workers...\n")
 
             queue: asyncio.Queue[Case] = asyncio.Queue()
             for case in cases:
