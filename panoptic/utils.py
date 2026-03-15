@@ -10,6 +10,9 @@ from importlib.resources import files
 from typing import Any
 from urllib.parse import urlsplit
 
+# Regex to redact values in key=value&... encoded strings (query params, form bodies)
+_PARAM_VALUE_RE = re.compile(r"(?<==)[^&]*")
+
 
 def validate_url_scheme(url: str) -> None:
     """Validate that a URL uses http:// or https:// scheme.
@@ -110,7 +113,7 @@ def redact_url(url: str) -> str:
         host = f"{host}:{parsed.port}"
     # Redact query parameter values but keep keys for context
     if parsed.query:
-        redacted_query = re.sub(r"(?<==)[^&]*", "***", parsed.query)
+        redacted_query = _PARAM_VALUE_RE.sub("***", parsed.query)
         return f"{parsed.scheme}://{host}{parsed.path}?{redacted_query}"
     return f"{parsed.scheme}://{host}{parsed.path}"
 

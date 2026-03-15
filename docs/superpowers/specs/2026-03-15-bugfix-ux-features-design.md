@@ -19,6 +19,7 @@ Fix all identified bugs, improve terminal UX, and add missing features expected 
 The param auto-detection regex uses `[^=&]+` for the value group, which breaks on base64-encoded values containing `=` padding. CLAUDE.md explicitly documents this gotcha. The ext-param validation at line 291 has the same bug.
 
 **Fix:**
+
 - Line 281: `r"(?P<param>[^=&]+)=(?P<value>[^=&]+)"` → `r"(?P<param>[^=&]+)=(?P<value>[^&]+)"`
 - Line 291: `[^=&]*` → `[^&]*`
 
@@ -48,6 +49,7 @@ This ensures only one worker ever enters the first-found block. Other workers th
 `_mark_completed` writes the full checkpoint JSON for every single case. With 1024+ cases, this creates 1024 file writes (each serializing an ever-growing set).
 
 **Fix:** Track a dirty flag and last-write timestamp, protected by a dedicated async lock. Only write when:
+
 - At least 5 seconds have passed since last write, OR
 - Scan is complete (final flush in `_run_scan` after queue.join)
 
@@ -94,6 +96,7 @@ Also make checkpoint writes atomic: write to a temp file, then `os.replace()` to
 The regex `re.sub(rf"(?P<param>{re.escape(config.param)})=...")` matches `id=` as a substring inside `userid=`. For URL `userid=1&id=2` with `--param id`, both parameters get replaced. The same bug affects `ext_param` substitution at line 92.
 
 **Fix:** Add `(?:^|(?<=&))` anchor before the param name at all three regex sites in `build_payload()`:
+
 ```python
 # Line 88 (ext_param — param part):
 rf"(?:^|(?<=&)){re.escape(config.param)}=(?P<value>[^&]*)"
@@ -124,6 +127,7 @@ This is a targeted fix in `build_payload()` — after regex substitution, URL-en
 `ScanResult.url` is written raw to JSON/CSV output. If the original URL contains auth tokens in query params, they're preserved in reports. The banner already uses `redact_url()` but structured output doesn't.
 
 **Fix:** Apply `redact_url()` in `_result_to_dict()`:
+
 ```python
 "url": redact_url(r.url),
 ```
@@ -145,6 +149,7 @@ This is a targeted fix in `build_payload()` — after regex substitution, URL-en
 `sanitize_filename()` can produce collisions when traversal markers differ. The `while ".." in sanitized` stripping combined with `lstrip("._")` means `../../etc/passwd` and `../../../etc/passwd` both become `etc_passwd`. Note: the originally cited example (`/etc/php/php.ini` vs `/usr/lib/php/php.ini`) does NOT collide — they produce `etc_php_php.ini` vs `usr_lib_php_php.ini`.
 
 **Fix:** Add collision detection in `_write_file()`. If the target path already exists, append a deterministic suffix (short hash of `case.case_id`) to disambiguate:
+
 ```python
 filename = sanitize_filename(case.location) + ".txt"
 filepath = output_dir / filename
@@ -205,6 +210,7 @@ text_out.write_info(f"Scan completed in {elapsed:.1f}s ({rps:.0f} req/s)")
 Currently accepts inverted ranges like `5.0-0.5` and negative values like `-1.0-0.5` without error. Negative delays cause `asyncio.sleep` to raise `ValueError`.
 
 **Fix:** After parsing, validate non-negative and `min < max`:
+
 ```python
 min_val, max_val = float(parts[0]), float(parts[1])
 if min_val < 0 or max_val < 0:
@@ -216,6 +222,7 @@ if min_val >= max_val:
 ```
 
 Also add `random_delay` validation in `ScanConfig.__post_init__` for programmatic construction:
+
 ```python
 if self.random_delay and (self.random_delay[0] < 0 or self.random_delay[1] < 0):
     raise ValueError("random_delay values must be non-negative")
@@ -230,6 +237,7 @@ if self.random_delay and self.random_delay[0] >= self.random_delay[1]:
 `ScanConfig.__post_init__` validates concurrency and heuristic_ratio but not timeout or delay.
 
 **Fix:** Add to `__post_init__`:
+
 ```python
 if self.timeout <= 0:
     raise ValueError(f"timeout must be > 0, got {self.timeout}")
@@ -238,6 +246,7 @@ if self.delay < 0:
 ```
 
 **Important:** Also validate in `validate_args()` to give clean CLI errors. A bare `ValueError` from `__post_init__` during `merge_config()` would show a raw Python traceback. Either:
+
 - (a) Add `if args.get("timeout") is not None and args["timeout"] <= 0:` checks in `validate_args()`, OR
 - (b) Wrap the `merge_config()` call in `cli.run()` with `try/except ValueError` that prints a clean message and calls `sys.exit(1)`
 
@@ -250,6 +259,7 @@ Option (a) is preferred for consistency with other CLI validations (concurrency,
 Currently `--list os` dumps bare values. Add a header and count.
 
 **Fix:**
+
 ```python
 values = list_values(args["list"], config=_config)
 print(f"Available {args['list']} values ({len(values)}):")
@@ -278,6 +288,7 @@ Suppress non-actionable output. Precise behavior contract:
 **Files:** `cli.py` (add arg), `models.py` (add field), `output.py` (check flag), `core.py` (pass through)
 
 **Implementation:**
+
 - Add `quiet: bool = False` to `ScanConfig`
 - Add `-q, --quiet` to CLI
 - In `TextFormatter`: accept `quiet` param, skip `write_banner`, `write_info`, `write_summary` when quiet
@@ -293,11 +304,13 @@ Only report findings when a specific string IS present in the response.
 **Files:** `cli.py` (add arg), `models.py` (add field), `core.py` (add check)
 
 **Implementation:**
+
 - Add `match_string: str | None = None` to `ScanConfig`
 - Add `--match-string` to CLI scan options
 - **Critical:** `match_string` must gate ALL positive result paths, not just the heuristic match. The Content-Length fast path (`core.py:339-354`) emits `found=True` and returns before the heuristic block — placing `match_string` only after heuristic would miss these results entirely.
 
   **Fix:** When `match_string` is set, skip the Content-Length optimization (download the full body):
+
   ```python
   # Content-Length skip optimization — disabled when match_string requires body inspection
   if (
@@ -310,6 +323,7 @@ Only report findings when a specific string IS present in the response.
   ```
 
   Then apply `match_string` check after reading the body, before both positive result paths:
+
   ```python
   html = response.text
 
@@ -331,10 +345,12 @@ Only report findings when a specific string IS present in the response.
 **Files:** `cli.py` (add args + parsing), `models.py` (add fields), `core.py` (add filtering)
 
 **Implementation:**
+
 - Add `match_codes: list[int] | None = None` and `filter_codes: list[int] | None = None` to `ScanConfig`
 - Add `--match-code` (comma-separated, e.g. `200,301`) and `--filter-code` to CLI
 
 - **CLI parsing** — parse comma-separated string to `list[int]` in `parse_args()`:
+
   ```python
   if result.get("match_codes") and isinstance(result["match_codes"], str):
       try:
@@ -347,11 +363,13 @@ Only report findings when a specific string IS present in the response.
           print(f"[!] Invalid --match-code: {e}", file=sys.stderr)
           sys.exit(1)
   ```
+
   Same parsing for `--filter-code`.
 
 - **Config merge** — normalize TOML-provided values (could be list of ints or comma-separated string) in `merge_config()`.
 
 - In `_process_case`, after getting response (before Content-Length optimization):
+
   ```python
   if self.config.filter_codes and response.status_code in self.config.filter_codes:
       await self._mark_completed(case)
@@ -368,6 +386,7 @@ Only report findings when a specific string IS present in the response.
 **Files:** `cli.py` (add arg), `models.py` (add field), `network.py` (use flag)
 
 **Implementation:**
+
 - Add `follow_redirects: bool = False` to `ScanConfig`
 - Add `--follow-redirects` to CLI
 - In `NetworkClient.__aenter__`, use `follow_redirects=self.config.follow_redirects`
@@ -377,6 +396,7 @@ Only report findings when a specific string IS present in the response.
 **Files:** `cli.py` (change to `action="append"` + update validation), `models.py` (change type), `network.py` (iterate), `core.py` (update FUZZ logic), `config.py` (normalize merge)
 
 **Implementation:**
+
 - Change `header: str | None` to `headers: list[str] | None = None` in `ScanConfig`
 - CLI: `--header` with `action="append"` (allows multiple)
 - `_build_headers` iterates over all headers
@@ -399,6 +419,7 @@ Only report findings when a specific string IS present in the response.
 **File:** `cli.py:244-261`
 
 **Implementation:**
+
 - Check `output_format` in both the `--list` handler AND `--list-all-files` handler for consistency
 - JSON: `json.dumps(sorted(values), indent=2)`
 - CSV: one column with header

@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import csv
 import json
-import re
 import sys
 from typing import TextIO
 
@@ -15,10 +14,7 @@ from rich.console import Console
 from rich.markup import escape as rich_escape
 
 from panoptic.models import ScanResult
-from panoptic.utils import redact_url
-
-# Regex to redact values in form-encoded POST bodies (key=VALUE&key2=VALUE2)
-_POST_VALUE_RE = re.compile(r"(?<==)[^&]*")
+from panoptic.utils import _PARAM_VALUE_RE, redact_url
 
 
 class TeeWriter:
@@ -45,7 +41,7 @@ def _redact_field(url: str) -> str:
     if url.startswith(("http://", "https://")):
         return redact_url(url)
     # POST body: redact form-encoded values (key=VALUE → key=***)
-    return _POST_VALUE_RE.sub("***", url)
+    return _PARAM_VALUE_RE.sub("***", url)
 
 
 def _result_to_dict(r: ScanResult) -> dict[str, object]:
@@ -106,10 +102,9 @@ class TextFormatter:
             return
         self._console.print(f"[dim][*] {message}[/dim]")
 
-    def write_summary(self, results: list[ScanResult], total_cases: int) -> None:
+    def write_summary(self, found: list[ScanResult], total_cases: int) -> None:
         if self._quiet:
             return
-        found = [r for r in results if r.found]
         self._console.print("\n[bold]Scan Complete[/bold]")
         self._console.print(f"  Cases tested: {total_cases}")
         self._console.print(f"  Files found:  [green]{len(found)}[/green]")

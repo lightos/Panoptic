@@ -60,7 +60,7 @@ class ScanResult:
     timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
 
 
-@dataclass
+@dataclass(frozen=True)
 class ScanConfig:
     """All configuration for a scan. Replaces global args + kb."""
 

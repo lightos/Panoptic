@@ -8,11 +8,13 @@ from __future__ import annotations
 
 import asyncio
 import base64
+import contextlib
 import json
 import os
 import random
 import re
 import sys
+import tempfile
 import time
 from pathlib import Path
 from typing import TextIO
@@ -41,6 +43,7 @@ from panoptic.models import Case, OutputFormat, ScanConfig, ScanResult
 from panoptic.network import NetworkClient
 from panoptic.output import CsvFormatter, JsonFormatter, TeeWriter, TextFormatter
 from panoptic.parsers import extract_binlog_cases, extract_home_file_cases
+from panoptic.update import get_revision
 from panoptic.utils import (
     generate_invalid_filename,
     get_random_agent,
@@ -87,8 +90,9 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
     """Build the request payload/URL for a given file location."""
     full_path = process_path(config, location)
 
+    parsed = urlsplit(config.url)
+
     if config.path_based:
-        parsed = urlsplit(config.url)
         path = parsed.path
         query_suffix = f"?{parsed.query}" if parsed.query else ""
         last_slash = path.rfind("/")
@@ -124,7 +128,6 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
             result,
         )
 
-    parsed = urlsplit(config.url)
     if config.data:
         return result
     return f"{parsed.scheme}://{parsed.netloc}{parsed.path}?{result}"
@@ -132,9 +135,6 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
 
 def save_checkpoint(filepath: str, completed_ids: set[str]) -> None:
     """Save completed case IDs to a checkpoint file atomically."""
-    import contextlib
-    import tempfile
-
     dir_name = os.path.dirname(filepath) or "."
     fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".tmp")
     try:
@@ -204,8 +204,6 @@ class Scanner:
         text_out = TextFormatter(stderr_stream, quiet=self.config.quiet)
 
         # Show git revision in banner if available
-        from panoptic.update import get_revision
-
         rev = get_revision()
         banner_version = f"{version}-{rev}" if rev else version
         text_out.write_banner(banner_version, redact_url(self.config.url))

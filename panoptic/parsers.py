@@ -6,6 +6,7 @@ Extracts additional scan targets from discovered files
 
 from __future__ import annotations
 
+import functools
 import re
 
 from panoptic.models import Case, FileType
@@ -94,7 +95,8 @@ def extract_binlog_cases(
     ]
 
 
+@functools.cache
 def _load_home_files() -> list[str]:
-    """Load common home directory files from bundled data."""
+    """Load common home directory files from bundled data (cached)."""
     content = load_data_file("home.txt")
     return [line.strip() for line in content.splitlines() if line.strip()]

@@ -1,6 +1,0 @@
-Starting CodeRabbit review in plain text mode...
-
-Connecting to review service
-[2026-03-15T10:26:45.198Z] ❌ REVIEW ERROR: Review failed: Unknown error
-Failed to start review: Review failed
-[error] stopping cli

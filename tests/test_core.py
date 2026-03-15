@@ -316,10 +316,10 @@ class TestCheckpointThrottling:
         write_count = 0
         original_save = save_checkpoint
 
-        def counting_save(*args: object, **kwargs: object) -> None:
+        def counting_save(filepath: str, completed_ids: set[str]) -> None:
             nonlocal write_count
             write_count += 1
-            original_save(*args, **kwargs)
+            original_save(filepath, completed_ids)
 
         with patch("panoptic.core.save_checkpoint", side_effect=counting_save):
             for i in range(20):

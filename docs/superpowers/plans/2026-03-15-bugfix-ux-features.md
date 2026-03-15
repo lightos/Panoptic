@@ -21,6 +21,7 @@
 ### Task 1: Fix regex in param auto-detection (spec item 1)
 
 **Files:**
+
 - Modify: `panoptic/cli.py:281,291`
 - Test: `tests/test_cli.py`
 
@@ -69,6 +70,7 @@ Expected: `test_base64_param_autodetect` FAILS because `[^=&]+` stops at `=`, so
 - [ ] **Step 3: Fix the regexes in cli.py**
 
 In `panoptic/cli.py:281`, change:
+
 ```python
 # OLD:
 match = re.match(r"(?P<param>[^=&]+)=(?P<value>[^=&]+)", params)
@@ -77,6 +79,7 @@ match = re.match(r"(?P<param>[^=&]+)=(?P<value>[^&]+)", params)
 ```
 
 In `panoptic/cli.py:291`, change:
+
 ```python
 # OLD:
 rf"(?P<param>{re.escape(config.ext_param)})=(?P<value>[^=&]*)",
@@ -106,6 +109,7 @@ git commit -m "fix: handle base64 = padding in param auto-detection regex"
 ### Task 2: Fix param replacement substring corruption (spec item 3b)
 
 **Files:**
+
 - Modify: `panoptic/core.py:87-102`
 - Test: `tests/test_core.py`
 
@@ -189,6 +193,7 @@ git commit -m "fix: anchor param regex to prevent substring matches in build_pay
 ### Task 3: Redact credentials in JSON/CSV output (spec item 3d)
 
 **Files:**
+
 - Modify: `panoptic/output.py:37-50`
 - Test: `tests/test_output.py`
 
@@ -244,6 +249,7 @@ from panoptic.utils import redact_url
 ```
 
 Change line 41 in `_result_to_dict`:
+
 ```python
 # OLD:
 "url": r.url,
@@ -273,6 +279,7 @@ git commit -m "fix: redact query param values in JSON/CSV output to prevent cred
 ### Task 4: Remove dead code — `except httpx.HTTPStatusError` (spec item 3e)
 
 **Files:**
+
 - Modify: `panoptic/network.py:99-102`
 - Test: `tests/test_network.py`
 
@@ -326,6 +333,7 @@ git commit -m "fix: remove dead except httpx.HTTPStatusError branch"
 ### Task 5: Fix `--write-files` filename collisions (spec item 3f)
 
 **Files:**
+
 - Modify: `panoptic/core.py:451-465`
 - Test: `tests/test_core.py`
 
@@ -427,6 +435,7 @@ git commit -m "fix: prevent filename collisions in --write-files with case_id su
 ### Task 6: Fix race condition on `first_found` flag (spec item 2)
 
 **Files:**
+
 - Modify: `panoptic/core.py:377-397`
 - Test: `tests/test_core.py`
 
@@ -539,6 +548,7 @@ git commit -m "fix: prevent race condition on first_found by moving check inside
 ### Task 7: Fix checkpoint write storm (spec item 3)
 
 **Files:**
+
 - Modify: `panoptic/core.py:110-113,130-143,432-440,256-260`
 - Test: `tests/test_core.py`
 
@@ -733,6 +743,7 @@ git commit -m "fix: throttle checkpoint writes with async lock and atomic file r
 ### Task 8: Add validation for `--delay`, `--timeout`, and `--random-delay` (spec items 6, 7)
 
 **Files:**
+
 - Modify: `panoptic/models.py:67-71`
 - Modify: `panoptic/cli.py:172-178,183-229`
 - Test: `tests/test_models.py`
@@ -873,6 +884,7 @@ git commit -m "feat: validate timeout, delay, and random-delay at CLI and model 
 ### Task 9: Remove redundant semaphore (spec item 4)
 
 **Files:**
+
 - Modify: `panoptic/network.py:26-29,85`
 
 The scanner creates exactly `config.concurrency` workers, each doing one fetch at a time. The `asyncio.Semaphore` in `NetworkClient` is redundant.
@@ -880,6 +892,7 @@ The scanner creates exactly `config.concurrency` workers, each doing one fetch a
 - [ ] **Step 1: Remove semaphore from `__init__` and `fetch`**
 
 In `panoptic/network.py`, remove line 29:
+
 ```python
 # DELETE: self._semaphore = asyncio.Semaphore(config.concurrency)
 ```
@@ -934,6 +947,7 @@ git commit -m "refactor: remove redundant concurrency semaphore from NetworkClie
 ### Task 10: Add elapsed time and ETA to progress bar (spec item 5)
 
 **Files:**
+
 - Modify: `panoptic/core.py:22-28,229-236,262-269`
 
 - [ ] **Step 1: Add time columns to Progress bar**
@@ -1000,6 +1014,7 @@ git commit -m "feat: add elapsed time, ETA, and req/s to progress bar and summar
 ### Task 11: Improve `--list` output with header and count (spec item 8)
 
 **Files:**
+
 - Modify: `panoptic/cli.py:251-261`
 - Test: `tests/test_cli.py`
 
@@ -1034,6 +1049,7 @@ git commit -m "feat: add header and count to --list output"
 ### Task 12: Add `--quiet` / `-q` flag (spec item 9)
 
 **Files:**
+
 - Modify: `panoptic/models.py` (add field)
 - Modify: `panoptic/cli.py` (add arg + default handling)
 - Modify: `panoptic/output.py` (quiet-aware TextFormatter)
@@ -1042,6 +1058,7 @@ git commit -m "feat: add header and count to --list output"
 - Test: `tests/test_models.py`
 
 Behavior contract:
+
 - Suppressed: banner, info, progress bar, summary, verbose
 - Shown: found, warning
 
@@ -1266,6 +1283,7 @@ git commit -m "feat: add --quiet flag to suppress non-actionable output"
 ### Task 13: Add `--follow-redirects` flag (spec item 12)
 
 **Files:**
+
 - Modify: `panoptic/models.py` (add field)
 - Modify: `panoptic/cli.py` (add arg)
 - Modify: `panoptic/network.py:56` (use config flag)
@@ -1360,6 +1378,7 @@ git commit -m "feat: add --follow-redirects flag"
 ### Task 14: Add `--match-string` (spec item 10)
 
 **Files:**
+
 - Modify: `panoptic/models.py` (add field)
 - Modify: `panoptic/cli.py` (add arg)
 - Modify: `panoptic/core.py:339-365` (gate both positive paths)
@@ -1527,6 +1546,7 @@ git commit -m "feat: add --match-string to only report findings containing a spe
 ### Task 15: Add `--match-code` and `--filter-code` (spec item 11)
 
 **Files:**
+
 - Modify: `panoptic/models.py` (add fields)
 - Modify: `panoptic/cli.py` (add args + parsing + validation)
 - Modify: `panoptic/core.py` (add filtering)
@@ -1661,6 +1681,7 @@ git commit -m "feat: add --match-code and --filter-code for HTTP status filterin
 ### Task 16: Add multiple `--header` support (spec item 13)
 
 **Files:**
+
 - Modify: `panoptic/models.py:115` (rename field)
 - Modify: `panoptic/cli.py:42,214-219,277` (action=append, validation, FUZZ check)
 - Modify: `panoptic/core.py:410-418` (iterate headers for FUZZ)
@@ -1849,6 +1870,7 @@ git commit -m "feat: support multiple --header flags with backward-compatible co
 ### Task 17: Add `--output-format` for `--list` and `--list-all-files` (spec item 14)
 
 **Files:**
+
 - Modify: `panoptic/cli.py:244-261`
 - Test: `tests/test_cli.py`
 
@@ -1962,6 +1984,7 @@ git commit -m "feat: add --output-format support for --list and --list-all-files
 ### Task 18: URL-encode payloads for GET requests (spec item 3c)
 
 **Files:**
+
 - Modify: `panoptic/core.py:68-107`
 - Test: `tests/test_core.py`
 
@@ -2100,6 +2123,7 @@ git commit -m "fix: URL-encode reserved chars in GET/POST payloads to prevent qu
 ### Task 19: Final — update CLAUDE.md with new flags
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 - [ ] **Step 1: Add new flags to CLAUDE.md**

@@ -47,7 +47,7 @@ def load_versions() -> dict[str, list[str]]:
     for line in content.splitlines():
         line = line.strip()
         if re.match(r"\[.+\]", line):
-            section = line.strip("[]")
+            section = line[1:-1]
         elif line and section is not None:
             versions.setdefault(section, []).append(line)
 
@@ -97,27 +97,14 @@ def parse_cases(config: ScanConfig) -> list[Case]:
 
         # Version expansion ([SECTION] patterns)
         match = re.search(r"\[([^\]]+)\]", location)
-        if match and config.all_versions and match.group(1) in versions:
-            for version in versions[match.group(1)]:
-                expanded = location.replace(match.group(0), version)
-                cases.append(
-                    Case(
-                        location=expanded,
-                        os=os_val,
-                        category=category_val,
-                        software=software_val,
-                        file_type=file_type,
-                    )
-                )
-        else:
+        locations = (
+            [location.replace(match.group(0), v) for v in versions[match.group(1)]]
+            if match and config.all_versions and match.group(1) in versions
+            else [location]
+        )
+        for loc in locations:
             cases.append(
-                Case(
-                    location=location,
-                    os=os_val,
-                    category=category_val,
-                    software=software_val,
-                    file_type=file_type,
-                )
+                Case(location=loc, os=os_val, category=category_val, software=software_val, file_type=file_type)
             )
 
     return cases
@@ -132,7 +119,6 @@ def load_custom_list(filepath: str) -> list[Case]:
         raise FileNotFoundError(f"List file not found: {filepath}")
     if not os.path.isfile(filepath):
         raise ValueError(f"Path is not a regular file: {filepath}")
-
     with open(filepath, encoding="utf-8") as f:
         return [Case(location=stripped) for line in f if (stripped := line.strip())]
 

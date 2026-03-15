@@ -1,5 +1,7 @@
 """Tests for panoptic.cases — CSV case parsing, validation, and filtering."""
 
+from pathlib import Path
+
 import pytest
 
 from panoptic.cases import load_custom_list, load_versions, parse_cases
@@ -53,15 +55,15 @@ class TestLoadVersions:
 
 
 class TestLoadCustomList:
-    def test_load_from_file(self, tmp_path: pytest.TempPathFactory) -> None:
-        listfile = tmp_path / "custom.txt"  # type: ignore[operator]
+    def test_load_from_file(self, tmp_path: Path) -> None:
+        listfile = tmp_path / "custom.txt"
         listfile.write_text("/etc/passwd\n/etc/shadow\n/var/log/syslog\n")
         cases = load_custom_list(str(listfile))
         assert len(cases) == 3
         assert cases[0].location == "/etc/passwd"
 
-    def test_skips_empty_lines(self, tmp_path: pytest.TempPathFactory) -> None:
-        listfile = tmp_path / "custom.txt"  # type: ignore[operator]
+    def test_skips_empty_lines(self, tmp_path: Path) -> None:
+        listfile = tmp_path / "custom.txt"
         listfile.write_text("/etc/passwd\n\n/etc/shadow\n\n")
         cases = load_custom_list(str(listfile))
         assert len(cases) == 2
@@ -70,7 +72,7 @@ class TestLoadCustomList:
         with pytest.raises(FileNotFoundError):
             load_custom_list("/nonexistent/path/list.txt")
 
-    def test_directory_raises(self, tmp_path: pytest.TempPathFactory) -> None:
+    def test_directory_raises(self, tmp_path: Path) -> None:
         with pytest.raises(ValueError, match="regular file"):
             load_custom_list(str(tmp_path))
 

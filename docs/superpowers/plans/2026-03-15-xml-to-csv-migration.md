@@ -17,6 +17,7 @@
 The XML contains `<mix>` tags for 23 Bash entries. The current parser silently drops these to `file_type=None` because `_determine_file_type()` only handles `conf`, `log`, `other`. Fix by adding `MIX` to the enum.
 
 **Files:**
+
 - Modify: `panoptic/models.py:13-18`
 - Test: `tests/test_cases.py`
 
@@ -71,6 +72,7 @@ git commit -m "feat: add MIX to FileType enum for mixed-type case entries"
 Write a one-time conversion script, run it, verify output matches XML, then delete the script.
 
 **Files:**
+
 - Create (temporary): `scripts/convert_xml_to_csv.py`
 - Create: `panoptic/data/cases.csv`
 
@@ -169,10 +171,12 @@ source .venv/bin/activate && python3 scripts/convert_xml_to_csv.py
 ```
 
 Expected output (count should match actual XML file entries — currently 1024):
+
 ```
 Wrote 1024 cases to panoptic/data/cases.csv
 Verified: 1024 entries match
 ```
+
 Note the actual count from this output — use it in all subsequent assertions.
 
 - [ ] **Step 3: Verify CSV content**
@@ -223,6 +227,7 @@ git commit -m "data: add cases.csv converted from cases.xml (1024 entries)"
 Replace the XML parser with a CSV parser. Add validation. Keep the same public API: `parse_cases()`, `load_custom_list()`, `list_values()`, `list_all_files()`, `load_versions()`.
 
 **Files:**
+
 - Modify: `panoptic/cases.py` (full rewrite)
 - Test: `tests/test_cases.py`
 
@@ -494,6 +499,7 @@ git commit -m "feat: rewrite case parser from XML to CSV with validation"
 ### Task 4: Remove defusedxml dependency and XML file
 
 **Files:**
+
 - Delete: `panoptic/data/cases.xml`
 - Modify: `pyproject.toml:20` (remove defusedxml from dependencies)
 - Modify: `pyproject.toml:57` (remove defusedxml from mypy overrides)
@@ -506,10 +512,13 @@ In `pyproject.toml`, remove the line `"defusedxml>=0.7",` from `dependencies`.
 - [ ] **Step 2: Remove defusedxml from mypy overrides**
 
 In `pyproject.toml`, change the mypy overrides module list from:
+
 ```toml
 module = ["defusedxml.*", "rich_argparse", "tomli"]
 ```
+
 to:
+
 ```toml
 module = ["rich_argparse", "tomli"]
 ```
@@ -517,10 +526,13 @@ module = ["rich_argparse", "tomli"]
 - [ ] **Step 3: Update CLI help text**
 
 In `panoptic/cli.py:138`, change the help text from:
+
 ```python
 help="List all file paths in the XML and exit"
 ```
+
 to:
+
 ```python
 help="List all file paths in the case database and exit"
 ```
@@ -569,15 +581,19 @@ git commit -m "chore: remove defusedxml dependency and cases.xml after CSV migra
 ### Task 5: Update CLAUDE.md
 
 **Files:**
+
 - Modify: `CLAUDE.md`
 
 - [ ] **Step 1: Update architecture section**
 
 Change `cases.py` description from:
+
 ```
 cases.py     → XML case parser with filtering (os/software/category/type)
 ```
+
 to:
+
 ```
 cases.py     → CSV case parser with validation and filtering (os/software/category/type)
 ```
@@ -585,12 +601,23 @@ cases.py     → CSV case parser with validation and filtering (os/software/cate
 - [ ] **Step 2: Update dependencies mention**
 
 In the Gotchas section, remove:
+
 ```
 - `defusedxml` is used for XML parsing (security)
 ```
 
 And in the Code Quality / Security first section, remove the `defusedxml` reference:
-Change `Use `defusedxml` for XML. Verify git remote before` to `Verify git remote before`.
+Change:
+
+```
+Use `defusedxml` for XML. Verify git remote before
+```
+
+to:
+
+```
+Verify git remote before
+```
 
 - [ ] **Step 3: Commit**
 
