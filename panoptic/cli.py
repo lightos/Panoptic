@@ -307,23 +307,45 @@ async def run(argv: list[str] | None = None) -> None:
         return
 
     if args.get("list_all_files"):
+        import json as json_mod
+
         from panoptic.cases import list_all_files
 
-        for path in list_all_files():
-            print(path)
+        paths = list_all_files()
+        fmt = args.get("output_format") or "text"
+
+        if fmt == "json":
+            print(json_mod.dumps(paths, indent=2))
+        elif fmt == "csv":
+            print("path")
+            for path in paths:
+                print(path)
+        else:
+            for path in paths:
+                print(path)
         return
 
     if args.get("list"):
+        import json as json_mod
+
         from panoptic.cases import list_values
         from panoptic.config import load_config, merge_config
 
-        # Build a config with current filters so --list respects --os, --software, etc.
         _file_config = load_config(args.get("config_file"))
         _config = merge_config({k: v for k, v in args.items() if v is not None}, _file_config)
         values = list_values(args["list"], config=_config)
-        print(f"Available {args['list']} values ({len(values)}):")
-        for val in sorted(values):
-            print(f"  {val}")
+        fmt = args.get("output_format") or "text"
+
+        if fmt == "json":
+            print(json_mod.dumps(sorted(values), indent=2))
+        elif fmt == "csv":
+            print(args["list"])
+            for val in sorted(values):
+                print(val)
+        else:
+            print(f"Available {args['list']} values ({len(values)}):")
+            for val in sorted(values):
+                print(f"  {val}")
         return
 
     # Load config and merge

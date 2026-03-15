@@ -142,6 +142,41 @@ class TestValidateArgs:
             )
 
 
+class TestListFormatting:
+    def test_list_json_output(self) -> None:
+        """--list with --output-format json should produce valid JSON."""
+        import json
+
+        from panoptic.cases import list_values
+
+        values = list_values("os")
+        output = json.dumps(sorted(values), indent=2)
+        parsed = json.loads(output)
+        assert isinstance(parsed, list)
+        assert "*NIX" in parsed
+
+    def test_list_all_files_json_output(self) -> None:
+        """--list-all-files with --output-format json should produce valid JSON."""
+        import json
+
+        from panoptic.cases import list_all_files
+
+        paths = list_all_files()
+        output = json.dumps(paths, indent=2)
+        parsed = json.loads(output)
+        assert isinstance(parsed, list)
+        assert len(parsed) > 0
+
+    def test_list_all_files_csv_output(self) -> None:
+        """--list-all-files with --output-format csv should have header row."""
+        from panoptic.cases import list_all_files
+
+        paths = list_all_files()
+        lines = ["path"] + paths
+        assert lines[0] == "path"
+        assert len(lines) > 1
+
+
 class TestParamAutodetection:
     async def test_base64_param_autodetect(self) -> None:
         """Param detection must handle base64 values with = padding."""
