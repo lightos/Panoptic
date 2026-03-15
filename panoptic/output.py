@@ -100,10 +100,6 @@ class TextFormatter:
         self._console.print("\n[bold]Scan Complete[/bold]")
         self._console.print(f"  Cases tested: {total_cases}")
         self._console.print(f"  Files found:  [green]{len(found)}[/green]")
-        if found:
-            self._console.print("\n[bold]Found files:[/bold]")
-            for r in found:
-                self.write_found(r)
 
 
 class JsonFormatter:

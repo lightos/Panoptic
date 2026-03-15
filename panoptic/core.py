@@ -331,7 +331,6 @@ class Scanner:
         else:
             text_out.write_summary(found_results, self.total_processed)
 
-        text_out.write_info(f"Total files found: {len(found_results)}")
         text_out.write_info(f"Finishing scan at: {time.strftime('%X')}")
 
         if self.config.output_format != OutputFormat.TEXT or self.config.output_file:
