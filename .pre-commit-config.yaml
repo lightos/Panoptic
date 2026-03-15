@@ -10,7 +10,7 @@ repos:
     rev: v1.16.0
     hooks:
       - id: mypy
-        exclude: ^(panoptic\.py|tests/)
+        exclude: ^(panoptic\.py|tests/|\.claire/)
         additional_dependencies:
           - httpx
           - rich
