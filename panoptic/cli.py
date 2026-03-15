@@ -39,7 +39,12 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     conn.add_argument("--proxy", help="Route requests through proxy (e.g. 'socks5://127.0.0.1:9050')")
     conn.add_argument("--ignore-proxy", action="store_true", help="Bypass system proxy settings")
     conn.add_argument("--random-agent", action="store_true", dest="random_agent", help="Choose random User-Agent")
-    conn.add_argument("--header", help="Add custom HTTP header (e.g. 'X-Forwarded-For: 127.0.0.1')")
+    conn.add_argument(
+        "--header",
+        dest="headers",
+        action="append",
+        help="Add custom HTTP header (e.g. 'X-Forwarded-For: 127.0.0.1'); repeatable",
+    )
     conn.add_argument("--cookie", help="Add HTTP Cookie header (e.g. 'sid=foobar; auth=1')")
     conn.add_argument("--user-agent", dest="user_agent", help="Set specific User-Agent string")
     conn.add_argument("--timeout", type=float, default=None, help="HTTP request timeout in seconds (default: 10)")
@@ -271,9 +276,9 @@ def validate_args(args: dict[str, Any]) -> None:
             sys.exit(1)
 
     # Header CRLF validation
-    if args.get("header"):
+    for hdr in args.get("headers") or []:
         try:
-            validate_header(args["header"])
+            validate_header(hdr)
         except ValueError as e:
             print(f"[!] Invalid header: {e}", file=sys.stderr)
             sys.exit(1)
@@ -335,7 +340,7 @@ async def run(argv: list[str] | None = None) -> None:
     params = config.data if config.data else parsed.query
 
     # Check if FUZZ marker is used in any injectable position
-    has_fuzz = "FUZZ" in (config.data or "") or "FUZZ" in (config.header or "")
+    has_fuzz = "FUZZ" in (config.data or "") or any("FUZZ" in h for h in (config.headers or []))
 
     # Auto-detect vulnerable parameter if not specified (ported from original)
     if not config.path_based and not config.param and not has_fuzz:

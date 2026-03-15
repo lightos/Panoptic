@@ -112,9 +112,14 @@ class NetworkClient:
         if self.config.cookie:
             headers["Cookie"] = self.config.cookie
 
-        # Custom header (Name: Value format, with CRLF validation)
-        if self.config.header:
-            name, value = validate_header(self.config.header)
-            headers[name] = value
+        # Custom headers (Name: Value format, with CRLF validation)
+        if self.config.headers:
+            for hdr in self.config.headers:
+                name, value = validate_header(hdr)
+                if name.lower() == "cookie" and "Cookie" in headers:
+                    import sys
+
+                    print("[!] Warning: --header 'Cookie: ...' overrides --cookie value", file=sys.stderr)
+                headers[name] = value
 
         return headers

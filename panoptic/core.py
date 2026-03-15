@@ -458,14 +458,18 @@ class Scanner:
         await self._mark_completed(case)
 
     def _fuzz_headers(self, location: str) -> dict[str, str] | None:
-        """Build per-request headers with FUZZ replaced, or None if no FUZZ in header."""
-        if not self.config.header or FUZZ_MARKER not in self.config.header:
+        """Build per-request headers with FUZZ replaced, or None if no FUZZ in headers."""
+        if not self.config.headers:
             return None
         from panoptic.utils import validate_header
 
-        name, value = validate_header(self.config.header)
+        fuzz_hdrs: dict[str, str] = {}
         processed = process_path(self.config, location)
-        return {name: value.replace(FUZZ_MARKER, processed)}
+        for hdr in self.config.headers:
+            if FUZZ_MARKER in hdr:
+                name, value = validate_header(hdr)
+                fuzz_hdrs[name] = value.replace(FUZZ_MARKER, processed)
+        return fuzz_hdrs or None
 
     async def _fetch(
         self,

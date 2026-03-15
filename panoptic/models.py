@@ -127,7 +127,7 @@ class ScanConfig:
     user_agent: str | None = None
     random_agent: bool = False
     cookie: str | None = None
-    header: str | None = None
+    headers: list[str] | None = None
     # Filtering
     os_filter: str | None = None
     software_filter: str | None = None

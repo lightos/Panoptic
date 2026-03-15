@@ -85,7 +85,7 @@ class TestValidateArgs:
                     "update": False,
                     "list_all_files": False,
                     "path_based": False,
-                    "header": None,
+                    "headers": None,
                 }
             )
 
@@ -98,7 +98,7 @@ class TestValidateArgs:
                     "update": False,
                     "list_all_files": False,
                     "path_based": False,
-                    "header": "X-Foo: bar\r\nInjected: yes",
+                    "headers": ["X-Foo: bar\r\nInjected: yes"],
                 }
             )
 
@@ -123,7 +123,7 @@ class TestValidateArgs:
                     "list": None,
                     "update": False,
                     "list_all_files": False,
-                    "header": None,
+                    "headers": None,
                     "timeout": -1.0,
                 }
             )
@@ -136,7 +136,7 @@ class TestValidateArgs:
                     "list": None,
                     "update": False,
                     "list_all_files": False,
-                    "header": None,
+                    "headers": None,
                     "delay": -0.5,
                 }
             )

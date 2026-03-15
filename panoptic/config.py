@@ -82,6 +82,16 @@ def merge_config(cli_args: dict[str, Any], file_config: dict[str, Any]) -> ScanC
             with contextlib.suppress(ValueError):
                 merged[code_key] = [int(c) for c in val]
 
+    # Backward compatibility: normalize singular "header" to plural "headers"
+    if "header" in merged and "headers" not in merged:
+        val = merged.pop("header")
+        if isinstance(val, str):
+            merged["headers"] = [val]
+        elif isinstance(val, list):
+            merged["headers"] = val
+    elif "header" in merged:
+        merged.pop("header")
+
     # Ensure url is present
     url = merged.pop("url", "")
 

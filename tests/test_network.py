@@ -67,13 +67,23 @@ class TestNetworkClient:
         assert request.headers["cookie"] == "sid=abc123"
 
     async def test_custom_header(self, httpx_mock: HTTPXMock) -> None:
-        config = ScanConfig(url="http://example.com", header="X-Custom: value123")
+        config = ScanConfig(url="http://example.com", headers=["X-Custom: value123"])
         httpx_mock.add_response()
         async with NetworkClient(config) as client:
             await client.fetch("http://example.com/test")
         request = httpx_mock.get_request()
         assert request is not None
         assert request.headers["x-custom"] == "value123"
+
+    async def test_multiple_custom_headers(self, httpx_mock: HTTPXMock) -> None:
+        config = ScanConfig(url="http://example.com", headers=["X-Custom: val1", "X-Other: val2"])
+        httpx_mock.add_response()
+        async with NetworkClient(config) as client:
+            await client.fetch("http://example.com/test")
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert request.headers["x-custom"] == "val1"
+        assert request.headers["x-other"] == "val2"
 
     async def test_no_follow_redirects(self, config: ScanConfig, httpx_mock: HTTPXMock) -> None:
         httpx_mock.add_response(status_code=302, headers={"Location": "/other"})
