@@ -1,13 +1,13 @@
 # Panoptic v2
 
 LFI (Local File Inclusion) scanner. Probes URLs for path traversal vulnerabilities
-using a database of known file paths (cases.xml).
+using a database of known file paths (cases.csv).
 
 ## Commands
 
 ```bash
 pip install -e ".[dev]"          # Install with dev deps
-python3 -m pytest tests/ -x -q   # Run tests (112 tests, <1s)
+python3 -m pytest tests/ -x -q   # Run tests (<1s)
 python3 -m mypy panoptic/        # Type check (strict mode)
 python3 -m ruff check panoptic/  # Lint
 python3 -m panoptic --help       # CLI usage
@@ -21,14 +21,14 @@ panoptic/
   config.py    → TOML config loading, CLI/config merge (CLI > file > defaults)
   core.py      → Scanner: async queue + worker pool, build_payload(), FUZZ marker
   models.py    → ScanConfig (frozen dataclass), Case, ScanResult, enums
-  network.py   → httpx async client with retry, proxy, SSL, concurrency control
+  network.py   → httpx async client with retry, proxy, SSL
   heuristic.py → Response comparison (difflib SequenceMatcher), clean_response()
   output.py    → Text/JSON/CSV formatters, TeeWriter for log files
-  cases.py     → XML case parser with filtering (os/software/category/type)
+  cases.py     → CSV case parser with validation and filtering (os/software/category/type)
   parsers.py   → Dynamic case extraction (passwd → home dirs, binlog index)
   utils.py     → URL normalization, header validation, redact_url
   update.py    → Git-based self-update with remote URL verification
-  data/        → cases.xml, agents.txt, home.txt, versions.ini
+  data/        → cases.csv, agents.txt, home.txt, versions.ini
 ```
 
 ## Code Quality
@@ -44,7 +44,7 @@ panoptic/
 - **Type safety** — `mypy --strict` must pass. Use `from __future__ import annotations`
   in every module. Frozen dataclasses for immutable data (ScanConfig, Case).
 - **Security first** — Validate all user input at CLI boundary (CRLF injection,
-  URL schemes, proxy schemes). Use `defusedxml` for XML. Verify git remote before
+  URL schemes, proxy schemes). Verify git remote before
   self-update. Redact credentials from output.
 
 ## Key Patterns
@@ -53,17 +53,51 @@ panoptic/
 - **FUZZ marker** — `FUZZ` in `--data` or `--header` values enables arbitrary injection
   point placement (cookies, JSON bodies, custom headers). Overrides `--param` regex.
 - **build_payload()** constructs URLs/data per-case. `process_path()` applies
-  prefix/postfix/replace_slash/base64 transformations.
+  prefix/postfix/replace_slash/base64 transformations. Payload values are URL-encoded
+  for GET (safe: `=+/%`) and POST (safe: `=/%`); FUZZ mode skips encoding.
 - **Heuristic matching** — responses compared against invalid-file baseline via
   difflib ratio. `clean_response()` strips filepath from both before comparison.
 - **Status code filtering** — 4xx/5xx responses with different status class than
   baseline are skipped (prevents false positives from web server error pages).
-- **asyncio.to_thread** for checkpoint writes to avoid blocking the event loop.
+  User-specified `--match-code` and `--filter-code` provide additional control.
+- **Checkpoint throttling** — checkpoint writes are throttled to 5-second intervals
+  with atomic file replacement (temp file + `os.replace`). Final flush on shutdown.
+- **Quiet mode** — `--quiet` suppresses banner/info/progress/summary; findings and
+  warnings always print.
+- **Multiple headers** — `--header` is repeatable (`action="append"`). The field is
+  `headers: list[str] | None` in ScanConfig. Config merge normalizes singular
+  `header` (old TOML) to plural `headers`.
 
 ## Gotchas
 
 - `[^&]*` not `[^=&]*` in param regex — values can contain `=` (base64 padding)
+- Param regex uses `(?:^|(?<=&))` anchor to prevent substring matches (e.g. `id` in `userid`)
 - Tests use `pytest-httpx` for mocking; `asyncio_mode = "auto"` in pyproject.toml
 - `tomli` is a fallback for Python <3.11 (3.11+ has `tomllib` in stdlib)
 - The original `panoptic.py` monolith is kept but excluded from mypy via pyproject.toml
-- `defusedxml` is used for XML parsing (security)
+- Case database is CSV (`cases.csv`) with validated columns: path, os, software, category, type
+- JSON/CSV output applies `redact_url()` — downstream tools parsing the URL field
+  will see redacted query params
+
+## E2E Testing
+
+Vulnerable test app at `~/dev/lfi-test-app/lfi-test-app/`. Requires Docker Desktop (WSL2 integration).
+
+```bash
+docker.exe compose -f ~/dev/lfi-test-app/lfi-test-app/docker-compose.yml up -d
+```
+
+App runs at `http://localhost:8080`. All endpoints should find 56 files with `--prefix "../../../" --os "*NIX" --auto`:
+
+| Endpoint | Command |
+|----------|---------|
+| GET param | `--url "http://localhost:8080/classic.php?file=test.txt"` |
+| Filter bypass | `--url "http://localhost:8080/filtered.php?file=test.txt" --prefix "....//....//....//....//"` |
+| POST param | `--url "http://localhost:8080/post.php" --data "file=test.txt"` |
+| Base64 | `--url "http://localhost:8080/base64.php?file=dGVzdC50eHQ=" --base64` |
+| Cookie FUZZ | `--url "http://localhost:8080/cookie.php" --header "Cookie: lang=FUZZ"` |
+| JSON FUZZ | `--url "http://localhost:8080/json_api.php" --data '{"file":"FUZZ"}'` |
+| Extension param | `--url "http://localhost:8080/param.php?file=test&type=txt" --param file --ext-param type` |
+| Path-based | `--url "http://localhost:8080/pathinfo.php/test.txt" --path-based` |
+
+Note: path-based returned 0 results — may be a test app issue (needs investigation).
