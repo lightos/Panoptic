@@ -1,6 +1,8 @@
 """Tests for panoptic.core — async scanner orchestrator."""
 
+import asyncio
 from pathlib import Path
+from unittest.mock import AsyncMock, patch
 
 from panoptic.core import Scanner, build_payload, load_checkpoint, save_checkpoint
 from panoptic.models import Case, ScanConfig
@@ -108,3 +110,44 @@ class TestWriteFile:
         output_dir = tmp_path / "output" / "example.com"
         files = list(output_dir.iterdir())
         assert len(files) == 2, f"Expected 2 files, got {len(files)}: {files}"
+
+
+class TestFirstFoundRace:
+    async def test_only_one_os_restriction_with_concurrent_matches(self) -> None:
+        """Multiple concurrent matching cases must trigger OS restriction exactly once."""
+        config = ScanConfig(
+            url="http://target.test/include.php?file=test.txt",
+            param="file",
+            concurrency=4,
+            automatic=True,
+        )
+        scanner = Scanner(config)
+        scanner.invalid_response = "<html>not found</html>"
+        scanner.invalid_status_code = 200
+        scanner.invalid_filename = "nonexistent"
+        scanner.original_response = "<html>original</html>"
+
+        text_out = AsyncMock()
+        text_out.write_found = lambda r: None
+        text_out.write_info = lambda m: None
+        text_out.write_verbose = lambda m: None
+
+        queue: asyncio.Queue[Case] = asyncio.Queue()
+
+        cases = [Case(location=f"/etc/file{i}", os="*NIX", category="OS", software="Linux") for i in range(10)]
+
+        mock_response = AsyncMock()
+        mock_response.status_code = 200
+        mock_response.text = "root:x:0:0:root:/root:/bin/bash"
+        mock_response.headers = {"content-length": "0"}
+
+        with (
+            patch.object(scanner, "_fetch", return_value=mock_response),
+            patch("panoptic.core.is_match", return_value=True),
+        ):
+            await asyncio.gather(
+                *[scanner._process_case(case, AsyncMock(), "file=test.txt", queue, text_out) for case in cases]
+            )
+
+        assert scanner.restrict_os == "*NIX"
+        assert scanner.first_found is True

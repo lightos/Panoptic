@@ -135,6 +135,7 @@ class Scanner:
         self.invalid_filename: str = ""
         self.restrict_os: str | None = config.os_filter
         self.first_found = False
+        self._first_found_lock = asyncio.Lock()
         self.completed_ids: set[str] = set()
         self.enqueued_ids: set[str] = set()
         self.total_queued = 0
@@ -372,20 +373,21 @@ class Scanner:
             self.results.append(result)
             text_out.write_found(result)
 
-            if not self.first_found:
-                self.first_found = True
-                if case.os and not self.restrict_os:
-                    if self.config.automatic:
-                        self.restrict_os = case.os
-                        text_out.write_info(f"Automatically restricting to OS: {case.os}")
-                    else:
-                        # Prompt user in non-auto mode (run in thread to avoid blocking event loop)
-                        answer = await asyncio.to_thread(
-                            input,
-                            f"[?] Restrict further scans to '{case.os}'? [Y/n] ",
-                        )
-                        if answer.strip().lower() in ("", "y", "yes"):
+            async with self._first_found_lock:
+                if not self.first_found:
+                    self.first_found = True
+                    if case.os and not self.restrict_os:
+                        if self.config.automatic:
                             self.restrict_os = case.os
+                            text_out.write_info(f"Automatically restricting to OS: {case.os}")
+                        else:
+                            # Prompt user in non-auto mode (run in thread to avoid blocking event loop)
+                            answer = await asyncio.to_thread(
+                                input,
+                                f"[?] Restrict further scans to '{case.os}'? [Y/n] ",
+                            )
+                            if answer.strip().lower() in ("", "y", "yes"):
+                                self.restrict_os = case.os
 
             if self.config.write_files and html:
                 self._write_file(case, html)
