@@ -381,6 +381,7 @@ class Scanner:
         baseline_length = max(len(self.original_response), len(self.invalid_response))
         if (
             not self.config.write_files
+            and not self.config.match_string
             and content_length > 0
             and content_length - baseline_length > SKIP_RETRIEVE_THRESHOLD
         ):
@@ -399,6 +400,10 @@ class Scanner:
         html = response.text
 
         if self.config.bad_string and self.config.bad_string in html:
+            await self._mark_completed(case)
+            return
+
+        if self.config.match_string and self.config.match_string not in html:
             await self._mark_completed(case)
             return
 

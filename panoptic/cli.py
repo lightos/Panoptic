@@ -80,6 +80,9 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     scan.add_argument("--postfix", default="", help="Add suffix to file paths (e.g. '%%00')")
     scan.add_argument("--multiplier", type=int, default=1, help="Repeat prefix N times (default: 1)")
     scan.add_argument("--bad-string", dest="bad_string", help="Skip paths if this string appears in response")
+    scan.add_argument(
+        "--match-string", dest="match_string", help="Only report findings containing this string in response"
+    )
     scan.add_argument("--replace-slash", dest="replace_slash", help="Use alternative character(s) for '/'")
     scan.add_argument(
         "--base64",

@@ -174,6 +174,100 @@ class TestAtomicCheckpoint:
         assert len(data) == 3
 
 
+class TestMatchString:
+    async def test_match_string_excludes_non_matching_response(self) -> None:
+        """Responses WITHOUT match_string should NOT be reported as found."""
+        config = ScanConfig(
+            url="http://example.com/test.php?file=test.txt",
+            param="file",
+            match_string="root:x:0:0",
+            automatic=True,
+        )
+        scanner = Scanner(config)
+        scanner.invalid_response = "<html>not found</html>"
+        scanner.invalid_status_code = 200
+        scanner.invalid_filename = "nonexistent"
+
+        mock_response = AsyncMock()
+        mock_response.status_code = 200
+        mock_response.text = "<html>some content without the string</html>"
+        mock_response.headers = {"content-length": "0"}
+
+        text_out = AsyncMock()
+        queue: asyncio.Queue[Case] = asyncio.Queue()
+        case = Case(location="/etc/shadow", os="*NIX")
+
+        with (
+            patch.object(scanner, "_fetch", return_value=mock_response),
+            patch("panoptic.core.is_match", return_value=True),
+        ):
+            await scanner._process_case(case, AsyncMock(), "file=test.txt", queue, text_out)
+
+        assert len(scanner.results) == 0
+
+    async def test_match_string_includes_matching_response(self) -> None:
+        """Responses WITH match_string should be reported as found."""
+        config = ScanConfig(
+            url="http://example.com/test.php?file=test.txt",
+            param="file",
+            match_string="root:x:0:0",
+            automatic=True,
+        )
+        scanner = Scanner(config)
+        scanner.invalid_response = "<html>not found</html>"
+        scanner.invalid_status_code = 200
+        scanner.invalid_filename = "nonexistent"
+
+        mock_response = AsyncMock()
+        mock_response.status_code = 200
+        mock_response.text = "root:x:0:0:root:/root:/bin/bash"
+        mock_response.headers = {"content-length": "0"}
+
+        text_out = AsyncMock()
+        text_out.write_found = lambda r: None
+        text_out.write_info = lambda m: None
+        queue: asyncio.Queue[Case] = asyncio.Queue()
+        case = Case(location="/etc/passwd", os="*NIX")
+
+        with (
+            patch.object(scanner, "_fetch", return_value=mock_response),
+            patch("panoptic.core.is_match", return_value=True),
+        ):
+            await scanner._process_case(case, AsyncMock(), "file=test.txt", queue, text_out)
+
+        assert len(scanner.results) == 1
+        assert scanner.results[0].found is True
+
+    async def test_match_string_disables_content_length_fast_path(self) -> None:
+        """Content-Length optimization must be skipped when match_string requires body inspection."""
+        config = ScanConfig(
+            url="http://example.com/test.php?file=test.txt",
+            param="file",
+            match_string="root:x:0:0",
+            automatic=True,
+        )
+        scanner = Scanner(config)
+        scanner.invalid_response = "x" * 100
+        scanner.invalid_status_code = 200
+        scanner.invalid_filename = "nonexistent"
+        scanner.original_response = "x" * 100
+
+        mock_response = AsyncMock()
+        mock_response.status_code = 200
+        mock_response.text = "large body " * 500
+        mock_response.headers = {"content-length": "50000"}
+
+        text_out = AsyncMock()
+        text_out.write_found = lambda r: None
+        queue: asyncio.Queue[Case] = asyncio.Queue()
+        case = Case(location="/etc/passwd", os="*NIX")
+
+        with patch.object(scanner, "_fetch", return_value=mock_response):
+            await scanner._process_case(case, AsyncMock(), "file=test.txt", queue, text_out)
+
+        assert len(scanner.results) == 0
+
+
 class TestCheckpointThrottling:
     async def test_rapid_marks_throttle_writes(self, tmp_path: Path) -> None:
         """Rapid _mark_completed calls should not write on every call."""
