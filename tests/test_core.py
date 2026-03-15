@@ -52,6 +52,45 @@ class TestBuildPayload:
         payload = build_payload(config, "/etc/passwd.conf", "content_type=html&type=txt&file=test.txt")
         assert "content_type=html" in payload  # content_type unchanged
 
+    def test_get_payload_encodes_ampersand(self) -> None:
+        """Payload containing & must be encoded in GET query strings."""
+        config = ScanConfig(url="http://example.com/test.php?file=test.txt", param="file")
+        payload = build_payload(config, "/etc/foo&bar", "file=test.txt")
+        assert "foo%26bar" in payload
+
+    def test_post_payload_encodes_plus_as_percent2b(self) -> None:
+        """POST payloads must encode + to prevent space decoding in form bodies."""
+        config = ScanConfig(
+            url="http://example.com/test.php",
+            param="file",
+            data="file=test.txt",
+        )
+        payload = build_payload(config, "/etc/foo+bar", "file=test.txt")
+        assert "%2B" in payload or "foo%2Bbar" in payload
+
+    def test_get_payload_preserves_plus(self) -> None:
+        """GET payloads should keep + unencoded for base64 compat with PHP $_GET."""
+        config = ScanConfig(url="http://example.com/test.php?file=test.txt", param="file")
+        payload = build_payload(config, "/etc/foo+bar", "file=test.txt")
+        assert "foo+bar" in payload
+
+    def test_replace_slash_percent_not_double_encoded(self) -> None:
+        """--replace-slash with pre-encoded value like %2F must not double-encode."""
+        config = ScanConfig(
+            url="http://example.com/test.php?file=test.txt",
+            param="file",
+            replace_slash="%2F",
+        )
+        payload = build_payload(config, "/etc/passwd", "file=test.txt")
+        assert "%2F" in payload
+        assert "%252F" not in payload
+
+    def test_fuzz_mode_no_encoding(self) -> None:
+        """FUZZ mode should not auto-encode — user controls the template."""
+        config = ScanConfig(url="http://example.com/test.php", data='{"file":"FUZZ"}')
+        payload = build_payload(config, "/etc/passwd", '{"file":"FUZZ"}')
+        assert "/etc/passwd" in payload
+
 
 class TestScanner:
     async def test_scanner_initializes(self) -> None:

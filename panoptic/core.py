@@ -15,6 +15,7 @@ import re
 import time
 from pathlib import Path
 from typing import TextIO
+from urllib.parse import quote as url_quote
 from urllib.parse import urlsplit
 
 import httpx
@@ -66,6 +67,20 @@ def process_path(config: ScanConfig, location: str) -> str:
     return full_path
 
 
+def _encode_param_value(value: str, *, is_post: bool = False) -> str:
+    """URL-encode chars that would corrupt a query/form body.
+
+    Safe chars (not encoded):
+      /       : LFI path traversal separators must stay literal
+      %       : Preserve pre-encoded sequences (e.g., --replace-slash "%2F")
+    GET-specific safe: = and + (base64 compat, PHP $_GET handles natively)
+    POST-specific: + MUST be encoded as %2B (decoded as space by form parsers)
+    """
+    if is_post:
+        return url_quote(value, safe="=/%")
+    return url_quote(value, safe="=+/%")
+
+
 def build_payload(config: ScanConfig, location: str, request_params: str) -> str:
     """Build the request payload/URL for a given file location."""
     full_path = process_path(config, location)
@@ -79,26 +94,30 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
             return f"{parsed.scheme}://{parsed.netloc}{base_path}/{full_path}"
         return f"{parsed.scheme}://{parsed.netloc}/{full_path}"
 
+    is_post = bool(config.data)
     result = request_params
     if FUZZ_MARKER in result:
         result = result.replace(FUZZ_MARKER, full_path)
     elif config.ext_param and config.param and "." in full_path:
         # When ext_param is set, split path into base and extension
         path_without_ext, ext = full_path.rsplit(".", 1)
+        encoded_path = _encode_param_value(path_without_ext, is_post=is_post)
+        encoded_ext = _encode_param_value(ext, is_post=is_post)
         result = re.sub(
             rf"(?:^|(?<=&)){re.escape(config.param)}=(?P<value>[^&]*)",
-            rf"{config.param}={path_without_ext}",
+            rf"{config.param}={encoded_path}",
             result,
         )
         result = re.sub(
             rf"(?:^|(?<=&)){re.escape(config.ext_param)}=(?P<value>[^&]*)",
-            rf"{config.ext_param}={ext}",
+            rf"{config.ext_param}={encoded_ext}",
             result,
         )
     elif config.param:
+        encoded_full_path = _encode_param_value(full_path, is_post=is_post)
         result = re.sub(
             rf"(?:^|(?<=&)){re.escape(config.param)}=(?P<value>[^&]*)",
-            rf"{config.param}={full_path}",
+            rf"{config.param}={encoded_full_path}",
             result,
         )
 
