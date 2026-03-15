@@ -5,7 +5,6 @@ Wraps httpx with retry, timeout, proxy support, and header validation.
 
 from __future__ import annotations
 
-import asyncio
 import ssl
 from types import TracebackType
 
@@ -26,7 +25,6 @@ class NetworkClient:
     def __init__(self, config: ScanConfig) -> None:
         self.config = config
         self._client: httpx.AsyncClient | None = None
-        self._semaphore = asyncio.Semaphore(config.concurrency)
 
     async def __aenter__(self) -> NetworkClient:
         timeout = httpx.Timeout(self.config.timeout, connect=5.0)
@@ -82,23 +80,21 @@ class NetworkClient:
         if self._client is None:
             raise RuntimeError("NetworkClient must be used as async context manager")
 
-        async with self._semaphore:
-            try:
-                if data is not None:
-                    post_headers = {"Content-Type": "application/x-www-form-urlencoded"}
-                    if headers:
-                        post_headers.update(headers)
-                    response = await self._client.post(
-                        url,
-                        content=data.encode("utf-8"),
-                        headers=post_headers,
-                    )
-                else:
-                    response = await self._client.get(url, headers=headers)
-                return response
-            except httpx.HTTPError:
-                # Connection/timeout errors have no response body
-                return None
+        try:
+            if data is not None:
+                post_headers = {"Content-Type": "application/x-www-form-urlencoded"}
+                if headers:
+                    post_headers.update(headers)
+                response = await self._client.post(
+                    url,
+                    content=data.encode("utf-8"),
+                    headers=post_headers,
+                )
+            else:
+                response = await self._client.get(url, headers=headers)
+            return response
+        except httpx.HTTPError:
+            return None
 
     def _build_headers(self) -> dict[str, str]:
         """Build default headers from config, with validation."""
