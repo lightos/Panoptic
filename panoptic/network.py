@@ -96,10 +96,6 @@ class NetworkClient:
                 else:
                     response = await self._client.get(url, headers=headers)
                 return response
-            except httpx.HTTPStatusError as e:
-                # Return the response even on HTTP errors (404/500) —
-                # the body is needed for heuristic comparison
-                return e.response
             except httpx.HTTPError:
                 # Connection/timeout errors have no response body
                 return None
