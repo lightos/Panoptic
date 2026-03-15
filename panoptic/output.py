@@ -39,7 +39,7 @@ def _result_to_dict(r: ScanResult) -> dict[str, object]:
     """Convert a ScanResult to a flat dict for serialization."""
     return {
         "timestamp": r.timestamp,
-        "url": redact_url(r.url),
+        "url": redact_url(r.url) if r.url.startswith(("http://", "https://")) else r.url,
         "location": r.case.location,
         "os": r.case.os,
         "category": r.case.category,
