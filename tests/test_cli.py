@@ -54,6 +54,10 @@ class TestParseArgs:
         args = parse_args(["--list", "software"])
         assert args["list"] == "software"
 
+    def test_inverted_random_delay_rejected(self) -> None:
+        with pytest.raises(SystemExit):
+            parse_args(["--url", "http://example.com", "--random-delay", "5.0-0.5"])
+
 
 class TestValidateArgs:
     def test_rejects_file_scheme(self) -> None:
@@ -94,6 +98,32 @@ class TestValidateArgs:
                 "header": None,
             }
         )
+
+    def test_rejects_negative_timeout(self) -> None:
+        with pytest.raises(SystemExit):
+            validate_args(
+                {
+                    "url": "http://example.com",
+                    "list": None,
+                    "update": False,
+                    "list_all_files": False,
+                    "header": None,
+                    "timeout": -1.0,
+                }
+            )
+
+    def test_rejects_negative_delay(self) -> None:
+        with pytest.raises(SystemExit):
+            validate_args(
+                {
+                    "url": "http://example.com",
+                    "list": None,
+                    "update": False,
+                    "list_all_files": False,
+                    "header": None,
+                    "delay": -0.5,
+                }
+            )
 
 
 class TestParamAutodetection:

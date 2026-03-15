@@ -70,6 +70,15 @@ class ScanConfig:
             raise ValueError(f"concurrency must be >= 1, got {self.concurrency}")
         if not (0.0 < self.heuristic_ratio < 1.0):
             raise ValueError(f"heuristic_ratio must be between 0 and 1 (exclusive), got {self.heuristic_ratio}")
+        if self.timeout <= 0:
+            raise ValueError(f"timeout must be > 0, got {self.timeout}")
+        if self.delay < 0:
+            raise ValueError(f"delay must be >= 0, got {self.delay}")
+        if self.random_delay is not None:
+            if self.random_delay[0] < 0 or self.random_delay[1] < 0:
+                raise ValueError("random_delay values must be non-negative")
+            if self.random_delay[0] >= self.random_delay[1]:
+                raise ValueError("random_delay min must be < max")
 
     def replace(self, **overrides: Any) -> ScanConfig:
         """Return a copy of this config with the given fields overridden."""

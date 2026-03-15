@@ -70,6 +70,34 @@ class TestScanConfig:
         _ = config.prefix + "/etc/passwd"
         assert config.prefix == original
 
+    def test_negative_timeout_rejected(self) -> None:
+        with pytest.raises(ValueError, match="timeout must be > 0"):
+            ScanConfig(url="http://example.com", timeout=-1.0)
+
+    def test_zero_timeout_rejected(self) -> None:
+        with pytest.raises(ValueError, match="timeout must be > 0"):
+            ScanConfig(url="http://example.com", timeout=0.0)
+
+    def test_negative_delay_rejected(self) -> None:
+        with pytest.raises(ValueError, match="delay must be >= 0"):
+            ScanConfig(url="http://example.com", delay=-0.5)
+
+    def test_zero_delay_allowed(self) -> None:
+        config = ScanConfig(url="http://example.com", delay=0.0)
+        assert config.delay == 0.0
+
+    def test_inverted_random_delay_rejected(self) -> None:
+        with pytest.raises(ValueError, match="random_delay min must be < max"):
+            ScanConfig(url="http://example.com", random_delay=(5.0, 0.5))
+
+    def test_negative_random_delay_rejected(self) -> None:
+        with pytest.raises(ValueError, match="random_delay values must be non-negative"):
+            ScanConfig(url="http://example.com", random_delay=(-1.0, 0.5))
+
+    def test_valid_random_delay_accepted(self) -> None:
+        config = ScanConfig(url="http://example.com", random_delay=(0.5, 2.0))
+        assert config.random_delay == (0.5, 2.0)
+
 
 class TestEnums:
     def test_file_type_values(self) -> None:

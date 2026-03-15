@@ -184,6 +184,15 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
             print("[!] Invalid --random-delay format. Use 'MIN-MAX' (e.g. '0.5-2.0')", file=sys.stderr)
             sys.exit(1)
 
+    if result.get("random_delay") and isinstance(result["random_delay"], tuple):
+        min_val, max_val = result["random_delay"]
+        if min_val < 0 or max_val < 0:
+            print("[!] --random-delay values must be non-negative", file=sys.stderr)
+            sys.exit(1)
+        if min_val >= max_val:
+            print("[!] --random-delay MIN must be less than MAX", file=sys.stderr)
+            sys.exit(1)
+
     return result
 
 
@@ -205,6 +214,13 @@ def validate_args(args: dict[str, Any]) -> None:
     # Concurrency validation
     if args.get("concurrency") is not None and args["concurrency"] < 1:
         print("[!] --concurrency must be at least 1", file=sys.stderr)
+        sys.exit(1)
+
+    if args.get("timeout") is not None and args["timeout"] <= 0:
+        print("[!] --timeout must be greater than 0", file=sys.stderr)
+        sys.exit(1)
+    if args.get("delay") is not None and args["delay"] < 0:
+        print("[!] --delay must be non-negative", file=sys.stderr)
         sys.exit(1)
 
     # Proxy scheme validation
