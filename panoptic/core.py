@@ -175,6 +175,7 @@ class Scanner:
         self._checkpoint_dirty = False
         self._last_checkpoint_time = 0.0
         self._checkpoint_lock = asyncio.Lock()
+        self._pause_lock = asyncio.Lock()
 
     async def run(self) -> None:
         """Execute the full scan workflow."""
@@ -294,7 +295,9 @@ class Scanner:
                             continue
 
                         try:
-                            await self._process_case(case, client, request_params, queue, scan_out)
+                            async with self._pause_lock:
+                                pass  # Block while interactive prompt is active
+                            await self._process_case(case, client, request_params, queue, scan_out, progress_ctx)
                             self.total_processed += 1
                             # Update progress bar total when dynamic cases are added
                             if progress_ctx is not None and progress_task_id is not None:
@@ -356,6 +359,7 @@ class Scanner:
         request_params: str,
         queue: asyncio.Queue[Case],
         text_out: TextFormatter,
+        progress: Progress | None = None,
     ) -> None:
         """Process a single case: fetch, compare, record result."""
         if self.config.random_delay:
@@ -457,13 +461,20 @@ class Scanner:
                             self.restrict_os = case.os
                             text_out.write_info(f"Automatically restricting to OS: {case.os}")
                         else:
-                            # Prompt user in non-auto mode (run in thread to avoid blocking event loop)
-                            answer = await asyncio.to_thread(
-                                input,
-                                f"[?] Restrict further scans to '{case.os}'? [Y/n] ",
-                            )
-                            if answer.strip().lower() in ("", "y", "yes"):
-                                self.restrict_os = case.os
+                            # Hold pause lock to block other workers during prompt
+                            async with self._pause_lock:
+                                if progress is not None:
+                                    progress.stop()
+                                try:
+                                    answer = await asyncio.to_thread(
+                                        input,
+                                        f"[?] Restrict further scans to '{case.os}'? [Y/n] ",
+                                    )
+                                    if answer.strip().lower() in ("", "y", "yes"):
+                                        self.restrict_os = case.os
+                                finally:
+                                    if progress is not None:
+                                        progress.start()
 
             if self.config.write_files and html:
                 self._write_file(case, html)
