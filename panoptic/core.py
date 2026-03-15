@@ -448,7 +448,10 @@ class Scanner:
             raise ValueError(f"Unsafe output directory: {output_dir}")
         output_dir.mkdir(parents=True, exist_ok=True)
 
-        filename = sanitize_filename(case.location) + ".txt"
+        sanitized = sanitize_filename(case.location)
+        # Include case_id suffix when traversal markers were stripped,
+        # since different traversal depths produce identical sanitized names.
+        filename = f"{sanitized}_{case.case_id[:8]}.txt" if ".." in case.location else f"{sanitized}.txt"
         filepath = output_dir / filename
 
         content = filter_content(html, self.original_response) if self.original_response else html

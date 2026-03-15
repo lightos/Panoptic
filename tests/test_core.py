@@ -82,3 +82,29 @@ class TestScanner:
 
     async def test_load_empty_checkpoint(self, tmp_path: Path) -> None:
         assert load_checkpoint(str(tmp_path / "nonexistent.json")) == set()
+
+
+class TestWriteFile:
+    def test_no_filename_collision(self, tmp_path: Path) -> None:
+        """Paths differing only in traversal depth must not overwrite each other."""
+        config = ScanConfig(
+            url="http://example.com/test.php?file=x",
+            param="file",
+            write_files=True,
+        )
+        scanner = Scanner(config)
+        scanner.original_response = "<html>original</html>"
+
+        case1 = Case(location="../../etc/passwd", os="*NIX")
+        case2 = Case(location="../../../etc/passwd", os="*NIX")
+
+        # Use monkeypatch approach with tmp_path
+        from unittest.mock import patch as mock_patch
+
+        with mock_patch("panoptic.core.Path.cwd", return_value=tmp_path):
+            scanner._write_file(case1, "content1")
+            scanner._write_file(case2, "content2")
+
+        output_dir = tmp_path / "output" / "example.com"
+        files = list(output_dir.iterdir())
+        assert len(files) == 2, f"Expected 2 files, got {len(files)}: {files}"
