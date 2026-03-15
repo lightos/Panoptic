@@ -320,10 +320,6 @@ class Scanner:
                 if progress_ctx is not None:
                     progress_ctx.stop()
 
-        elapsed = time.monotonic() - scan_start
-        rps = self.total_processed / elapsed if elapsed > 0 else 0
-        text_out.write_info(f"Scan completed in {elapsed:.1f}s ({rps:.0f} req/s)")
-
         found_results = [r for r in self.results if r.found]
 
         if not found_results:
@@ -331,6 +327,9 @@ class Scanner:
         else:
             text_out.write_summary(found_results, self.total_processed)
 
+        elapsed = time.monotonic() - scan_start
+        rps = self.total_processed / elapsed if elapsed > 0 else 0
+        text_out.write_info(f"Completed in {elapsed:.1f}s ({rps:.0f} req/s)")
         text_out.write_info(f"Finishing scan at: {time.strftime('%X')}")
 
         if self.config.output_format != OutputFormat.TEXT or self.config.output_file:
