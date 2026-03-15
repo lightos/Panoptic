@@ -1,8 +1,10 @@
 """Tests for panoptic.cli — argument parsing and validation."""
 
+from unittest.mock import AsyncMock, patch
+
 import pytest
 
-from panoptic.cli import parse_args, validate_args
+from panoptic.cli import parse_args, run, validate_args
 
 
 class TestParseArgs:
@@ -92,3 +94,14 @@ class TestValidateArgs:
                 "header": None,
             }
         )
+
+
+class TestParamAutodetection:
+    async def test_base64_param_autodetect(self) -> None:
+        """Param detection must handle base64 values with = padding."""
+        with patch("panoptic.core.Scanner") as mock_scanner_cls:
+            mock_scanner = AsyncMock()
+            mock_scanner_cls.return_value = mock_scanner
+            await run(["--url", "http://example.com/test.php?file=dGVzdC50eHQ=&id=1", "--auto"])
+            config = mock_scanner_cls.call_args[0][0]
+            assert config.param == "file"

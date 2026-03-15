@@ -282,7 +282,7 @@ async def run(argv: list[str] | None = None) -> None:
 
     # Auto-detect vulnerable parameter if not specified (ported from original)
     if not config.path_based and not config.param and not has_fuzz:
-        match = re.match(r"(?P<param>[^=&]+)=(?P<value>[^=&]+)", params)
+        match = re.match(r"(?P<param>[^=&]+)=(?P<value>[^&]+)", params)
         if match:
             config = config.replace(param=match.group("param"))
         else:
@@ -292,7 +292,7 @@ async def run(argv: list[str] | None = None) -> None:
 
     # Validate --ext-param exists in query/data
     if config.ext_param and not re.search(
-        rf"(?P<param>{re.escape(config.ext_param)})=(?P<value>[^=&]*)",
+        rf"(?P<param>{re.escape(config.ext_param)})=(?P<value>[^&]*)",
         params,
     ):
         print(f"[!] Extension parameter '{config.ext_param}' not found.", file=sys.stderr)
