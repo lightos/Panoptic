@@ -6,6 +6,7 @@ Merge priority: CLI args > config file > built-in defaults.
 
 from __future__ import annotations
 
+import contextlib
 import sys
 from pathlib import Path
 from typing import Any
@@ -70,6 +71,16 @@ def merge_config(cli_args: dict[str, Any], file_config: dict[str, Any]) -> ScanC
     # Handle output_format enum conversion
     if "output_format" in merged and isinstance(merged["output_format"], str):
         merged["output_format"] = OutputFormat(merged["output_format"])
+
+    # Normalize match_codes / filter_codes from TOML (may be string or list of strings)
+    for code_key in ("match_codes", "filter_codes"):
+        val = merged.get(code_key)
+        if isinstance(val, str):
+            with contextlib.suppress(ValueError):
+                merged[code_key] = [int(c.strip()) for c in val.split(",")]
+        elif isinstance(val, list) and val and isinstance(val[0], str):
+            with contextlib.suppress(ValueError):
+                merged[code_key] = [int(c) for c in val]
 
     # Ensure url is present
     url = merged.pop("url", "")

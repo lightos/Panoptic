@@ -372,6 +372,14 @@ class Scanner:
             await self._mark_completed(case)
             return
 
+        # User-specified status code filtering
+        if self.config.filter_codes and response.status_code in self.config.filter_codes:
+            await self._mark_completed(case)
+            return
+        if self.config.match_codes and response.status_code not in self.config.match_codes:
+            await self._mark_completed(case)
+            return
+
         # Content-Length skip optimization: if response is much larger than baseline
         # and we're not writing files, classify as found by status alone
         try:

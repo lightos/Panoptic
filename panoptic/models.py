@@ -102,6 +102,8 @@ class ScanConfig:
     # Detection
     bad_string: str | None = None
     match_string: str | None = None
+    match_codes: list[int] | None = None
+    filter_codes: list[int] | None = None
     replace_slash: str | None = None
     base64_encode: bool = False
     heuristic_ratio: float = 0.9

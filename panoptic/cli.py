@@ -83,6 +83,16 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     scan.add_argument(
         "--match-string", dest="match_string", help="Only report findings containing this string in response"
     )
+    scan.add_argument(
+        "--match-code",
+        dest="match_codes",
+        help="Only report findings with these HTTP status codes (comma-separated, e.g. '200,301')",
+    )
+    scan.add_argument(
+        "--filter-code",
+        dest="filter_codes",
+        help="Exclude findings with these HTTP status codes (comma-separated, e.g. '404,500')",
+    )
     scan.add_argument("--replace-slash", dest="replace_slash", help="Use alternative character(s) for '/'")
     scan.add_argument(
         "--base64",
@@ -209,6 +219,19 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         if min_val >= max_val:
             print("[!] --random-delay MIN must be less than MAX", file=sys.stderr)
             sys.exit(1)
+
+    for code_key in ("match_codes", "filter_codes"):
+        if result.get(code_key) and isinstance(result[code_key], str):
+            try:
+                codes = [int(c.strip()) for c in result[code_key].split(",")]
+                for code in codes:
+                    if not 100 <= code <= 599:
+                        raise ValueError(f"HTTP status code out of range: {code}")
+                result[code_key] = codes
+            except ValueError as e:
+                flag = "--match-code" if code_key == "match_codes" else "--filter-code"
+                print(f"[!] Invalid {flag}: {e}", file=sys.stderr)
+                sys.exit(1)
 
     return result
 

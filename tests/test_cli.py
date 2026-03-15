@@ -58,6 +58,22 @@ class TestParseArgs:
         with pytest.raises(SystemExit):
             parse_args(["--url", "http://example.com", "--random-delay", "5.0-0.5"])
 
+    def test_match_code_parsing(self) -> None:
+        args = parse_args(["--url", "http://example.com", "--match-code", "200,301"])
+        assert args["match_codes"] == [200, 301]
+
+    def test_filter_code_parsing(self) -> None:
+        args = parse_args(["--url", "http://example.com", "--filter-code", "404,500"])
+        assert args["filter_codes"] == [404, 500]
+
+    def test_invalid_match_code_rejected(self) -> None:
+        with pytest.raises(SystemExit):
+            parse_args(["--url", "http://example.com", "--match-code", "999"])
+
+    def test_non_numeric_match_code_rejected(self) -> None:
+        with pytest.raises(SystemExit):
+            parse_args(["--url", "http://example.com", "--match-code", "abc"])
+
 
 class TestValidateArgs:
     def test_rejects_file_scheme(self) -> None:
