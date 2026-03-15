@@ -90,6 +90,37 @@ class TestCsvFormatter:
         assert "location" in content  # Header still present
 
 
+class TestUrlRedaction:
+    def test_json_output_redacts_url(self) -> None:
+        """JSON output must not leak raw query param values."""
+        result = ScanResult(
+            case=Case(location="/etc/passwd"),
+            found=True,
+            url="http://example.com/test.php?file=/etc/passwd&token=secret123",
+            status_code=200,
+        )
+        buf = io.StringIO()
+        JsonFormatter(buf).write_results([result])
+        buf.seek(0)
+        data = json.loads(buf.read())
+        assert "secret123" not in data[0]["url"]
+        assert "token=***" in data[0]["url"]
+
+    def test_csv_output_redacts_url(self) -> None:
+        """CSV output must not leak raw query param values."""
+        result = ScanResult(
+            case=Case(location="/etc/passwd"),
+            found=True,
+            url="http://example.com/test.php?file=/etc/passwd&token=secret123",
+            status_code=200,
+        )
+        buf = io.StringIO()
+        CsvFormatter(buf).write_results([result])
+        buf.seek(0)
+        content = buf.read()
+        assert "secret123" not in content
+
+
 class TestTextFormatter:
     def test_found_message(self, sample_results: list[ScanResult]) -> None:
         buf = io.StringIO()

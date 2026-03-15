@@ -13,6 +13,7 @@ from typing import TextIO
 from rich.console import Console
 
 from panoptic.models import ScanResult
+from panoptic.utils import redact_url
 
 
 class TeeWriter:
@@ -38,7 +39,7 @@ def _result_to_dict(r: ScanResult) -> dict[str, object]:
     """Convert a ScanResult to a flat dict for serialization."""
     return {
         "timestamp": r.timestamp,
-        "url": r.url,
+        "url": redact_url(r.url),
         "location": r.case.location,
         "os": r.case.os,
         "category": r.case.category,
