@@ -97,11 +97,10 @@ def parse_cases(config: ScanConfig) -> list[Case]:
 
         # Version expansion ([SECTION] patterns)
         match = re.search(r"\[([^\]]+)\]", location)
-        locations = (
-            [location.replace(match.group(0), v) for v in versions[match.group(1)]]
-            if match and config.all_versions and match.group(1) in versions
-            else [location]
-        )
+        if match and config.all_versions and match.group(1) in versions:
+            locations = [location.replace(match.group(0), v) for v in versions[match.group(1)]]
+        else:
+            locations = [location]
         for loc in locations:
             cases.append(
                 Case(location=loc, os=os_val, category=category_val, software=software_val, file_type=file_type)

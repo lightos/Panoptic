@@ -67,3 +67,5 @@ class TestEndToEnd:
         for case in cases:
             if case.os:
                 assert case.os == "*NIX"
+            if case.file_type:
+                assert case.file_type.value == "conf"

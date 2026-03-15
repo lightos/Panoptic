@@ -52,7 +52,7 @@ from panoptic.utils import (
     validate_header,
 )
 
-PASSWD_FILES = ["/etc/passwd", "/etc/security/passwd"]
+PASSWD_FILES = frozenset({"/etc/passwd", "/etc/security/passwd"})
 FUZZ_MARKER = "FUZZ"
 
 
@@ -399,10 +399,8 @@ class Scanner:
 
         # Content-Length skip optimization: if response is much larger than baseline
         # and we're not writing files, classify as found by status alone
-        try:
-            content_length = int(response.headers.get("content-length", 0))
-        except (ValueError, TypeError):
-            content_length = 0
+        raw_length = response.headers.get("content-length", "0")
+        content_length = int(raw_length) if raw_length.isdigit() else 0
         baseline_length = max(len(self.original_response), len(self.invalid_response))
         if (
             not self.config.write_files
@@ -539,18 +537,26 @@ class Scanner:
 
     def _write_file(self, case: Case, html: str) -> None:
         """Write discovered file content to local output directory."""
-        base = (Path.cwd() / "output").resolve()
-        output_dir = (base / self._parsed_url.netloc.replace(":", "_")).resolve()
-        if not str(output_dir).startswith(str(base)):
-            raise ValueError(f"Unsafe output directory: {output_dir}")
-        output_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            base = (Path.cwd() / "output").resolve()
+            output_dir = (base / self._parsed_url.netloc.replace(":", "_")).resolve()
+            if not str(output_dir).startswith(str(base)):
+                raise ValueError(f"Unsafe output directory: {output_dir}")
+            output_dir.mkdir(parents=True, exist_ok=True)
 
-        sanitized = sanitize_filename(case.location)
-        # Always include case_id suffix to prevent collisions from paths that
-        # sanitize identically (e.g. /foo/bar and /foo:bar both → foo_bar).
-        filename = f"{sanitized}_{case.case_id[:8]}.txt"
-        filepath = output_dir / filename
+            sanitized = sanitize_filename(case.location)
+            # Always include case_id suffix to prevent collisions from paths that
+            # sanitize identically (e.g. /foo/bar and /foo:bar both → foo_bar).
+            suffix = f"_{case.case_id[:8]}.txt"
+            # Cap filename length to stay within filesystem limits (typically 255 bytes).
+            max_name_len = 255 - len(suffix)
+            if len(sanitized) > max_name_len:
+                sanitized = sanitized[:max_name_len]
+            filename = f"{sanitized}{suffix}"
+            filepath = output_dir / filename
 
-        content = filter_content(html, self.original_response) if self.original_response else html
+            content = filter_content(html, self.original_response) if self.original_response else html
 
-        filepath.write_text(content, encoding="utf-8")
+            filepath.write_text(content, encoding="utf-8")
+        except OSError as exc:
+            print(f"[!] Warning: could not write file for '{case.location}': {exc}", file=sys.stderr)

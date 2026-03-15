@@ -86,6 +86,9 @@ class TestGetRandomAgent:
         assert len(agent) > 0
 
     def test_returns_different_values(self) -> None:
-        """Should return different agents (probabilistic, run a few times)."""
+        """Should return different agents with deterministic seed."""
+        import random
+
+        random.seed(42)
         agents = {get_random_agent() for _ in range(20)}
-        assert len(agents) > 1  # Very unlikely to get same agent 20 times
+        assert len(agents) > 1

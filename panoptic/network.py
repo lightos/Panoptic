@@ -83,7 +83,13 @@ class NetworkClient:
 
         try:
             if data is not None:
-                post_headers = {"Content-Type": "application/x-www-form-urlencoded"}
+                # Infer content type from payload: JSON bodies get application/json,
+                # everything else defaults to form-encoded.
+                content_type = "application/x-www-form-urlencoded"
+                stripped = data.lstrip()
+                if stripped.startswith(("{", "[")):
+                    content_type = "application/json"
+                post_headers = {"Content-Type": content_type}
                 if headers:
                     post_headers.update(headers)
                 response = await self._client.post(

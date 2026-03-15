@@ -72,7 +72,11 @@ def merge_config(cli_args: dict[str, Any], file_config: dict[str, Any]) -> ScanC
 
     # Handle output_format enum conversion
     if "output_format" in merged and isinstance(merged["output_format"], str):
-        merged["output_format"] = OutputFormat(merged["output_format"])
+        try:
+            merged["output_format"] = OutputFormat(merged["output_format"])
+        except ValueError as e:
+            print(f"[!] Invalid output_format in config: {e}", file=sys.stderr)
+            merged.pop("output_format")
 
     # Normalize match_codes / filter_codes from TOML (may be string or list)
     for code_key in ("match_codes", "filter_codes"):

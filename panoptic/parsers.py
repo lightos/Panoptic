@@ -35,7 +35,7 @@ def extract_home_file_cases(
         r"(?P<gid>\d*):"
         r"(?P<info>[^:]*):"
         r"(?P<home>[^:]+):"
-        r"[/a-z]*"
+        r"(?P<shell>[^:\n]*)"
     )
 
     for match in pattern.finditer(passwd_content):
@@ -96,7 +96,7 @@ def extract_binlog_cases(
 
 
 @functools.cache
-def _load_home_files() -> list[str]:
+def _load_home_files() -> tuple[str, ...]:
     """Load common home directory files from bundled data (cached)."""
     content = load_data_file("home.txt")
-    return [line.strip() for line in content.splitlines() if line.strip()]
+    return tuple(line.strip() for line in content.splitlines() if line.strip())

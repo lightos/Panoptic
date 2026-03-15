@@ -7,12 +7,35 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from typing import Any
+from urllib.parse import urlsplit
 
 from rich_argparse import RawDescriptionRichHelpFormatter
 
 from panoptic.utils import normalize_url, parse_status_codes, validate_header, validate_url_scheme
+
+# Boolean/value defaults from argparse that should be stripped before config merge,
+# so they don't override config file values. ScanConfig defaults apply when absent
+# from both CLI and file config.
+_ARGPARSE_DEFAULTS: dict[str, object] = {
+    "path_based": False,
+    "write_files": False,
+    "skip_parsing": False,
+    "invalid_ssl": False,
+    "automatic": False,
+    "all_versions": False,
+    "random_agent": False,
+    "ignore_proxy": False,
+    "verbose": False,
+    "follow_redirects": False,
+    "quiet": False,
+    "base64_encode": False,
+    "prefix": "",
+    "postfix": "",
+    "multiplier": 1,
+}
 
 EXAMPLES = """
 Examples:
@@ -172,25 +195,6 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     parsed = parser.parse_args(argv)
     result = vars(parsed)
 
-    # Remove args at their argparse defaults so they don't override config file values.
-    # ScanConfig defaults will apply when these keys are absent from both CLI and file config.
-    _ARGPARSE_DEFAULTS = {
-        "path_based": False,
-        "write_files": False,
-        "skip_parsing": False,
-        "invalid_ssl": False,
-        "automatic": False,
-        "all_versions": False,
-        "random_agent": False,
-        "ignore_proxy": False,
-        "verbose": False,
-        "follow_redirects": False,
-        "quiet": False,
-        "base64_encode": False,
-        "prefix": "",
-        "postfix": "",
-        "multiplier": 1,
-    }
     for key, default in _ARGPARSE_DEFAULTS.items():
         if result.get(key) == default:
             result.pop(key, None)
@@ -318,9 +322,11 @@ async def run(argv: list[str] | None = None) -> None:
                 print(path)
         return
 
+    # Lazy import — only needed for scan and --list modes
+    from panoptic.config import load_config, merge_config
+
     if args.get("list"):
         from panoptic.cases import list_values
-        from panoptic.config import load_config, merge_config
 
         _file_config = load_config(args.get("config_file"))
         _config = merge_config({k: v for k, v in args.items() if v is not None}, _file_config)
@@ -339,16 +345,10 @@ async def run(argv: list[str] | None = None) -> None:
                 print(f"  {val}")
         return
 
-    # Load config and merge
-    from panoptic.config import load_config, merge_config
-
     file_config = load_config(args.pop("config_file", None))
     config = merge_config(args, file_config)
 
     # Shared URL parsing for param detection and ext-param validation
-    import re
-    from urllib.parse import urlsplit
-
     parsed = urlsplit(config.url)
     params = config.data if config.data else parsed.query
 

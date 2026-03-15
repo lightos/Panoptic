@@ -40,6 +40,14 @@ def _redact_field(url: str) -> str:
     """Redact a URL or POST body for safe serialization."""
     if url.startswith(("http://", "https://")):
         return redact_url(url)
+    # JSON body: redact all string values
+    if url.lstrip().startswith("{"):
+        try:
+            import re as _re
+
+            return _re.sub(r'(?<=: )"[^"]*"', '"***"', json.dumps(json.loads(url)))
+        except (json.JSONDecodeError, ValueError):
+            pass
     # POST body: redact form-encoded values (key=VALUE → key=***)
     return _PARAM_VALUE_RE.sub("***", url)
 
@@ -141,8 +149,20 @@ class CsvFormatter:
     def __init__(self, stream: TextIO | None = None) -> None:
         self._stream = stream or sys.stdout
 
+    @staticmethod
+    def _sanitize_csv_value(value: object) -> object:
+        """Neutralize spreadsheet formula injection in CSV cells.
+
+        Values starting with =, +, -, or @ are prefixed with a single quote
+        to prevent Excel/Sheets from interpreting them as formulas.
+        """
+        if isinstance(value, str) and value and value[0] in ("=", "+", "-", "@"):
+            return f"'{value}"
+        return value
+
     def write_results(self, results: list[ScanResult]) -> None:
         writer = csv.DictWriter(self._stream, fieldnames=self.FIELDS)
         writer.writeheader()
         for r in results:
-            writer.writerow(_result_to_dict(r))
+            row = {k: self._sanitize_csv_value(v) for k, v in _result_to_dict(r).items()}
+            writer.writerow(row)

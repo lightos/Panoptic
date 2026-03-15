@@ -111,7 +111,7 @@ class TestValidateArgs:
                 "update": False,
                 "list_all_files": False,
                 "path_based": False,
-                "header": None,
+                "headers": None,
             }
         )
 

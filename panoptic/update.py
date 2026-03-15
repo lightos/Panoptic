@@ -16,6 +16,14 @@ _PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_PACKAGE_DIR)
 
 
+def _normalise_git_url(url: str) -> str:
+    """Normalise a git remote URL for comparison (strip trailing .git and slash)."""
+    url = url.rstrip("/")
+    if url.endswith(".git"):
+        url = url[:-4]
+    return url.lower()
+
+
 def do_update() -> None:
     """Perform self-update from git or print pip guidance."""
     git_dir = os.path.join(_PROJECT_ROOT, ".git")
@@ -45,14 +53,7 @@ def do_update() -> None:
 
     remote_url = remote_check.stdout.decode("utf-8", errors="replace").strip()
 
-    # Normalise for comparison: strip trailing .git and trailing slash
-    def _normalise_url(u: str) -> str:
-        u = u.rstrip("/")
-        if u.endswith(".git"):
-            u = u[:-4]
-        return u.lower()
-
-    if _normalise_url(remote_url) != _normalise_url(GIT_REPOSITORY_URL):
+    if _normalise_git_url(remote_url) != _normalise_git_url(GIT_REPOSITORY_URL):
         print(f"[!] Remote 'origin' ({remote_url}) does not match expected upstream.")
         print(f"[i] Expected: {GIT_REPOSITORY_URL}")
         print("[i] Aborting update for safety. Please verify your git remotes.")
@@ -60,7 +61,7 @@ def do_update() -> None:
 
     try:
         result = subprocess.run(
-            ["git", "pull", "--ff-only"],
+            ["git", "pull", "--ff-only", "origin"],
             capture_output=True,
             cwd=_PROJECT_ROOT,
         )
