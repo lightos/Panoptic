@@ -165,7 +165,10 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     parser.add_argument("--config", dest="config_file", help="Path to TOML config file")
     parser.add_argument("--update", action="store_true", help="Update from GitHub repository")
     parser.add_argument(
-        "--list-all-files", dest="list_all_files", action="store_true", help="List all file paths in the XML and exit"
+        "--list-all-files",
+        dest="list_all_files",
+        action="store_true",
+        help="List all file paths in the case database and exit",
     )
 
     parsed = parser.parse_args(argv)
@@ -374,9 +377,9 @@ async def run(argv: list[str] | None = None) -> None:
             print("[!] If this is a path-based URL, use --path-based", file=sys.stderr)
             sys.exit(1)
 
-    # Validate --ext-param exists in query/data
+    # Validate --ext-param exists in query/data (anchored to prevent substring matches)
     if config.ext_param and not re.search(
-        rf"(?P<param>{re.escape(config.ext_param)})=(?P<value>[^&]*)",
+        rf"(?:^|(?<=&)){re.escape(config.ext_param)}=(?P<value>[^&]*)",
         params,
     ):
         print(f"[!] Extension parameter '{config.ext_param}' not found.", file=sys.stderr)

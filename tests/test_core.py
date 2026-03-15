@@ -142,9 +142,7 @@ class TestWriteFile:
         case2 = Case(location="../../../etc/passwd", os="*NIX")
 
         # Use monkeypatch approach with tmp_path
-        from unittest.mock import patch as mock_patch
-
-        with mock_patch("panoptic.core.Path.cwd", return_value=tmp_path):
+        with patch("panoptic.core.Path.cwd", return_value=tmp_path):
             scanner._write_file(case1, "content1")
             scanner._write_file(case2, "content2")
 
