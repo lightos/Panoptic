@@ -84,19 +84,19 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
         # When ext_param is set, split path into base and extension
         path_without_ext, ext = full_path.rsplit(".", 1)
         result = re.sub(
-            rf"(?P<param>{re.escape(config.param)})=(?P<value>[^&]*)",
-            rf"\1={path_without_ext}",
+            rf"(?:^|(?<=&)){re.escape(config.param)}=(?P<value>[^&]*)",
+            rf"{config.param}={path_without_ext}",
             result,
         )
         result = re.sub(
-            rf"(?P<param>{re.escape(config.ext_param)})=(?P<value>[^&]*)",
-            rf"\1={ext}",
+            rf"(?:^|(?<=&)){re.escape(config.ext_param)}=(?P<value>[^&]*)",
+            rf"{config.ext_param}={ext}",
             result,
         )
     elif config.param:
         result = re.sub(
-            rf"(?P<param>{re.escape(config.param)})=(?P<value>[^&]*)",
-            rf"\1={full_path}",
+            rf"(?:^|(?<=&)){re.escape(config.param)}=(?P<value>[^&]*)",
+            rf"{config.param}={full_path}",
             result,
         )
 

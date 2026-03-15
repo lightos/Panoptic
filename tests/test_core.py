@@ -31,6 +31,23 @@ class TestBuildPayload:
         payload = build_payload(config, "/etc/passwd", "file=test.txt")
         assert "/./" in payload
 
+    def test_param_not_substring_matched(self) -> None:
+        """--param id must not match userid."""
+        config = ScanConfig(url="http://example.com/test.php?userid=1&id=2", param="id")
+        payload = build_payload(config, "/etc/passwd", "userid=1&id=2")
+        assert "userid=1" in payload  # userid unchanged
+        assert "id=/etc/passwd" in payload or "id=%2Fetc%2Fpasswd" in payload
+
+    def test_ext_param_not_substring_matched(self) -> None:
+        """--ext-param type must not match content_type."""
+        config = ScanConfig(
+            url="http://example.com/test.php?content_type=html&type=txt&file=test.txt",
+            param="file",
+            ext_param="type",
+        )
+        payload = build_payload(config, "/etc/passwd.conf", "content_type=html&type=txt&file=test.txt")
+        assert "content_type=html" in payload  # content_type unchanged
+
 
 class TestScanner:
     async def test_scanner_initializes(self) -> None:
