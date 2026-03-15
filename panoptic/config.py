@@ -18,7 +18,7 @@ else:
     try:
         import tomli as tomllib
     except ImportError:
-        tomllib = None
+        tomllib = None  # type: ignore[assignment,unused-ignore]
 
 
 DEFAULT_CONFIG_PATH = Path.home() / ".config" / "panoptic" / "config.toml"
