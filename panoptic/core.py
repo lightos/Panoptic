@@ -24,6 +24,8 @@ from rich.progress import (
     Progress,
     SpinnerColumn,
     TextColumn,
+    TimeElapsedColumn,
+    TimeRemainingColumn,
 )
 
 from panoptic.cases import load_custom_list, parse_cases
@@ -241,11 +243,14 @@ class Scanner:
             # Workers block on queue.get() and only exit when signaled after all work is done.
             stop_event = asyncio.Event()
 
+            scan_start = time.monotonic()
             with Progress(
                 SpinnerColumn(),
                 TextColumn("[progress.description]{task.description}"),
                 BarColumn(),
                 MofNCompleteColumn(),
+                TimeElapsedColumn(),
+                TimeRemainingColumn(),
                 transient=True,
             ) as progress:
                 progress_task = progress.add_task("Scanning", total=self.total_queued)
@@ -274,6 +279,10 @@ class Scanner:
                     await self._flush_checkpoint()
                     stop_event.set()
                     await asyncio.gather(*worker_tasks, return_exceptions=True)
+
+        elapsed = time.monotonic() - scan_start
+        rps = self.total_processed / elapsed if elapsed > 0 else 0
+        text_out.write_info(f"Scan completed in {elapsed:.1f}s ({rps:.0f} req/s)")
 
         found_results = [r for r in self.results if r.found]
 
