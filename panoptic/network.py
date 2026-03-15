@@ -51,7 +51,7 @@ class NetworkClient:
             verify=ssl_verify,
             transport=transport,
             headers=headers,
-            follow_redirects=False,
+            follow_redirects=self.config.follow_redirects,
             trust_env=not self.config.ignore_proxy,
         )
 

@@ -81,3 +81,31 @@ class TestNetworkClient:
             response = await client.fetch("http://example.com/redir")
             assert response is not None
             assert response.status_code == 302  # Should NOT follow
+
+    async def test_follow_redirects_when_enabled(self, httpx_mock: HTTPXMock) -> None:
+        """Verify redirect following works by checking final response content."""
+        config = ScanConfig(url="http://example.com", follow_redirects=True)
+        httpx_mock.add_response(
+            url="http://example.com/start",
+            status_code=302,
+            headers={"Location": "http://example.com/final"},
+        )
+        httpx_mock.add_response(url="http://example.com/final", text="followed")
+        async with NetworkClient(config) as client:
+            resp = await client.fetch("http://example.com/start")
+            assert resp is not None
+            assert resp.text == "followed"
+            assert resp.status_code == 200
+
+    async def test_no_follow_redirects_by_default(self, httpx_mock: HTTPXMock) -> None:
+        """Default behavior should NOT follow redirects."""
+        config = ScanConfig(url="http://example.com")
+        httpx_mock.add_response(
+            url="http://example.com/start",
+            status_code=302,
+            headers={"Location": "http://example.com/final"},
+        )
+        async with NetworkClient(config) as client:
+            resp = await client.fetch("http://example.com/start")
+            assert resp is not None
+            assert resp.status_code == 302
