@@ -2,140 +2,172 @@ Panoptic
 ===
 
 ![Panoptic Logo](https://i.imgur.com/nQrtLkO.png)
-+ [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-+ [![Python Versions](https://img.shields.io/badge/python-3.x-blue.svg)](https://www.python.org/)
-  
-  Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through path traversal vulnerability. Official introductionary post can be found [here](http://websec.ca/blog/view/panoptic). Also, you can find a sample run [here](https://gist.github.com/stamparm/5335273).
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
+[![Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+
+Panoptic is an open source penetration testing tool that automates the process of search and retrieval of content for common log and config files through path traversal vulnerability. Official introductory post can be found [here](http://websec.ca/blog/view/panoptic).
 
 ## Features
 
-* Automatic discovery of common log and configuration files via parameter-based and path-based LFI
-* Automatic detection of target OS when a file is found, with option to restrict further scans (`--os`)
-* Ability to test all versioned file paths (`--all-versions`) based on `versions.ini`
-* Extension parameter handling for separate filename and extension (`--ext-param`)
-* Multi-threaded scanning for faster results (`--threads`)
-* Comprehensive built-in testing library with categorization by OS, category, and software
-* Multiple traversal bypass techniques: custom prefixes (`--prefix`), postfixes (`--postfix`), traversal depth (`--multiplier`), and slash replacement (`--replace-slash`)
-* Listing options: list available filters (`--list`), and list all built-in file paths (`--list-all-files`)
-* Support for HTTP/HTTPS and SOCKS4/SOCKS5 proxies (`--proxy`), with proxy validation
-* Random or custom User-Agent support (`--random-agent`, `--user-agent`)
-* Heuristic response comparison to skip invalid paths and reduce false positives
-* Parse `/etc/passwd` to enumerate users and retrieve home directory files
-* Save discovered files to a local output directory (`--write-files`)
-* Auto-update Panoptic to the latest version from the official repository (`--update`)
+* **Async concurrent scanning** with configurable worker pool (`--concurrency`)
+* Automatic discovery of common log and configuration files via parameter-based, path-based, POST, cookie, header, and JSON body injection
+* **FUZZ marker** for arbitrary injection points — place `FUZZ` in any `--header` or `--data` value
+* **Base64 encoding** for endpoints that decode file paths (`--base64`)
+* Automatic OS detection with option to restrict further scans
+* Heuristic response comparison with status code filtering to reduce false positives
+* Dynamic case injection — parse `/etc/passwd` for home directory files, `mysql-bin.index` for binlog files
+* **Multiple output formats**: text (rich), JSON, CSV (`--output-format`)
+* **Resume/checkpoint** support for long-running scans (`--resume-file`)
+* **TOML config files** for persistent settings (`--config`)
+* Multiple traversal bypass techniques: prefixes, postfixes, multiplier, slash replacement, double encoding
+* HTTP/HTTPS and SOCKS4/SOCKS5 proxy support with validation
+* Random or custom User-Agent, cookie, and header support
+* Credential redaction in banner and log output
+* Self-update with remote URL verification (`--update`)
 
 ## Requirements
-* Python 3.x
-* The script uses the `python3` shebang. You can run it directly with `./panoptic.py` (after `chmod +x panoptic.py`) or explicitly with `python3 panoptic.py`. If your system's `python` points to Python 3, you may use `python` instead.
 
-## Installation / Quick Start
-Clone the repository and make the script executable:
+* Python 3.10+
+* Dependencies: `httpx[socks]`, `rich`, `rich-argparse`, `defusedxml`
+
+## Installation
+
 ```bash
 git clone https://github.com/lightos/Panoptic.git
 cd Panoptic
-chmod +x panoptic.py
+pip install -e .
 ```
-Then run the tool:
+
+For development:
 ```bash
-./panoptic.py --url "http://localhost/include.php?file=test.txt"
+pip install -e ".[dev]"
 ```
 
 ## Usage
-Use these common invocation patterns:
+
 ```bash
-# Basic LFI testing
-./panoptic.py --url "http://localhost/include.php?file=test.txt"
-
-# Filter scans
-./panoptic.py --url "http://localhost/include.php?file=test.txt" --os "*NIX" --type conf
-```
-
-## Help Menu
-```text
-Usage: panoptic.py --url TARGET [options]
-
-Options:
-  -h/--help             Show this help message and exit
-  -v/--verbose          Display extra output information
-  -u/--url=URL          Set target URL
-  -p/--param=PARAM      Set parameter name to test for (e.g. "page")
-  -d/--data=DATA        Set data for HTTP POST request (e.g. "page=default")
-  -t/--type=TYPE        Set type of file to look for ("conf" or "log")
-  -o/--os=OS            Set filter name for OS (e.g. "*NIX")
-  -s/--software=SOFT..  Set filter name for software (e.g. "PHP")
-  -c/--category=CATE..  Set filter name for category (e.g. "FTP")
-  -l/--list=GROUP       List available filters for group (e.g. "software")
-  -a/--auto             Avoid user interaction by using default options
-  -w/--write-files      Write content of retrieved files to output folder
-  -x/--skip-parsing     Skip special tests if *NIX passwd file is found
-  -P/--path-based       Target file paths directly instead of using query parameters
-  -i/--invalid-ssl      Ignore SSL certificate validation errors
-  --load=LISTFILE       Load and try user provided list from a file
-  --ignore-proxy        Ignore system default HTTP proxy
-  --proxy=PROXY         Set proxy (e.g. "socks5://192.168.5.92")
-  --user-agent=UA       Set HTTP User-Agent header value
-  --random-agent        Choose random HTTP User-Agent header value
-  --cookie=COOKIE       Set HTTP Cookie header value (e.g. "sid=foobar")
-  --header=HEADER       Set a custom HTTP header (e.g. "Max-Forwards=10")
-  --prefix=PREFIX       Set prefix for file path (e.g. "../")
-  --postfix=POSTFIX     Set postfix for file path (e.g. "%00")
-  --multiplier=MULTI..  Set multiplication number for prefix (default: 1)
-  --bad-string=STRING   Set a string occurring when file is not found
-  --replace-slash=RE..  Set replacement for char / in paths (e.g. "/././")
-  --threads=THREADS     Set number of threads (default: 1)
-  --all-versions        Test all versioned file paths (may significantly increase scan time)
-  --ext-param=PARAM     Name of parameter containing file extension (e.g. "type")
-  --update              Update Panoptic from official repository
-  --list-all-files      List all file paths in the XML and exit
-  --log-file            Save console output to this file
+panoptic --url "http://target/include.php?file=test.txt"
 ```
 
 ## Examples
 
-### Basic parameter-based LFI testing
+### Basic parameter-based LFI
 ```bash
-./panoptic.py --url "http://localhost/include.php?file=test.txt"
-./panoptic.py --url "http://localhost/include.php?file=test.txt&id=1" --param file
-./panoptic.py --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
+panoptic --url "http://target/include.php?file=test.txt"
+panoptic --url "http://target/include.php?file=test.txt&id=1" --param file
 ```
 
-### Path-based LFI testing
+### POST data injection
 ```bash
-./panoptic.py --url "http://localhost/files/view/test.txt" --path-based --prefix "../"
+panoptic --url "http://target/include.php" --data "file=test.txt&id=1" --param file
 ```
 
-### Extension parameter testing
+### Path-based LFI
 ```bash
-./panoptic.py --url "http://localhost/param.php?file=test&type=txt" --param file --ext-param type
+panoptic --url "http://target/view.php/test.txt" --path-based
 ```
 
-### Comprehensive scanning with all-versions option
+### Base64-encoded parameter
 ```bash
-./panoptic.py --url "http://localhost/include.php?file=test.txt" --auto --all-versions
+panoptic --url "http://target/load.php?file=dGVzdC50eHQ=" --base64 --auto
 ```
 
-### Filter listings
+### Cookie injection (FUZZ marker)
 ```bash
-./panoptic.py --list software
-./panoptic.py --list category
-./panoptic.py --list os
+panoptic --url "http://target/page.php" --header "Cookie: lang=FUZZ" --auto
+```
+
+### JSON body injection (FUZZ marker)
+```bash
+panoptic --url "http://target/api/load" --data '{"file":"FUZZ"}' --auto
+```
+
+### Custom header injection (FUZZ marker)
+```bash
+panoptic --url "http://target/page.php" --header "X-Template: FUZZ" --auto
+```
+
+### Extension parameter
+```bash
+panoptic --url "http://target/view.php?file=test&type=txt" --param file --ext-param type
+```
+
+### Filter bypass with prefix
+```bash
+panoptic --url "http://target/filtered.php?file=test.txt" --prefix "....//....//....//....//"
 ```
 
 ### Filtered scans
 ```bash
-./panoptic.py -u "http://localhost/include.php?file=test.txt" --os "Windows"
-./panoptic.py -u "http://localhost/include.php?file=test.txt" --software PostgreSQL
+panoptic --url "http://target/include.php?file=test.txt" --os "*NIX" --type conf
+panoptic --url "http://target/include.php?file=test.txt" --software PostgreSQL
 ```
 
-### Proxy usage with SSL errors ignored
+### JSON output with resume support
 ```bash
-./panoptic.py -u "https://localhost/include.php?file=test.txt" --proxy "socks5://127.0.0.1:9050" --invalid-ssl
+panoptic --url "http://target/include.php?file=test.txt" --output-format json --output-file results.json --resume-file scan.checkpoint
 ```
+
+### Proxy with SSL errors ignored
+```bash
+panoptic --url "https://target/include.php?file=test.txt" --proxy "socks5://127.0.0.1:9050" --invalid-ssl
+```
+
+### List available filters
+```bash
+panoptic --list software
+panoptic --list category
+panoptic --list os
+```
+
+### Comprehensive scan
+```bash
+panoptic --url "http://target/include.php?file=test.txt" --auto --all-versions --concurrency 8
+```
+
+## FUZZ Marker
+
+Place `FUZZ` anywhere in `--header` or `--data` values to mark the injection point. Panoptic replaces `FUZZ` with each file path during scanning. This enables testing injection points that `--param` can't reach:
+
+| Injection Type | Example |
+|---------------|---------|
+| Cookie value | `--header "Cookie: theme=FUZZ"` |
+| Custom header | `--header "X-Include: FUZZ"` |
+| JSON body | `--data '{"template":"FUZZ"}'` |
+| Nested value | `--header "Cookie: sid=abc; lang=FUZZ"` |
+
+When `FUZZ` is present, `--param` is not required.
+
+## Configuration
+
+Panoptic supports TOML config files for persistent settings:
+
+```bash
+panoptic --url "http://target/include.php?file=test.txt" --config ~/.config/panoptic/config.toml
+```
+
+Default config location: `~/.config/panoptic/config.toml`
+
+```toml
+[defaults]
+concurrency = 8
+verbose = true
+automatic = true
+
+[proxy]
+url = "socks5://127.0.0.1:9050"
+
+[headers]
+user_agent = "Mozilla/5.0"
+```
+
+Priority: CLI args > config file > built-in defaults.
 
 ## Contributing
+
 Contributions are welcome! Please open issues or pull requests on GitHub:
 https://github.com/lightos/Panoptic
 
 ## License
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.

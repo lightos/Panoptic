@@ -1,0 +1,61 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "panoptic"
+version = "2.0.0"
+description = "Search and retrieve content of common log and config files via path traversal vulnerability"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "Roberto Christopher Salgado Bjerre"},
+    {name = "Miroslav Stampar"},
+]
+dependencies = [
+    "httpx[socks]>=0.27",
+    "rich>=13.0",
+    "rich-argparse>=1.4",
+    "defusedxml>=0.7",
+    "tomli>=2.0; python_version < '3.11'",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "pytest-httpx>=0.30",
+    "ruff>=0.4",
+    "mypy>=1.10",
+    "pre-commit>=4.0",
+    "pip-audit>=2.7",
+]
+
+[tool.setuptools.packages.find]
+include = ["panoptic*"]
+
+[tool.setuptools.package-data]
+panoptic = ["data/*"]
+
+[project.scripts]
+panoptic = "panoptic.__main__:main"
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+
+[tool.mypy]
+python_version = "3.10"
+strict = true
+exclude = ["^panoptic\\.py$"]
+
+[[tool.mypy.overrides]]
+module = ["defusedxml.*", "rich_argparse", "tomli"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
