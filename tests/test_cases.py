@@ -52,6 +52,10 @@ class TestLoadVersions:
         assert len(versions["JBOSS"]) > 0
 
 
+def test_file_type_has_mix() -> None:
+    assert FileType.MIX.value == "mix"
+
+
 class TestLoadCustomList:
     def test_load_from_file(self, tmp_path: pytest.TempPathFactory) -> None:
         listfile = tmp_path / "custom.txt"  # type: ignore[operator]
