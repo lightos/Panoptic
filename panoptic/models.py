@@ -110,11 +110,13 @@ class ScanConfig:
     automatic: bool = False
     invalid_ssl: bool = False
     all_versions: bool = False
+    follow_redirects: bool = False
     # Output
     output_format: OutputFormat = OutputFormat.TEXT
     output_file: str | None = None
     log_file: str | None = None
     verbose: bool = False
+    quiet: bool = False
     # Proxy
     proxy: str | None = None
     ignore_proxy: bool = False

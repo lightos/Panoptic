@@ -54,11 +54,18 @@ def _result_to_dict(r: ScanResult) -> dict[str, object]:
 class TextFormatter:
     """Rich-powered text output for terminal display."""
 
-    def __init__(self, stream: TextIO | None = None) -> None:
-        self._stream = stream or sys.stderr
-        self._console = Console(file=self._stream, highlight=False)
+    def __init__(
+        self,
+        stream: TextIO | None = None,
+        console: Console | None = None,
+        quiet: bool = False,
+    ) -> None:
+        self._console = console or Console(file=stream or sys.stderr, highlight=False)
+        self._quiet = quiet
 
     def write_banner(self, version: str, url: str) -> None:
+        if self._quiet:
+            return
         self._console.print(
             f"[bold cyan] .-',--.`-.[/]\n"
             f"[bold cyan]<_ | () | _>[/]\n"
@@ -67,6 +74,8 @@ class TextFormatter:
         )
 
     def write_info(self, message: str) -> None:
+        if self._quiet:
+            return
         self._console.print(f"[blue][i][/blue] {message}")
 
     def write_warning(self, message: str) -> None:
@@ -80,9 +89,13 @@ class TextFormatter:
         self._console.print(f"[bold green][+][/bold green] Found '{case.location}'{context}")
 
     def write_verbose(self, message: str) -> None:
+        if self._quiet:
+            return
         self._console.print(f"[dim][*] {message}[/dim]")
 
     def write_summary(self, results: list[ScanResult], total_cases: int) -> None:
+        if self._quiet:
+            return
         found = [r for r in results if r.found]
         self._console.print("\n[bold]Scan Complete[/bold]")
         self._console.print(f"  Cases tested: {total_cases}")

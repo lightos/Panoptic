@@ -44,6 +44,12 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     conn.add_argument("--user-agent", dest="user_agent", help="Set specific User-Agent string")
     conn.add_argument("--timeout", type=float, default=None, help="HTTP request timeout in seconds (default: 10)")
     conn.add_argument("--retries", type=int, default=None, help="Number of retries per request (default: 3)")
+    conn.add_argument(
+        "--follow-redirects",
+        dest="follow_redirects",
+        action="store_true",
+        help="Follow HTTP redirects (default: don't follow)",
+    )
 
     # Filtering
     filt = parser.add_argument_group("Filtering / Listing")
@@ -104,6 +110,12 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     out = parser.add_argument_group("Output")
     out.add_argument("-v", "--verbose", action="store_true", help="Show detailed information")
     out.add_argument(
+        "-q",
+        "--quiet",
+        action="store_true",
+        help="Suppress banner, info, and progress — only show findings and warnings",
+    )
+    out.add_argument(
         "-w",
         "--write-files",
         dest="write_files",
@@ -153,6 +165,8 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         "random_agent": False,
         "ignore_proxy": False,
         "verbose": False,
+        "follow_redirects": False,
+        "quiet": False,
         "base64_encode": False,
         "prefix": "",
         "postfix": "",

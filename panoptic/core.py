@@ -178,7 +178,7 @@ class Scanner:
 
     async def _run_scan(self, stderr_stream: TextIO, version: str) -> None:
         """Execute the scan with the given output stream."""
-        text_out = TextFormatter(stderr_stream)
+        text_out = TextFormatter(stderr_stream, quiet=self.config.quiet)
 
         # Show git revision in banner if available
         from panoptic.update import get_revision
@@ -244,16 +244,28 @@ class Scanner:
             stop_event = asyncio.Event()
 
             scan_start = time.monotonic()
-            with Progress(
-                SpinnerColumn(),
-                TextColumn("[progress.description]{task.description}"),
-                BarColumn(),
-                MofNCompleteColumn(),
-                TimeElapsedColumn(),
-                TimeRemainingColumn(),
-                transient=True,
-            ) as progress:
-                progress_task = progress.add_task("Scanning", total=self.total_queued)
+            progress_ctx: Progress | None = None
+            progress_task_id = None
+            if not self.config.quiet:
+                from rich.console import Console as RichConsole
+
+                progress_ctx = Progress(
+                    SpinnerColumn(),
+                    TextColumn("[progress.description]{task.description}"),
+                    BarColumn(),
+                    MofNCompleteColumn(),
+                    TimeElapsedColumn(),
+                    TimeRemainingColumn(),
+                    console=RichConsole(file=stderr_stream, highlight=False),
+                    transient=True,
+                )
+                progress_ctx.start()
+                progress_task_id = progress_ctx.add_task("Scanning", total=self.total_queued)
+                scan_out = TextFormatter(console=progress_ctx.console, quiet=False)
+            else:
+                scan_out = TextFormatter(stderr_stream, quiet=True)
+
+            try:
 
                 async def worker() -> None:
                     while not stop_event.is_set():
@@ -263,10 +275,13 @@ class Scanner:
                             continue
 
                         try:
-                            await self._process_case(case, client, request_params, queue, text_out)
+                            await self._process_case(case, client, request_params, queue, scan_out)
                             self.total_processed += 1
                             # Update progress bar total when dynamic cases are added
-                            progress.update(progress_task, total=self.total_queued, completed=self.total_processed)
+                            if progress_ctx is not None and progress_task_id is not None:
+                                progress_ctx.update(
+                                    progress_task_id, total=self.total_queued, completed=self.total_processed
+                                )
                         finally:
                             queue.task_done()
 
@@ -279,6 +294,9 @@ class Scanner:
                     await self._flush_checkpoint()
                     stop_event.set()
                     await asyncio.gather(*worker_tasks, return_exceptions=True)
+            finally:
+                if progress_ctx is not None:
+                    progress_ctx.stop()
 
         elapsed = time.monotonic() - scan_start
         rps = self.total_processed / elapsed if elapsed > 0 else 0

@@ -137,3 +137,46 @@ class TestTextFormatter:
         buf.seek(0)
         output = buf.read()
         assert "2" in output  # 2 found
+
+
+class TestQuietMode:
+    def test_quiet_suppresses_banner(self) -> None:
+        buf = io.StringIO()
+        formatter = TextFormatter(buf, quiet=True)
+        formatter.write_banner("1.0", "http://example.com")
+        buf.seek(0)
+        assert buf.read() == ""
+
+    def test_quiet_suppresses_info(self) -> None:
+        buf = io.StringIO()
+        formatter = TextFormatter(buf, quiet=True)
+        formatter.write_info("Starting scan")
+        buf.seek(0)
+        assert buf.read() == ""
+
+    def test_quiet_suppresses_summary(self) -> None:
+        buf = io.StringIO()
+        formatter = TextFormatter(buf, quiet=True)
+        formatter.write_summary([], 100)
+        buf.seek(0)
+        assert buf.read() == ""
+
+    def test_quiet_shows_found(self) -> None:
+        buf = io.StringIO()
+        formatter = TextFormatter(buf, quiet=True)
+        result = ScanResult(
+            case=Case(location="/etc/passwd"),
+            found=True,
+            url="http://example.com/test.php?file=/etc/passwd",
+            status_code=200,
+        )
+        formatter.write_found(result)
+        buf.seek(0)
+        assert "/etc/passwd" in buf.read()
+
+    def test_quiet_shows_warning(self) -> None:
+        buf = io.StringIO()
+        formatter = TextFormatter(buf, quiet=True)
+        formatter.write_warning("SSL disabled")
+        buf.seek(0)
+        assert "SSL disabled" in buf.read()
