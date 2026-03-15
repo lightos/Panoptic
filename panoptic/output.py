@@ -7,13 +7,18 @@ from __future__ import annotations
 
 import csv
 import json
+import re
 import sys
 from typing import TextIO
 
 from rich.console import Console
+from rich.markup import escape as rich_escape
 
 from panoptic.models import ScanResult
 from panoptic.utils import redact_url
+
+# Regex to redact values in form-encoded POST bodies (key=VALUE&key2=VALUE2)
+_POST_VALUE_RE = re.compile(r"(?<==)[^&]*")
 
 
 class TeeWriter:
@@ -35,11 +40,19 @@ class TeeWriter:
         return self.primary.fileno()
 
 
+def _redact_field(url: str) -> str:
+    """Redact a URL or POST body for safe serialization."""
+    if url.startswith(("http://", "https://")):
+        return redact_url(url)
+    # POST body: redact form-encoded values (key=VALUE → key=***)
+    return _POST_VALUE_RE.sub("***", url)
+
+
 def _result_to_dict(r: ScanResult) -> dict[str, object]:
     """Convert a ScanResult to a flat dict for serialization."""
     return {
         "timestamp": r.timestamp,
-        "url": redact_url(r.url) if r.url.startswith(("http://", "https://")) else r.url,
+        "url": _redact_field(r.url),
         "location": r.case.location,
         "os": r.case.os,
         "category": r.case.category,
@@ -86,7 +99,7 @@ class TextFormatter:
         file_type_str = case.file_type.value if case.file_type else None
         parts = [p for p in (case.os, case.category, case.software, file_type_str) if p]
         context = f" ({'/'.join(parts)})" if parts else ""
-        self._console.print(f"[bold green][+][/bold green] Found '{case.location}'{context}")
+        self._console.print(f"[bold green][+][/bold green] Found '{rich_escape(case.location)}'{rich_escape(context)}")
 
     def write_verbose(self, message: str) -> None:
         if self._quiet:

@@ -29,11 +29,16 @@ def do_update() -> None:
 
     # Verify that the configured remote points to the expected upstream repository
     # to prevent supply-chain attacks via tampered local git configuration.
-    remote_check = subprocess.run(
-        ["git", "remote", "get-url", "origin"],
-        capture_output=True,
-        cwd=_PROJECT_ROOT,
-    )
+    try:
+        remote_check = subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            capture_output=True,
+            cwd=_PROJECT_ROOT,
+        )
+    except FileNotFoundError:
+        print("[!] 'git' is not installed or not in PATH.")
+        print("[i] Please install git or update via: pip install -U panoptic")
+        return
     if remote_check.returncode != 0:
         print("[!] Cannot determine remote URL. Please verify your git configuration.")
         return
@@ -53,11 +58,15 @@ def do_update() -> None:
         print("[i] Aborting update for safety. Please verify your git remotes.")
         return
 
-    result = subprocess.run(
-        ["git", "pull", "--ff-only"],
-        capture_output=True,
-        cwd=_PROJECT_ROOT,
-    )
+    try:
+        result = subprocess.run(
+            ["git", "pull", "--ff-only"],
+            capture_output=True,
+            cwd=_PROJECT_ROOT,
+        )
+    except FileNotFoundError:
+        print("[!] 'git' is not installed or not in PATH.")
+        return
 
     if result.returncode == 0:
         stdout = result.stdout.decode("utf-8", errors="replace")

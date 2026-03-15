@@ -12,6 +12,7 @@ import json
 import os
 import random
 import re
+import sys
 import time
 from pathlib import Path
 from typing import TextIO
@@ -45,6 +46,7 @@ from panoptic.utils import (
     get_random_agent,
     redact_url,
     sanitize_filename,
+    validate_header,
 )
 
 PASSWD_FILES = ["/etc/passwd", "/etc/security/passwd"]
@@ -88,11 +90,12 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
     if config.path_based:
         parsed = urlsplit(config.url)
         path = parsed.path
+        query_suffix = f"?{parsed.query}" if parsed.query else ""
         last_slash = path.rfind("/")
         if last_slash >= 0:
             base_path = path[:last_slash]
-            return f"{parsed.scheme}://{parsed.netloc}{base_path}/{full_path}"
-        return f"{parsed.scheme}://{parsed.netloc}/{full_path}"
+            return f"{parsed.scheme}://{parsed.netloc}{base_path}/{full_path}{query_suffix}"
+        return f"{parsed.scheme}://{parsed.netloc}/{full_path}{query_suffix}"
 
     is_post = bool(config.data)
     result = request_params
@@ -160,6 +163,8 @@ class Scanner:
 
     def __init__(self, config: ScanConfig) -> None:
         self.config = config
+        self._parsed_url = urlsplit(config.url)
+        self._base_url = f"{self._parsed_url.scheme}://{self._parsed_url.netloc}{self._parsed_url.path}"
         self.results: list[ScanResult] = []
         self.original_response: str = ""
         self.invalid_response: str = ""
@@ -179,8 +184,6 @@ class Scanner:
 
     async def run(self) -> None:
         """Execute the full scan workflow."""
-        import sys
-
         from panoptic import __version__
 
         # Set up log file tee if configured
@@ -225,15 +228,13 @@ class Scanner:
             if self.completed_ids:
                 text_out.write_info(f"Resuming: {len(self.completed_ids)} cases already completed")
 
-        parsed = urlsplit(self.config.url)
-        request_params = self.config.data or parsed.query
+        request_params = self.config.data or self._parsed_url.query
 
         text_out.write_info(f"Starting scan at: {time.strftime('%X')}")
         text_out.write_info("Checking original response...")
 
         async with NetworkClient(self.config) as client:
-            base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
-            orig_resp = await self._fetch(client, base_url, self.config.data or self.config.url)
+            orig_resp = await self._fetch(client, self._base_url, self.config.data or self.config.url)
             if orig_resp is None:
                 text_out.write_warning("Cannot connect to target. Check connection settings.")
                 return
@@ -242,7 +243,7 @@ class Scanner:
             self.invalid_filename = generate_invalid_filename()
             invalid_payload = build_payload(self.config, self.invalid_filename, request_params)
             inv_fuzz_hdrs = self._fuzz_headers(self.invalid_filename)
-            inv_resp = await self._fetch(client, base_url, invalid_payload, headers=inv_fuzz_hdrs)
+            inv_resp = await self._fetch(client, self._base_url, invalid_payload, headers=inv_fuzz_hdrs)
 
             if inv_resp is None:
                 text_out.write_warning("Cannot retrieve invalid response baseline.")
@@ -333,7 +334,6 @@ class Scanner:
         text_out.write_info(f"Finishing scan at: {time.strftime('%X')}")
 
         if self.config.output_format != OutputFormat.TEXT or self.config.output_file:
-            import sys
 
             def _write_output(stream: TextIO) -> None:
                 match self.config.output_format:
@@ -371,15 +371,13 @@ class Scanner:
             await self._mark_completed(case)
             return
 
-        parsed = urlsplit(self.config.url)
-        base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
         payload_str = build_payload(self.config, case.location, request_params)
 
         if self.config.verbose:
             text_out.write_verbose(f"Trying '{case.location}'")
 
         fuzz_hdrs = self._fuzz_headers(case.location)
-        response = await self._fetch(client, base_url, payload_str, headers=fuzz_hdrs)
+        response = await self._fetch(client, self._base_url, payload_str, headers=fuzz_hdrs)
 
         if response is None:
             # Network failure: do NOT checkpoint so the case is retried on resume
@@ -489,7 +487,6 @@ class Scanner:
         """Build per-request headers with FUZZ replaced, or None if no FUZZ in headers."""
         if not self.config.headers:
             return None
-        from panoptic.utils import validate_header
 
         fuzz_hdrs: dict[str, str] = {}
         processed = process_path(self.config, location)
@@ -544,17 +541,16 @@ class Scanner:
 
     def _write_file(self, case: Case, html: str) -> None:
         """Write discovered file content to local output directory."""
-        parsed = urlsplit(self.config.url)
         base = (Path.cwd() / "output").resolve()
-        output_dir = (base / parsed.netloc.replace(":", "_")).resolve()
+        output_dir = (base / self._parsed_url.netloc.replace(":", "_")).resolve()
         if not str(output_dir).startswith(str(base)):
             raise ValueError(f"Unsafe output directory: {output_dir}")
         output_dir.mkdir(parents=True, exist_ok=True)
 
         sanitized = sanitize_filename(case.location)
-        # Include case_id suffix when traversal markers were stripped,
-        # since different traversal depths produce identical sanitized names.
-        filename = f"{sanitized}_{case.case_id[:8]}.txt" if ".." in case.location else f"{sanitized}.txt"
+        # Always include case_id suffix to prevent collisions from paths that
+        # sanitize identically (e.g. /foo/bar and /foo:bar both → foo_bar).
+        filename = f"{sanitized}_{case.case_id[:8]}.txt"
         filepath = output_dir / filename
 
         content = filter_content(html, self.original_response) if self.original_response else html

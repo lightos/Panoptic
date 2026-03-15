@@ -6,12 +6,13 @@ Handles argument parsing, validation, and dispatch to scan/list/update modes.
 from __future__ import annotations
 
 import argparse
+import json
 import sys
 from typing import Any
 
 from rich_argparse import RawDescriptionRichHelpFormatter
 
-from panoptic.utils import normalize_url, validate_header, validate_url_scheme
+from panoptic.utils import normalize_url, parse_status_codes, validate_header, validate_url_scheme
 
 EXAMPLES = """
 Examples:
@@ -223,11 +224,7 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     for code_key in ("match_codes", "filter_codes"):
         if result.get(code_key) and isinstance(result[code_key], str):
             try:
-                codes = [int(c.strip()) for c in result[code_key].split(",")]
-                for code in codes:
-                    if not 100 <= code <= 599:
-                        raise ValueError(f"HTTP status code out of range: {code}")
-                result[code_key] = codes
+                result[code_key] = parse_status_codes(result[code_key])
             except ValueError as e:
                 flag = "--match-code" if code_key == "match_codes" else "--filter-code"
                 print(f"[!] Invalid {flag}: {e}", file=sys.stderr)
@@ -305,15 +302,13 @@ async def run(argv: list[str] | None = None) -> None:
         return
 
     if args.get("list_all_files"):
-        import json as json_mod
-
         from panoptic.cases import list_all_files
 
         paths = list_all_files()
         fmt = args.get("output_format") or "text"
 
         if fmt == "json":
-            print(json_mod.dumps(paths, indent=2))
+            print(json.dumps(paths, indent=2))
         elif fmt == "csv":
             print("path")
             for path in paths:
@@ -324,8 +319,6 @@ async def run(argv: list[str] | None = None) -> None:
         return
 
     if args.get("list"):
-        import json as json_mod
-
         from panoptic.cases import list_values
         from panoptic.config import load_config, merge_config
 
@@ -335,7 +328,7 @@ async def run(argv: list[str] | None = None) -> None:
         fmt = args.get("output_format") or "text"
 
         if fmt == "json":
-            print(json_mod.dumps(sorted(values), indent=2))
+            print(json.dumps(sorted(values), indent=2))
         elif fmt == "csv":
             print(args["list"])
             for val in sorted(values):

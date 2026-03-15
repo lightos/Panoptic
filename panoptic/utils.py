@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import random
+import re
 import secrets
+import sys
 from importlib.resources import files
+from typing import Any
 from urllib.parse import urlsplit
 
 
@@ -29,8 +32,6 @@ def validate_header(header: str) -> tuple[str, str]:
     if ":" not in header:
         # Backward compatibility: original used Name=Value format
         if "=" in header:
-            import sys
-
             print(
                 "[!] Warning: header format 'Name=Value' is deprecated, use 'Name: Value'",
                 file=sys.stderr,
@@ -109,8 +110,6 @@ def redact_url(url: str) -> str:
         host = f"{host}:{parsed.port}"
     # Redact query parameter values but keep keys for context
     if parsed.query:
-        import re
-
         redacted_query = re.sub(r"(?<==)[^&]*", "***", parsed.query)
         return f"{parsed.scheme}://{host}{parsed.path}?{redacted_query}"
     return f"{parsed.scheme}://{host}{parsed.path}"
@@ -121,3 +120,15 @@ def normalize_url(url: str) -> str:
     if not url.lower().startswith(("http://", "https://")):
         url = f"http://{url}"
     return url
+
+
+def parse_status_codes(raw: str | list[Any]) -> list[int]:
+    """Parse and validate a comma-separated string or list of HTTP status codes.
+
+    Raises ValueError on invalid codes or codes outside 100-599.
+    """
+    codes = [int(c.strip()) for c in raw.split(",")] if isinstance(raw, str) else [int(c) for c in raw]
+    for code in codes:
+        if not 100 <= code <= 599:
+            raise ValueError(f"HTTP status code out of range: {code}")
+    return codes

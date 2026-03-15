@@ -6,6 +6,7 @@ Wraps httpx with retry, timeout, proxy support, and header validation.
 from __future__ import annotations
 
 import ssl
+import sys
 from types import TracebackType
 
 import httpx
@@ -117,8 +118,6 @@ class NetworkClient:
             for hdr in self.config.headers:
                 name, value = validate_header(hdr)
                 if name.lower() == "cookie" and "Cookie" in headers:
-                    import sys
-
                     print("[!] Warning: --header 'Cookie: ...' overrides --cookie value", file=sys.stderr)
                 headers[name] = value
 

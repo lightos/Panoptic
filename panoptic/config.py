@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from panoptic.models import OutputFormat, ScanConfig
+from panoptic.utils import parse_status_codes
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -73,30 +74,14 @@ def merge_config(cli_args: dict[str, Any], file_config: dict[str, Any]) -> ScanC
     if "output_format" in merged and isinstance(merged["output_format"], str):
         merged["output_format"] = OutputFormat(merged["output_format"])
 
-    # Normalize match_codes / filter_codes from TOML (may be string or list of strings)
+    # Normalize match_codes / filter_codes from TOML (may be string or list)
     for code_key in ("match_codes", "filter_codes"):
         val = merged.get(code_key)
-        if isinstance(val, str):
+        if isinstance(val, str | list) and val:
             try:
-                codes = [int(c.strip()) for c in val.split(",")]
-                for c in codes:
-                    if not 100 <= c <= 599:
-                        raise ValueError(f"HTTP status code out of range: {c}")
-                merged[code_key] = codes
-            except ValueError as e:
-                flag = "match_codes" if code_key == "match_codes" else "filter_codes"
-                print(f"[!] Invalid {flag} in config: {e}", file=sys.stderr)
-                merged.pop(code_key)
-        elif isinstance(val, list) and val:
-            try:
-                codes = [int(c) for c in val]
-                for c in codes:
-                    if not 100 <= c <= 599:
-                        raise ValueError(f"HTTP status code out of range: {c}")
-                merged[code_key] = codes
+                merged[code_key] = parse_status_codes(val)
             except (ValueError, TypeError) as e:
-                flag = "match_codes" if code_key == "match_codes" else "filter_codes"
-                print(f"[!] Invalid {flag} in config: {e}", file=sys.stderr)
+                print(f"[!] Invalid {code_key} in config: {e}", file=sys.stderr)
                 merged.pop(code_key)
 
     # Backward compatibility: normalize singular "header" to plural "headers"
