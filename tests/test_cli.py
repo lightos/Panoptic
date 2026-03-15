@@ -22,8 +22,8 @@ class TestParseArgs:
         assert args["verbose"] is True
         assert args["automatic"] is True
 
-    def test_threads_maps_to_concurrency(self) -> None:
-        args = parse_args(["-u", "http://example.com", "--threads", "8"])
+    def test_concurrency_flag(self) -> None:
+        args = parse_args(["-u", "http://example.com", "--concurrency", "8"])
         assert args["concurrency"] == 8
 
     def test_new_flags(self) -> None:

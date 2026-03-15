@@ -17,7 +17,6 @@ dependencies = [
     "httpx[socks]>=0.27",
     "rich>=13.0",
     "rich-argparse>=1.4",
-    "defusedxml>=0.7",
     "tomli>=2.0; python_version < '3.11'",
 ]
 
@@ -54,7 +53,7 @@ strict = true
 exclude = ["^panoptic\\.py$"]
 
 [[tool.mypy.overrides]]
-module = ["defusedxml.*", "rich_argparse", "tomli"]
+module = ["rich_argparse", "tomli"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

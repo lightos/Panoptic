@@ -16,7 +16,6 @@ class FileType(Enum):
     CONF = "conf"
     LOG = "log"
     OTHER = "other"
-    MIX = "mix"
 
 
 class OutputFormat(Enum):

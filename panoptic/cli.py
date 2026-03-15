@@ -9,7 +9,7 @@ import argparse
 import sys
 from typing import Any
 
-from rich_argparse import RichHelpFormatter
+from rich_argparse import RawDescriptionRichHelpFormatter
 
 from panoptic.utils import normalize_url, validate_header, validate_url_scheme
 
@@ -30,7 +30,7 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         prog="panoptic",
         description="Panoptic -- probe a URL for local files via path traversal vulnerability",
         epilog=EXAMPLES,
-        formatter_class=RichHelpFormatter,
+        formatter_class=RawDescriptionRichHelpFormatter,
     )
 
     # Connection / Proxy
@@ -111,9 +111,6 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     # Performance
     perf = parser.add_argument_group("Performance")
     perf.add_argument("--concurrency", type=int, default=None, help="Number of concurrent requests (default: 4)")
-    perf.add_argument(
-        "--threads", type=int, default=None, dest="_threads_deprecated", help="Deprecated: use --concurrency instead"
-    )
     perf.add_argument("--delay", type=float, default=None, help="Delay between requests in seconds")
     perf.add_argument(
         "--random-delay",
@@ -197,11 +194,6 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         if result.get(key) == default:
             result.pop(key, None)
 
-    # Handle deprecated --threads
-    threads_val = result.pop("_threads_deprecated", None)
-    if threads_val is not None and result.get("concurrency") is None:
-        result["concurrency"] = threads_val
-
     # Normalize URL
     if result.get("url") and not result["url"].lower().startswith(("http://", "https://")):
         result["url"] = normalize_url(result["url"])
@@ -248,7 +240,10 @@ def validate_args(args: dict[str, Any]) -> None:
     """Validate parsed arguments, exiting on errors."""
     # Must have at least one action
     if not any((args.get("url"), args.get("list"), args.get("update"), args.get("list_all_files"))):
-        print("[!] Missing required argument: specify --url, --list, --update, or --list-all-files", file=sys.stderr)
+        print(
+            "[!] Missing required argument: specify --url, --list, --update, or --list-all-files (try --help)",
+            file=sys.stderr,
+        )
         sys.exit(1)
 
     # URL scheme validation

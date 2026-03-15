@@ -127,7 +127,7 @@ The review demonstrates strong understanding of both the existing codebase behav
 ## Recommended Actions
 
 1. **Switch Scanner Core from asyncio.gather to asyncio.Queue + workers** -- this is the most architecturally significant change and affects how OS restriction and dynamic case injection work
-2. **Replace Case.__hash__() with a deterministic case ID** (SHA-256 or canonical tuple) for resume/checkpoint stability
+2. **Replace Case.**hash**() with a deterministic case ID** (SHA-256 or canonical tuple) for resume/checkpoint stability
 3. **Add importlib.resources loading and pyproject.toml package-data** to ensure data files are accessible in installed builds
 4. **Add {HOST} placeholder expansion** to the Case Parser specification
 5. **Move re.escape() from CLI validation to regex construction site** in scanner/network code

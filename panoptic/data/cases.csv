@@ -1,0 +1,1025 @@
+path,os,software,category,type
+/etc/security/failedlogin,AIX,AIX,*NIX,log
+/etc/security/lastlog,AIX,AIX,*NIX,log
+/etc/utmp,AIX,AIX,*NIX,log
+/usr/spool/mqueue/syslog,AIX,AIX,*NIX,log
+/var/adm/cron/log,AIX,AIX,*NIX,log
+/var/adm/qacct,AIX,AIX,*NIX,log
+/var/adm/ras/bootlog,AIX,AIX,*NIX,log
+/var/adm/ras/errlog,AIX,AIX,*NIX,log
+/etc/bash.bashrc,*NIX,Bash,*NIX,other
+/etc/bash_completion.d/debconf,*NIX,Bash,*NIX,other
+/root/.bash_config,*NIX,Bash,*NIX,other
+/root/.bash_history,*NIX,Bash,*NIX,other
+/root/.bash_logout,*NIX,Bash,*NIX,other
+/root/.bashrc,*NIX,Bash,*NIX,other
+/usr/lib/cron/log,*NIX,Bash,*NIX,other
+/usr/spool/lp/log,*NIX,Bash,*NIX,other
+/var/adm/SYSLOG,*NIX,Bash,*NIX,other
+/var/adm/X0msgs,*NIX,Bash,*NIX,other
+/var/adm/acct/sum/loginlog,*NIX,Bash,*NIX,other
+/var/adm/crash/unix,*NIX,Bash,*NIX,other
+/var/adm/crash/vmcore,*NIX,Bash,*NIX,other
+/var/adm/dtmp,*NIX,Bash,*NIX,other
+/var/adm/lastlog/username,*NIX,Bash,*NIX,other
+/var/adm/loginlog,*NIX,Bash,*NIX,other
+/var/adm/lp/lpd-errs,*NIX,Bash,*NIX,other
+/var/adm/pacct,*NIX,Bash,*NIX,other
+/var/adm/sulog,*NIX,Bash,*NIX,other
+/var/adm/utmp,*NIX,Bash,*NIX,other
+/var/adm/utmpx,*NIX,Bash,*NIX,other
+/var/adm/wtmp,*NIX,Bash,*NIX,other
+/var/adm/wtmpx,*NIX,Bash,*NIX,other
+/etc/bluetooth/input.conf,*NIX,Bluetooth,*NIX,conf
+/etc/bluetooth/main.conf,*NIX,Bluetooth,*NIX,conf
+/etc/bluetooth/network.conf,*NIX,Bluetooth,*NIX,conf
+/etc/bluetooth/rfcomm.conf,*NIX,Bluetooth,*NIX,conf
+/etc/newsyslog.conf,FreeBSD,FreeBSD,*NIX,conf
+/var/adm/aculog,SunOS,SunOS,*NIX,log
+/var/adm/aculogs,SunOS,SunOS,*NIX,log
+/var/adm/log/asppp.log,SunOS,SunOS,*NIX,log
+/var/adm/messages,SunOS,SunOS,*NIX,log
+/var/adm/vold.log,SunOS,SunOS,*NIX,log
+/var/cron/log,SunOS,SunOS,*NIX,log
+/var/log/POPlog,SunOS,SunOS,*NIX,log
+/var/log/authlog,SunOS,SunOS,*NIX,log
+/var/lp/logs/lpNet,SunOS,SunOS,*NIX,log
+/var/lp/logs/lpsched,SunOS,SunOS,*NIX,log
+/var/lp/logs/requests,SunOS,SunOS,*NIX,log
+/var/saf/_log,SunOS,SunOS,*NIX,log
+/var/saf/port/log,SunOS,SunOS,*NIX,log
+/etc/X11/xorg.conf,*NIX,X11,*NIX,conf
+/etc/X11/xorg.conf-vesa,*NIX,X11,*NIX,conf
+/etc/X11/xorg.conf-vmware,*NIX,X11,*NIX,conf
+/etc/X11/xorg.conf.BeforeVMwareToolsInstall,*NIX,X11,*NIX,conf
+/etc/X11/xorg.conf.orig,*NIX,X11,*NIX,conf
+/etc/kong/kong.conf,*NIX,Kong,API Gateway,conf
+/etc/clamav/clamd.conf,*NIX,ClamAV,Antivirus,log
+/etc/clamav/freshclam.conf,*NIX,ClamAV,Antivirus,log
+/etc/keycloak/standalone.xml,*NIX,Keycloak,Authentication,conf
+/etc/shibboleth/shibboleth2.xml,*NIX,Shibboleth,Authentication,conf
+/etc/bacula/bacula-dir.conf,*NIX,Bacula,Backup Systems,conf
+/etc/rsnapshot.conf,*NIX,Rsnapshot,Backup Systems,conf
+/etc/varnish/secret,*NIX,Varnish,CDN,conf
+/var/lib/jenkins/credentials.xml,*NIX,Jenkins,CI/CD,conf
+/var/lib/jenkins/secrets/master.key,*NIX,Jenkins,CI/CD,conf
+/etc/cloud/cloud.cfg,*NIX,Cloud-Init,Cloud Infrastructure,conf
+/var/lib/cloud/instance/user-data.txt,*NIX,Cloud-Init,Cloud Infrastructure,conf
+/etc/docker/daemon.json,*NIX,Docker,Containerization,conf
+/etc/rancher/k3s/k3s.yaml,*NIX,K3s,Containerization,conf
+/etc/cassandra/cassandra.yaml,*NIX,Cassandra,Databases,conf
+/etc/couchdb/local.ini,*NIX,CouchDB,Databases,conf
+/etc/mongodb/mongodb.conf,*NIX,MongoDB,Databases,conf
+/etc/my.cnf,*NIX,MySQL,Databases,conf
+/etc/mysql/my.cnf,*NIX,MySQL,Databases,conf
+/var/lib/mysql/my.cnf,*NIX,MySQL,Databases,conf
+/MySQL/my.cnf,Windows,MySQL,Databases,conf
+/MySQL/my.ini,Windows,MySQL,Databases,conf
+/Program Files/MySQL/MySQL Server 5.0/my.cnf,Windows,MySQL,Databases,conf
+/Program Files/MySQL/MySQL Server 5.0/my.ini,Windows,MySQL,Databases,conf
+/Program Files/MySQL/my.cnf,Windows,MySQL,Databases,conf
+/Program Files/MySQL/my.ini,Windows,MySQL,Databases,conf
+/mysql/bin/my.ini,Windows,MySQL,Databases,conf
+/etc/mysql/conf.d/old_passwords.cnf,*NIX,MySQL,Databases,log
+/var/data/mysql-bin.index,*NIX,MySQL,Databases,log
+/var/log/data/mysql-bin.index,*NIX,MySQL,Databases,log
+/var/log/mysql-bin.index,*NIX,MySQL,Databases,log
+/var/log/mysql.err,*NIX,MySQL,Databases,log
+/var/log/mysql.log,*NIX,MySQL,Databases,log
+/var/log/mysql/data/mysql-bin.index,*NIX,MySQL,Databases,log
+/var/log/mysql/mysql-bin.index,*NIX,MySQL,Databases,log
+/var/log/mysql/mysql-bin.log,*NIX,MySQL,Databases,log
+/var/log/mysql/mysql-slow.log,*NIX,MySQL,Databases,log
+/var/log/mysql/mysql.log,*NIX,MySQL,Databases,log
+/var/log/mysqlderror.log,*NIX,MySQL,Databases,log
+/var/mysql-bin.index,*NIX,MySQL,Databases,log
+/var/mysql.log,*NIX,MySQL,Databases,log
+/usr/local/mysql/data/mysql-bin.index,OSX,MySQL,Databases,log
+/usr/local/mysql/data/mysql-bin.log,OSX,MySQL,Databases,log
+/usr/local/mysql/data/mysql-slow.log,OSX,MySQL,Databases,log
+/usr/local/mysql/data/mysql.err,OSX,MySQL,Databases,log
+/usr/local/mysql/data/mysql.log,OSX,MySQL,Databases,log
+/usr/local/mysql/data/mysqlderror.log,OSX,MySQL,Databases,log
+/usr/local/mysql/data/{HOST}.err,OSX,MySQL,Databases,log
+/MySQL/data/mysql-bin.index,Windows,MySQL,Databases,log
+/MySQL/data/mysql-bin.log,Windows,MySQL,Databases,log
+/MySQL/data/mysql.err,Windows,MySQL,Databases,log
+/MySQL/data/mysql.log,Windows,MySQL,Databases,log
+/MySQL/data/{HOST}.err,Windows,MySQL,Databases,log
+/Program Files/MySQL/MySQL Server 5.0/data/mysql-bin.index,Windows,MySQL,Databases,log
+/Program Files/MySQL/MySQL Server 5.0/data/mysql-bin.log,Windows,MySQL,Databases,log
+/Program Files/MySQL/MySQL Server 5.0/data/mysql.err,Windows,MySQL,Databases,log
+/Program Files/MySQL/MySQL Server 5.0/data/mysql.log,Windows,MySQL,Databases,log
+/Program Files/MySQL/MySQL Server 5.0/data/{HOST}.err,Windows,MySQL,Databases,log
+/Program Files/MySQL/data/mysql-bin.index,Windows,MySQL,Databases,log
+/Program Files/MySQL/data/mysql-bin.log,Windows,MySQL,Databases,log
+/Program Files/MySQL/data/mysql.err,Windows,MySQL,Databases,log
+/Program Files/MySQL/data/mysql.log,Windows,MySQL,Databases,log
+/Program Files/MySQL/data/{HOST}.err,Windows,MySQL,Databases,log
+/etc/postgresql/pg_hba.conf,*NIX,PostgreSQL,Databases,conf
+/etc/postgresql/postgresql.conf,*NIX,PostgreSQL,Databases,conf
+/home/postgres/data/PG_VERSION,*NIX,PostgreSQL,Databases,conf
+/home/postgres/data/pg_hba.conf,*NIX,PostgreSQL,Databases,conf
+/home/postgres/data/pg_ident.conf,*NIX,PostgreSQL,Databases,conf
+/home/postgres/data/postgresql.conf,*NIX,PostgreSQL,Databases,conf
+/usr/internet/pgsql/data/pg_hba.conf,*NIX,PostgreSQL,Databases,conf
+/usr/local/pgsql/bin/pg_passwd,*NIX,PostgreSQL,Databases,conf
+/usr/local/pgsql/data/passwd,*NIX,PostgreSQL,Databases,conf
+/usr/local/pgsql/data/pg_hba.conf,*NIX,PostgreSQL,Databases,conf
+/usr/local/pgsql/data/postgresql.conf,*NIX,PostgreSQL,Databases,conf
+/var/lib/pgsql/data/postgresql.conf,*NIX,PostgreSQL,Databases,conf
+/var/nm2/postgresql.conf,*NIX,PostgreSQL,Databases,conf
+/var/postgresql/db/postgresql.conf,*NIX,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/8.3/data/pg_hba.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/8.3/data/pg_ident.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/8.3/data/postgresql.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/8.4/data/pg_hba.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/8.4/data/pg_ident.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/8.4/data/postgresql.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/9.0/data/pg_hba.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/9.0/data/pg_ident.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/9.0/data/postgresql.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/9.1/data/pg_hba.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/9.1/data/pg_ident.conf,Windows,PostgreSQL,Databases,conf
+/Program Files/PostgreSQL/9.1/data/postgresql.conf,Windows,PostgreSQL,Databases,conf
+/usr/internet/pgsql/data/postmaster.log,*NIX,PostgreSQL,Databases,log
+/usr/local/pgsql/data/pg_log,*NIX,PostgreSQL,Databases,log
+/usr/local/pgsql/data/postgresql.log,*NIX,PostgreSQL,Databases,log
+/var/log/cron/var/log/postgres.log,*NIX,PostgreSQL,Databases,log
+/var/log/pgsql/pgsql.log,*NIX,PostgreSQL,Databases,log
+/var/log/pgsql8.log,*NIX,PostgreSQL,Databases,log
+/var/log/pgsql_log,*NIX,PostgreSQL,Databases,log
+/var/log/postgres/pg_backup.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgres/postgres.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/main.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/postgres.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/postgresql-8.1-main.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/postgresql-8.3-main.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/postgresql-8.4-main.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/postgresql-9.0-main.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/postgresql-9.1-main.log,*NIX,PostgreSQL,Databases,log
+/var/log/postgresql/postgresql.log,*NIX,PostgreSQL,Databases,log
+/var/postgresql/log/postgresql.log,*NIX,PostgreSQL,Databases,log
+/PostgreSQL/log/pgadmin.log,Windows,PostgreSQL,Databases,log
+/etc/redis/redis.conf,*NIX,Redis,Databases,conf
+/etc/apache2/conf.d/phpmyadmin.conf,*NIX,phpMyAdmin,Databases,conf
+/etc/phpmyadmin/config.inc.php,*NIX,phpMyAdmin,Databases,conf
+/usr/local/psa/admin/htdocs/domains/databases/phpMyAdmin/libraries/config.default.php,*NIX,phpMyAdmin,Databases,conf
+/WINDOWS/system32/Macromed/Flash/FlashInstall.log,Windows,Macromedia Flash,Desktop applications,log
+/WINDOWS/system32/Macromed/Flash/install.log,Windows,Macromedia Flash,Desktop applications,log
+/root/.m2/settings.xml,*NIX,Maven,Development,conf
+/var/log/exim/mainlog,*NIX,Exim,Email,log
+/var/log/exim/paniclog,*NIX,Exim,Email,log
+/var/log/exim/rejectlog,*NIX,Exim,Email,log
+/var/log/exim_mainlog,*NIX,Exim,Email,log
+/var/log/exim_paniclog,*NIX,Exim,Email,log
+/var/log/exim_rejectlog,*NIX,Exim,Email,log
+/var/log/maillog,*NIX,Exim,Email,log
+/etc/opendkim/keys/default/private.key,*NIX,OpenDKIM,Email,conf
+/etc/postfix/sasl_passwd,*NIX,Postfix,Email,conf
+/etc/httpd/conf.d/squirrelmail.conf,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/apache.conf,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/config.php,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/config/config.php,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/config_default.php,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/config_local.php,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/default_pref,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/filters_setup.php,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/index.php,*NIX,SquirrelMail,Email,conf
+/etc/squirrelmail/sqspell_config.php,*NIX,SquirrelMail,Email,conf
+/private/etc/squirrelmail/config/config.php,*NIX,SquirrelMail,Email,conf
+/srv/www/htdos/squirrelmail/config/config.php,*NIX,SquirrelMail,Email,conf
+/usr/share/squirrelmail/config/config.php,*NIX,SquirrelMail,Email,conf
+/usr/share/squirrelmail/plugins/squirrel_logger/setup.php,*NIX,SquirrelMail,Email,conf
+/var/www/html/squirrelmail-1.2.9/config/config.php,*NIX,SquirrelMail,Email,conf
+/var/www/html/squirrelmail/config/config.php,*NIX,SquirrelMail,Email,conf
+/var/www/squirrelmail/config/config.php,*NIX,SquirrelMail,Email,conf
+/var/lib/squirrelmail/prefs/squirrelmail.log,*NIX,SquirrelMail,Email,log
+/var/log/apache2/squirrelmail.err.log,*NIX,SquirrelMail,Email,log
+/var/log/apache2/squirrelmail.log,*NIX,SquirrelMail,Email,log
+/var/log/mail.log,*NIX,SquirrelMail,Email,log
+/var/log/squirrelmail.log,*NIX,SquirrelMail,Email,log
+/usr/local/squirrelmail/www/README,*NIX,SquirrelMail,Email,other
+/WINDOWS/system32/logfiles/SMTPSVC,Windows,Windows SMTP,Email,log
+/WINDOWS/system32/logfiles/SMTPSVC1,Windows,Windows SMTP,Email,log
+/WINDOWS/system32/logfiles/SMTPSVC2,Windows,Windows SMTP,Email,log
+/WINDOWS/system32/logfiles/SMTPSVC3,Windows,Windows SMTP,Email,log
+/WINDOWS/system32/logfiles/SMTPSVC4,Windows,Windows SMTP,Email,log
+/WINDOWS/system32/logfiles/SMTPSVC5,Windows,Windows SMTP,Email,log
+/WINNT/system32/logfiles/SMTPSVC,Windows,Windows SMTP,Email,log
+/WINNT/system32/logfiles/SMTPSVC1,Windows,Windows SMTP,Email,log
+/WINNT/system32/logfiles/SMTPSVC2,Windows,Windows SMTP,Email,log
+/WINNT/system32/logfiles/SMTPSVC3,Windows,Windows SMTP,Email,log
+/WINNT/system32/logfiles/SMTPSVC4,Windows,Windows SMTP,Email,log
+/WINNT/system32/logfiles/SMTPSVC5,Windows,Windows SMTP,Email,log
+/WINDOWS/system32/logfiles/MSFTPSVC,Windows,IIS FTP,FTP,log
+/WINDOWS/system32/logfiles/MSFTPSVC1,Windows,IIS FTP,FTP,log
+/WINDOWS/system32/logfiles/MSFTPSVC2,Windows,IIS FTP,FTP,log
+/WINNT/system32/logfiles/MSFTPSVC,Windows,IIS FTP,FTP,log
+/WINNT/system32/logfiles/MSFTPSVC1,Windows,IIS FTP,FTP,log
+/WINNT/system32/logfiles/MSFTPSVC2,Windows,IIS FTP,FTP,log
+/etc/muddleftpd/muddleftpd.conf,*NIX,MuddleFTPD,FTP,conf
+/etc/muddleftpd/muddleftpd.passwd,*NIX,MuddleFTPD,FTP,conf
+/etc/muddleftpd/mudlogd.conf,*NIX,MuddleFTPD,FTP,conf
+/etc/muddleftpd/passwd,*NIX,MuddleFTPD,FTP,conf
+/usr/sbin/mudpasswd,*NIX,MuddleFTPD,FTP,conf
+/var/log/muddleftpd.conf,*NIX,MuddleFTPD,FTP,conf
+/etc/muddleftpd.com,*NIX,MuddleFTPD,FTP,log
+/etc/muddleftpd/mudlog,*NIX,MuddleFTPD,FTP,log
+/usr/sbin/mudlogd,*NIX,MuddleFTPD,FTP,log
+/var/log/muddleftpd,*NIX,MuddleFTPD,FTP,log
+/etc/logrotate.d/ftp,*NIX,Other,FTP,log
+/var/log/ftp-proxy,*NIX,Other,FTP,log
+/var/log/ftp-proxy/ftp-proxy.log,*NIX,Other,FTP,log
+/var/log/ftplog,*NIX,Other,FTP,log
+/etc/ftpchroot,*NIX,Other,FTP,other
+/etc/ftphosts,*NIX,Other,FTP,other
+/etc/ftpusers,*NIX,Other,FTP,other
+/etc/proftp.conf,*NIX,ProFTPD,FTP,conf
+/etc/proftpd/modules.conf,*NIX,ProFTPD,FTP,conf
+/etc/protpd/proftpd.conf,*NIX,ProFTPD,FTP,conf
+/etc/vhcs2/proftpd/proftpd.conf,*NIX,ProFTPD,FTP,conf
+/etc/logrotate.d/proftpd,*NIX,ProFTPD,FTP,log
+/etc/pam.d/proftpd,*NIX,ProFTPD,FTP,log
+/var/log/proftpd,*NIX,ProFTPD,FTP,log
+/var/log/proftpd.access_log,*NIX,ProFTPD,FTP,log
+/var/log/proftpd.xferlog,*NIX,ProFTPD,FTP,log
+/var/log/proftpd/xferlog.legacy,*NIX,ProFTPD,FTP,log
+/www/logs/proftpd.system.log,*NIX,ProFTPD,FTP,log
+/etc/pure-ftpd.conf,*NIX,Pure-FTPd,FTP,conf
+/etc/pure-ftpd/pure-ftpd.conf,*NIX,Pure-FTPd,FTP,conf
+/etc/pure-ftpd/pure-ftpd.pdb,*NIX,Pure-FTPd,FTP,conf
+/etc/pure-ftpd/pureftpd.pdb,*NIX,Pure-FTPd,FTP,conf
+/etc/pureftpd.passwd,*NIX,Pure-FTPd,FTP,conf
+/etc/pureftpd.pdb,*NIX,Pure-FTPd,FTP,conf
+/usr/etc/pure-ftpd.conf,*NIX,Pure-FTPd,FTP,conf
+/usr/local/etc/pure-ftpd.conf,*NIX,Pure-FTPd,FTP,conf
+/usr/local/etc/pureftpd.pdb,*NIX,Pure-FTPd,FTP,conf
+/usr/local/pureftpd/etc/pure-ftpd.conf,*NIX,Pure-FTPd,FTP,conf
+/usr/local/pureftpd/etc/pureftpd.pdb,*NIX,Pure-FTPd,FTP,conf
+/usr/local/pureftpd/sbin/pure-config.pl,*NIX,Pure-FTPd,FTP,conf
+/usr/sbin/pure-config.pl,*NIX,Pure-FTPd,FTP,conf
+/usr/ports/contrib/pure-ftpd/pure-ftpd.conf,Crux Linux,Pure-FTPd,FTP,conf
+/usr/ports/contrib/pure-ftpd/pureftpd.passwd,Crux Linux,Pure-FTPd,FTP,conf
+/usr/ports/contrib/pure-ftpd/pureftpd.pdb,Crux Linux,Pure-FTPd,FTP,conf
+/usr/ports/ftp/pure-ftpd/pure-ftpd.conf,"DragonflyBSD, FreeBSD",Pure-FTPd,FTP,conf
+/usr/ports/ftp/pure-ftpd/pureftpd.passwd,"DragonflyBSD, FreeBSD",Pure-FTPd,FTP,conf
+/usr/ports/ftp/pure-ftpd/pureftpd.pdb,"DragonflyBSD, FreeBSD",Pure-FTPd,FTP,conf
+/usr/pkgsrc/net/pureftpd/pure-ftpd.conf,NetBSD,Pure-FTPd,FTP,conf
+/usr/pkgsrc/net/pureftpd/pureftpd.passwd,NetBSD,Pure-FTPd,FTP,conf
+/usr/pkgsrc/net/pureftpd/pureftpd.pdb,NetBSD,Pure-FTPd,FTP,conf
+/usr/ports/net/pure-ftpd/pure-ftpd.conf,OpenBSD,Pure-FTPd,FTP,conf
+/usr/ports/net/pure-ftpd/pureftpd.passwd,OpenBSD,Pure-FTPd,FTP,conf
+/usr/ports/net/pure-ftpd/pureftpd.pdb,OpenBSD,Pure-FTPd,FTP,conf
+/logs/pure-ftpd.log,*NIX,Pure-FTPd,FTP,log
+/var/log/pure-ftpd/pure-ftpd.log,*NIX,Pure-FTPd,FTP,log
+/var/log/pureftpd.log,*NIX,Pure-FTPd,FTP,log
+/etc/chrootUsers,*NIX,vsftpd,FTP,conf
+/etc/vsftpd.conf,*NIX,vsftpd,FTP,conf
+/etc/vsftpd/vsftpd.conf,*NIX,vsftpd,FTP,conf
+/etc/logrotate.d/vsftpd.log,*NIX,vsftpd,FTP,log
+/etc/vsftpd.chroot_list,*NIX,vsftpd,FTP,log
+/var/log/vsftpd.log,*NIX,vsftpd,FTP,log
+/etc/wu-ftpd/ftpaccess,*NIX,wu-ftpd,FTP,conf
+/etc/wu-ftpd/ftphosts,*NIX,wu-ftpd,FTP,conf
+/etc/wu-ftpd/ftpusers,*NIX,wu-ftpd,FTP,conf
+/var/adm/log/xferlog,*NIX,wu-ftpd,FTP,log
+/var/log/xferlog,*NIX,wu-ftpd,FTP,log
+/usr/local/apache/conf/modsec.conf,*NIX,Mod Security,Firewalls,conf
+/usr/local/apache2/conf/modsec.conf,*NIX,Mod Security,Firewalls,conf
+/logs/security_debug_log,*NIX,Mod Security,Firewalls,log
+/logs/security_log,*NIX,Mod Security,Firewalls,log
+/usr/local/apache/logs/audit_log,*NIX,Mod Security,Firewalls,log
+/usr/local/apache2/logs/audit_log,*NIX,Mod Security,Firewalls,log
+/WINDOWS/system32/logfiles/Firewall/pfirewall.log,Windows,Windows firewall,Firewalls,log
+/WINDOWS/system32/logfiles/Firewall/pfirewall.log.old,Windows,Windows firewall,Firewalls,log
+/WINNT/system32/logfiles/Firewall/pfirewall.log,Windows,Windows firewall,Firewalls,log
+/WINNT/system32/logfiles/Firewall/pfirewall.log.old,Windows,Windows firewall,Firewalls,log
+/etc/firewall.rules,FreeBSD,ipfw,Firewalls,conf
+/etc/ipfw.conf,FreeBSD,ipfw,Firewalls,conf
+/etc/ipfw.rules,FreeBSD,ipfw,Firewalls,conf
+/var/log/ipfw,FreeBSD,ipfw,Firewalls,log
+/var/log/ipfw.log,FreeBSD,ipfw,Firewalls,log
+/var/log/ipfw.today,FreeBSD,ipfw,Firewalls,log
+/var/log/ipfw/ipfw.log,FreeBSD,ipfw,Firewalls,log
+/etc/ansible/ansible.cfg,*NIX,Ansible,Infrastructure as Code,conf
+/root/.terraform.d/credentials.tfrc.json,*NIX,Terraform,Infrastructure as Code,conf
+/etc/mosquitto/mosquitto.conf,*NIX,Mosquitto,IoT,conf
+/etc/openldap/ldap.conf,*NIX,OpenLDAP,LDAP,conf
+/etc/filebeat/filebeat.yml,*NIX,Elastic Stack,Logging,conf
+/etc/logstash/logstash.yml,*NIX,Elastic Stack,Logging,conf
+/etc/kafka/server.properties,*NIX,Kafka,Message Brokers,conf
+/etc/rabbitmq/rabbitmq.conf,*NIX,RabbitMQ,Message Brokers,conf
+/etc/grafana/grafana.ini,*NIX,Grafana,Monitoring,conf
+/etc/prometheus/prometheus.yml,*NIX,Prometheus,Monitoring,conf
+/etc/dhcp/dhclient.conf,*NIX,DHCP,Network,conf
+/etc/dhcp3/dhclient.conf,*NIX,DHCP,Network,conf
+/etc/dhcp3/dhcpd.conf,*NIX,DHCP,Network,conf
+/etc/miredo-server.conf,*NIX,Miredo,Network,conf
+/etc/miredo.conf,*NIX,Miredo,Network,conf
+/etc/miredo/miredo-server.conf,*NIX,Miredo,Network,conf
+/etc/miredo/miredo.conf,*NIX,Miredo,Network,conf
+/Program Files/Vidalia Bundle/Polipo/polipo.conf,Windows,Polipo,Network,conf
+/etc/samba/dhcp.conf,*NIX,Samba,Network,conf
+/etc/samba/private/smbpasswd,*NIX,Samba,Network,conf
+/etc/samba/samba.conf,*NIX,Samba,Network,conf
+/etc/samba/smb.conf,*NIX,Samba,Network,conf
+/etc/samba/smb.conf.user,*NIX,Samba,Network,conf
+/etc/samba/smbpasswd,*NIX,Samba,Network,conf
+/etc/samba/smbusers,*NIX,Samba,Network,conf
+/etc/smb.conf,*NIX,Samba,Network,conf
+/etc/smbpasswd,*NIX,Samba,Network,conf
+/usr/local/etc/smb.conf,*NIX,Samba,Network,conf
+/usr/local/samba/lib/smb.conf.user,*NIX,Samba,Network,conf
+/etc/samba/netlogon,*NIX,Samba,Network,log
+/usr/local/logs/samba.log,*NIX,Samba,Network,log
+/usr/local/samba/lib/log.user,*NIX,Samba,Network,log
+/var/log/log.smb,*NIX,Samba,Network,log
+/var/log/samba.log,*NIX,Samba,Network,log
+/var/log/samba.log1,*NIX,Samba,Network,log
+/var/log/samba.log2,*NIX,Samba,Network,log
+/var/log/samba/log.nmbd,*NIX,Samba,Network,log
+/var/log/samba/log.smbd,*NIX,Samba,Network,log
+/etc/tinyproxy/tinyproxy.conf,*NIX,Tinyproxy,Network,conf
+/etc/tor/tor-tsocks.conf,*NIX,Tor,Network,conf
+/etc/wicd/dhclient.conf.template.default,*NIX,Wicd,Network,conf
+/etc/wicd/manager-settings.conf,*NIX,Wicd,Network,conf
+/etc/wicd/wired-settings.conf,*NIX,Wicd,Network,conf
+/etc/wicd/wireless-settings.conf,*NIX,Wicd,Network,conf
+/etc/stunnel/stunnel.conf,*NIX,stunnel,Network,conf
+/etc/tsocks.conf,*NIX,tsocks,Network,conf
+/wamp/bin/apache/apache2.2.21/conf/httpd.conf,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/apache/apache2.2.21/wampserver.conf,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/apache/apache2.2.22/conf/httpd.conf,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/apache/apache2.2.22/conf/wampserver.conf,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/apache/apache2.2.22/wampserver.conf,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/mysql/mysql5.5.16/my.ini,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/mysql/mysql5.5.16/wampserver.conf,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/mysql/mysql5.5.24/my.ini,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/mysql/mysql5.5.24/wampserver.conf,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/php/php5.3.8/php.ini,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/php/php5.4.3/php.ini,Windows,WAMP,Packaged Web Dev,conf
+/wamp/bin/apache/apache2.2.21/logs/access.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/bin/apache/apache2.2.21/logs/error.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/bin/apache/apache2.2.22/logs/access.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/bin/apache/apache2.2.22/logs/error.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/bin/mysql/mysql5.5.16/data/mysql-bin.index,Windows,WAMP,Packaged Web Dev,log
+/wamp/bin/mysql/mysql5.5.24/data/mysql-bin.index,Windows,WAMP,Packaged Web Dev,log
+/wamp/logs/access.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/logs/apache_error.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/logs/genquery.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/logs/mysql.log,Windows,WAMP,Packaged Web Dev,log
+/wamp/logs/slowquery.log,Windows,WAMP,Packaged Web Dev,log
+/opt/lampp/etc/httpd.conf,*NIX,XAMPP,Packaged Web Dev,conf
+/xampp/FileZillaFTP/FileZilla Server.xml,Windows,XAMPP,Packaged Web Dev,conf
+/xampp/MercuryMail/mercury.ini,Windows,XAMPP,Packaged Web Dev,conf
+/xampp/apache/conf/httpd.conf,Windows,XAMPP,Packaged Web Dev,conf
+/xampp/php/php.ini,Windows,XAMPP,Packaged Web Dev,conf
+/xampp/phpMyAdmin/config.inc.php,Windows,XAMPP,Packaged Web Dev,conf
+/xampp/sendmail/sendmail.ini,Windows,XAMPP,Packaged Web Dev,conf
+/xampp/webalizer/webalizer.conf,Windows,XAMPP,Packaged Web Dev,conf
+/xampp/apache/logs/access.log,Windows,XAMPP,Packaged Web Dev,log
+/xampp/apache/logs/error.log,Windows,XAMPP,Packaged Web Dev,log
+/xampp/mysql/data/mysql-bin.index,Windows,XAMPP,Packaged Web Dev,log
+/xampp/mysql/data/mysql.err,Windows,XAMPP,Packaged Web Dev,log
+/xampp/mysql/data/{HOST}.err,Windows,XAMPP,Packaged Web Dev,log
+/xampp/sendmail/sendmail.log,Windows,XAMPP,Packaged Web Dev,log
+/xampp/htdocs/aca.txt,Windows,XAMPP,Packaged Web Dev,other
+/xampp/htdocs/admin.php,Windows,XAMPP,Packaged Web Dev,other
+/xampp/htdocs/leer.txt,Windows,XAMPP,Packaged Web Dev,other
+/etc/cups/acroread.conf,*NIX,CUPS,Printing,conf
+/etc/cups/cupsd.conf,*NIX,CUPS,Printing,conf
+/etc/cups/cupsd.conf.default,*NIX,CUPS,Printing,conf
+/etc/cups/pdftops.conf,*NIX,CUPS,Printing,conf
+/etc/cups/printers.conf,*NIX,CUPS,Printing,conf
+/etc/mono/1.0/machine.config,*NIX,Mono,Programming,conf
+/etc/mono/2.0/machine.config,*NIX,Mono,Programming,conf
+/etc/mono/2.0/web.config,*NIX,Mono,Programming,conf
+/etc/mono/config,*NIX,Mono,Programming,conf
+/bin/php.ini,*NIX,PHP,Programming,conf
+/etc/httpd/conf.d/php.conf,*NIX,PHP,Programming,conf
+/etc/httpd/php.ini,*NIX,PHP,Programming,conf
+/etc/php.ini,*NIX,PHP,Programming,conf
+/etc/php/apache/php.ini,*NIX,PHP,Programming,conf
+/etc/php/apache2/php.ini,*NIX,PHP,Programming,conf
+/etc/php/cgi/php.ini,*NIX,PHP,Programming,conf
+/etc/php/php.ini,*NIX,PHP,Programming,conf
+/etc/php/php4/php.ini,*NIX,PHP,Programming,conf
+/etc/php4.4/fcgi/php.ini,*NIX,PHP,Programming,conf
+/etc/php4/apache/php.ini,*NIX,PHP,Programming,conf
+/etc/php4/apache2/php.ini,*NIX,PHP,Programming,conf
+/etc/php4/cgi/php.ini,*NIX,PHP,Programming,conf
+/etc/php5/apache/php.ini,*NIX,PHP,Programming,conf
+/etc/php5/apache2/php.ini,*NIX,PHP,Programming,conf
+/etc/php5/cgi/php.ini,*NIX,PHP,Programming,conf
+/home/bin/stable/apache/php.ini,*NIX,PHP,Programming,conf
+/home2/bin/stable/apache/php.ini,*NIX,PHP,Programming,conf
+/opt/xampp/etc/php.ini,*NIX,PHP,Programming,conf
+/usr/lib/php.ini,*NIX,PHP,Programming,conf
+/usr/lib/php/php.ini,*NIX,PHP,Programming,conf
+/usr/local/Zend/etc/php.ini,*NIX,PHP,Programming,conf
+/usr/local/apache/conf/php.ini,*NIX,PHP,Programming,conf
+/usr/local/etc/php.ini,*NIX,PHP,Programming,conf
+/usr/local/lib/php.ini,*NIX,PHP,Programming,conf
+/usr/local/php/lib/php.ini,*NIX,PHP,Programming,conf
+/usr/local/php4/lib/php.ini,*NIX,PHP,Programming,conf
+/usr/local/php5/lib/php.ini,*NIX,PHP,Programming,conf
+/var/local/www/conf/php.ini,*NIX,PHP,Programming,conf
+/web/conf/php.ini,*NIX,PHP,Programming,conf
+/Volumes/Macintosh_HD1/usr/local/php/lib/php.ini,OSX,PHP,Programming,conf
+/NetServer/bin/stable/apache/php.ini,Windows,PHP,Programming,conf
+/PHP/php.ini,Windows,PHP,Programming,conf
+/WINDOWS/php.ini,Windows,PHP,Programming,conf
+/WINNT/php.ini,Windows,PHP,Programming,conf
+/apache/php/php.ini,Windows,PHP,Programming,conf
+/php/php.ini,Windows,PHP,Programming,conf
+/php4/php.ini,Windows,PHP,Programming,conf
+/php5/php.ini,Windows,PHP,Programming,conf
+/xampp/apache/bin/php.ini,Windows,PHP,Programming,conf
+/etc/vault/config.hcl,*NIX,Vault,Secret Management,conf
+/etc/consul/consul.hcl,*NIX,Consul,Service Mesh,conf
+/etc/adduser.conf,*NIX,Linux,System Files,conf
+/etc/apt/apt.conf,*NIX,Linux,System Files,conf
+/etc/avahi/avahi-daemon.conf,*NIX,Linux,System Files,conf
+/etc/ca-certificates.conf,*NIX,Linux,System Files,conf
+/etc/ca-certificates.conf.dpkg-old,*NIX,Linux,System Files,conf
+/etc/casper.conf,*NIX,Linux,System Files,conf
+/etc/chkrootkit.conf,*NIX,Linux,System Files,conf
+/etc/debconf.conf,*NIX,Linux,System Files,conf
+/etc/deluser.conf,*NIX,Linux,System Files,conf
+/etc/dns2tcpd.conf,*NIX,Linux,System Files,conf
+/etc/e2fsck.conf,*NIX,Linux,System Files,conf
+/etc/esound/esd.conf,*NIX,Linux,System Files,conf
+/etc/etter.conf,*NIX,Linux,System Files,conf
+/etc/foremost.conf,*NIX,Linux,System Files,conf
+/etc/fuse.conf,*NIX,Linux,System Files,conf
+/etc/hdparm.conf,*NIX,Linux,System Files,conf
+/etc/host.conf,*NIX,Linux,System Files,conf
+/etc/inetd.conf,*NIX,Linux,System Files,conf
+/etc/kbd/config,*NIX,Linux,System Files,conf
+/etc/kernel-img.conf,*NIX,Linux,System Files,conf
+/etc/kernel-pkg.conf,*NIX,Linux,System Files,conf
+/etc/ld.so.conf,*NIX,Linux,System Files,conf
+/etc/ldap/ldap.conf,*NIX,Linux,System Files,conf
+/etc/logrotate.conf,*NIX,Linux,System Files,conf
+/etc/ltrace.conf,*NIX,Linux,System Files,conf
+/etc/mail/sendmail.conf,*NIX,Linux,System Files,conf
+/etc/manpath.config,*NIX,Linux,System Files,conf
+/etc/mtools.conf,*NIX,Linux,System Files,conf
+/etc/pam.conf,*NIX,Linux,System Files,conf
+/etc/pulse/client.conf,*NIX,Linux,System Files,conf
+/etc/resolv.conf,*NIX,Linux,System Files,conf
+/etc/security/access.conf,*NIX,Linux,System Files,conf
+/etc/security/group.conf,*NIX,Linux,System Files,conf
+/etc/security/limits.conf,*NIX,Linux,System Files,conf
+/etc/security/namespace.conf,*NIX,Linux,System Files,conf
+/etc/security/pam_env.conf,*NIX,Linux,System Files,conf
+/etc/security/sepermit.conf,*NIX,Linux,System Files,conf
+/etc/security/time.conf,*NIX,Linux,System Files,conf
+/etc/sensors.conf,*NIX,Linux,System Files,conf
+/etc/sensors3.conf,*NIX,Linux,System Files,conf
+/etc/smi.conf,*NIX,Linux,System Files,conf
+/etc/ssh/sshd_config,*NIX,Linux,System Files,conf
+/etc/sysctl.conf,*NIX,Linux,System Files,conf
+/etc/sysctl.d/10-console-messages.conf,*NIX,Linux,System Files,conf
+/etc/sysctl.d/10-network-security.conf,*NIX,Linux,System Files,conf
+/etc/sysctl.d/10-process-security.conf,*NIX,Linux,System Files,conf
+/etc/sysctl.d/wine.sysctl.conf,*NIX,Linux,System Files,conf
+/etc/syslog.conf,*NIX,Linux,System Files,conf
+/etc/updatedb.conf,*NIX,Linux,System Files,conf
+/usr/share/adduser/adduser.conf,*NIX,Linux,System Files,conf
+/tmp/access.log,*NIX,Linux,System Files,log
+/var/log/Xorg.0.log,*NIX,Linux,System Files,log
+/var/log/auth.log,*NIX,Linux,System Files,log
+/var/log/boot.log,*NIX,Linux,System Files,log
+/var/log/daemon.log,*NIX,Linux,System Files,log
+/var/log/daemon.log.1,*NIX,Linux,System Files,log
+/var/log/kern.log,*NIX,Linux,System Files,log
+/var/log/kern.log.1,*NIX,Linux,System Files,log
+/var/log/mail.err,*NIX,Linux,System Files,log
+/var/log/mail.info,*NIX,Linux,System Files,log
+/var/log/mail.log,*NIX,Linux,System Files,log
+/var/log/mail.warn,*NIX,Linux,System Files,log
+/var/log/messages,*NIX,Linux,System Files,log
+/var/log/messages.1,*NIX,Linux,System Files,log
+/var/log/news.all,*NIX,Linux,System Files,log
+/var/log/news/news.all,*NIX,Linux,System Files,log
+/var/log/news/news.crit,*NIX,Linux,System Files,log
+/var/log/news/news.err,*NIX,Linux,System Files,log
+/var/log/news/news.notice,*NIX,Linux,System Files,log
+/var/log/news/suck.err,*NIX,Linux,System Files,log
+/var/log/news/suck.notice,*NIX,Linux,System Files,log
+/var/log/pm-powersave.log,*NIX,Linux,System Files,log
+/var/log/syslog,*NIX,Linux,System Files,log
+/var/log/syslog.1,*NIX,Linux,System Files,log
+/var/log/ufw.log,*NIX,Linux,System Files,log
+/var/log/user.log,*NIX,Linux,System Files,log
+/var/log/user.log.1,*NIX,Linux,System Files,log
+/boot/grub/grub.cfg,*NIX,Linux,System Files,other
+/boot/grub/menu.lst,*NIX,Linux,System Files,other
+/etc/SUSE-release,*NIX,Linux,System Files,other
+/etc/alias,*NIX,Linux,System Files,other
+/etc/crontab,*NIX,Linux,System Files,other
+/etc/crypttab,*NIX,Linux,System Files,other
+/etc/debian_version,*NIX,Linux,System Files,other
+/etc/default/grub,*NIX,Linux,System Files,other
+/etc/exports,*NIX,Linux,System Files,other
+/etc/fedora-release,*NIX,Linux,System Files,other
+/etc/fstab,*NIX,Linux,System Files,other
+/etc/group,*NIX,Linux,System Files,other
+/etc/group-,*NIX,Linux,System Files,other
+/etc/hostname,*NIX,Linux,System Files,other
+/etc/hosts,*NIX,Linux,System Files,other
+/etc/hosts.allow,*NIX,Linux,System Files,other
+/etc/hosts.deny,*NIX,Linux,System Files,other
+/etc/inittab,*NIX,Linux,System Files,other
+/etc/issue,*NIX,Linux,System Files,other
+/etc/issue.net,*NIX,Linux,System Files,other
+/etc/login.defs,*NIX,Linux,System Files,other
+/etc/mandrake-release,*NIX,Linux,System Files,other
+/etc/modules,*NIX,Linux,System Files,other
+/etc/motd,*NIX,Linux,System Files,other
+/etc/mtab,*NIX,Linux,System Files,other
+/etc/networks,*NIX,Linux,System Files,other
+/etc/os-release,*NIX,Linux,System Files,other
+/etc/passwd,*NIX,Linux,System Files,other
+/etc/passwd-,*NIX,Linux,System Files,other
+/etc/passwd~,*NIX,Linux,System Files,other
+/etc/password.master,*NIX,Linux,System Files,other
+/etc/profile,*NIX,Linux,System Files,other
+/etc/redhat-release,*NIX,Linux,System Files,other
+/etc/resolvconf/update-libc.d/sendmail,*NIX,Linux,System Files,other
+/etc/security/environ,*NIX,Linux,System Files,other
+/etc/security/group,*NIX,Linux,System Files,other
+/etc/security/limits,*NIX,Linux,System Files,other
+/etc/security/opasswd,*NIX,Linux,System Files,other
+/etc/security/passwd,*NIX,Linux,System Files,other
+/etc/security/user,*NIX,Linux,System Files,other
+/etc/shadow,*NIX,Linux,System Files,other
+/etc/shadow-,*NIX,Linux,System Files,other
+/etc/shadow~,*NIX,Linux,System Files,other
+/etc/slackware-release,*NIX,Linux,System Files,other
+/etc/sudoers,*NIX,Linux,System Files,other
+/etc/sysconfig/network-scripts/ifcfg-eth0,*NIX,Linux,System Files,other
+/etc/timezone,*NIX,Linux,System Files,other
+/root/.Xauthority,*NIX,Linux,System Files,other
+/root/.ksh_history,*NIX,Linux,System Files,other
+/usr/lib/security/mkuser.default,*NIX,Linux,System Files,other
+/proc/cpuinfo,*NIX,Proc,System Files,other
+/proc/devices,*NIX,Proc,System Files,other
+/proc/meminfo,*NIX,Proc,System Files,other
+/proc/net/tcp,*NIX,Proc,System Files,other
+/proc/net/udp,*NIX,Proc,System Files,other
+/proc/self/cmdline,*NIX,Proc,System Files,other
+/proc/self/environ,*NIX,Proc,System Files,other
+/proc/self/fd/0,*NIX,Proc,System Files,other
+/proc/self/fd/1,*NIX,Proc,System Files,other
+/proc/self/fd/10,*NIX,Proc,System Files,other
+/proc/self/fd/11,*NIX,Proc,System Files,other
+/proc/self/fd/12,*NIX,Proc,System Files,other
+/proc/self/fd/13,*NIX,Proc,System Files,other
+/proc/self/fd/14,*NIX,Proc,System Files,other
+/proc/self/fd/15,*NIX,Proc,System Files,other
+/proc/self/fd/2,*NIX,Proc,System Files,other
+/proc/self/fd/3,*NIX,Proc,System Files,other
+/proc/self/fd/4,*NIX,Proc,System Files,other
+/proc/self/fd/5,*NIX,Proc,System Files,other
+/proc/self/fd/6,*NIX,Proc,System Files,other
+/proc/self/fd/7,*NIX,Proc,System Files,other
+/proc/self/fd/8,*NIX,Proc,System Files,other
+/proc/self/fd/9,*NIX,Proc,System Files,other
+/proc/self/mounts,*NIX,Proc,System Files,other
+/proc/self/stat,*NIX,Proc,System Files,other
+/proc/self/status,*NIX,Proc,System Files,other
+/proc/version,*NIX,Proc,System Files,other
+/etc/X11/xorg.conf,*NIX,X11,System Files,conf
+/etc/X11/xorg.conf-vesa,*NIX,X11,System Files,conf
+/etc/X11/xorg.conf-vmware,*NIX,X11,System Files,conf
+/etc/X11/xorg.conf.BeforeVMwareToolsInstall,*NIX,X11,System Files,conf
+/etc/X11/xorg.conf.orig,*NIX,X11,System Files,conf
+/etc/openvpn/certs/ca.crt,*NIX,OpenVPN,VPN,conf
+/etc/openvpn/client.conf,*NIX,OpenVPN,VPN,conf
+/etc/openvpn/client/client.conf,*NIX,OpenVPN,VPN,conf
+/etc/openvpn/client/client.key,*NIX,OpenVPN,VPN,conf
+/etc/openvpn/server.conf,*NIX,OpenVPN,VPN,conf
+/etc/strongswan/ipsec.secrets,*NIX,StrongSwan,VPN,conf
+/etc/wireguard/wg0.conf,*NIX,WireGuard,VPN,conf
+/etc/cvs-cron.conf,*NIX,CVS,Versioning,conf
+/etc/cvs-pserver.conf,*NIX,CVS,Versioning,conf
+/etc/subversion/config,*NIX,SVN,Versioning,conf
+/etc/modprobe.d/vmware-tools.conf,*NIX,VMWare,Virtualization,conf
+/etc/updatedb.conf.BeforeVMwareToolsInstall,*NIX,VMWare,Virtualization,conf
+/etc/vmware-tools/config,*NIX,VMWare,Virtualization,conf
+/etc/vmware-tools/tpvmlp.conf,*NIX,VMWare,Virtualization,conf
+/etc/vmware-tools/vmware-tools-libraries.conf,*NIX,VMWare,Virtualization,conf
+/var/log/vmware/hostd-1.log,*NIX,VMWare,Virtualization,log
+/var/log/vmware/hostd.log,*NIX,VMWare,Virtualization,log
+/var/cpanel/cpanel.config,*NIX,Cpanel,Web Hosting Administration,conf
+/usr/local/cpanel/logs/access_log,*NIX,Cpanel,Web Hosting Administration,log
+/usr/local/cpanel/logs/error_log,*NIX,Cpanel,Web Hosting Administration,log
+/usr/local/cpanel/logs/license_log,*NIX,Cpanel,Web Hosting Administration,log
+/usr/local/cpanel/logs/login_log,*NIX,Cpanel,Web Hosting Administration,log
+/usr/local/cpanel/logs/stats_log,*NIX,Cpanel,Web Hosting Administration,log
+/etc/sso/sso_config.ini,*NIX,Plesk,Web Hosting Administration,conf
+/etc/sw-cp-server/applications.d/00-sso-cpserver.conf,*NIX,Plesk,Web Hosting Administration,conf
+/etc/sw-cp-server/applications.d/plesk.conf,*NIX,Plesk,Web Hosting Administration,conf
+/usr/local/psa/admin/conf/php.ini,*NIX,Plesk,Web Hosting Administration,conf
+/usr/local/psa/admin/conf/site_isolation_settings.ini,*NIX,Plesk,Web Hosting Administration,conf
+/usr/local/sb/config,*NIX,Plesk,Web Hosting Administration,conf
+/usr/local/psa/admin/logs/httpsd_access_log,*NIX,Plesk,Web Hosting Administration,log
+/usr/local/psa/admin/logs/panel.log,*NIX,Plesk,Web Hosting Administration,log
+/var/log/sso/sso.log,*NIX,Plesk,Web Hosting Administration,log
+/var/log/sw-cp-server/error_log,*NIX,Plesk,Web Hosting Administration,log
+/etc/apache/apache.conf,*NIX,Apache,Web Servers,conf
+/etc/apache/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/apache.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/conf.d/charset,*NIX,Apache,Web Servers,conf
+/etc/apache2/conf.d/security,*NIX,Apache,Web Servers,conf
+/etc/apache2/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/envvars,*NIX,Apache,Web Servers,conf
+/etc/apache2/httpd.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/autoindex.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/deflate.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/dir.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/mem_cache.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/mime.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/proxy.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/setenvif.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-available/ssl.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-enabled/alias.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-enabled/deflate.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-enabled/dir.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-enabled/mime.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-enabled/negotiation.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-enabled/php5.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/mods-enabled/status.conf,*NIX,Apache,Web Servers,conf
+/etc/apache2/vhosts.d/default_vhost.include,*NIX,Apache,Web Servers,conf
+/etc/http/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/etc/http/httpd.conf,*NIX,Apache,Web Servers,conf
+/etc/httpd.conf,*NIX,Apache,Web Servers,conf
+/etc/httpd/apache.conf,*NIX,Apache,Web Servers,conf
+/etc/httpd/apache2.conf,*NIX,Apache,Web Servers,conf
+/etc/httpd/conf/apache.conf,*NIX,Apache,Web Servers,conf
+/etc/httpd/conf/apache2.conf,*NIX,Apache,Web Servers,conf
+/etc/httpd/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/etc/httpd/httpd.conf,*NIX,Apache,Web Servers,conf
+/opt/apache/apache.conf,*NIX,Apache,Web Servers,conf
+/opt/apache/apache2.conf,*NIX,Apache,Web Servers,conf
+/opt/apache/conf/apache.conf,*NIX,Apache,Web Servers,conf
+/opt/apache/conf/apache2.conf,*NIX,Apache,Web Servers,conf
+/opt/apache/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/opt/apache2/apache.conf,*NIX,Apache,Web Servers,conf
+/opt/apache2/apache2.conf,*NIX,Apache,Web Servers,conf
+/opt/apache2/conf/apache.conf,*NIX,Apache,Web Servers,conf
+/opt/apache2/conf/apache2.conf,*NIX,Apache,Web Servers,conf
+/opt/apache2/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/opt/httpd/apache.conf,*NIX,Apache,Web Servers,conf
+/opt/httpd/apache2.conf,*NIX,Apache,Web Servers,conf
+/opt/httpd/conf/apache.conf,*NIX,Apache,Web Servers,conf
+/opt/httpd/conf/apache2.conf,*NIX,Apache,Web Servers,conf
+/private/etc/httpd/apache.conf,*NIX,Apache,Web Servers,conf
+/private/etc/httpd/apache2.conf,*NIX,Apache,Web Servers,conf
+/private/etc/httpd/httpd.conf,*NIX,Apache,Web Servers,conf
+/private/etc/httpd/httpd.conf.default,*NIX,Apache,Web Servers,conf
+/usr/apache/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/apache2/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache/apache.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache/apache2.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache/conf/apache.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache/conf/apache2.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache2/apache.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache2/apache2.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache2/conf/apache.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache2/conf/apache2.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache2/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apache2/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apps/apache/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/apps/apache2/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/etc/apache/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/etc/apache2/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/etc/httpd/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/httpd/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php/apache.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php/apache.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php/apache2.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php/apache2.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php/httpd.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php4/apache.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php4/apache.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php4/apache2.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php4/apache2.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php4/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php4/httpd.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php5/apache.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php5/apache.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php5/apache2.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php5/apache2.conf.php,*NIX,Apache,Web Servers,conf
+/usr/local/php5/httpd.conf,*NIX,Apache,Web Servers,conf
+/usr/local/php5/httpd.conf.php,*NIX,Apache,Web Servers,conf
+/var/www/conf/httpd.conf,*NIX,Apache,Web Servers,conf
+/Volumes/Macintosh_HD1/opt/apache/conf/httpd.conf,OS X,Apache,Web Servers,conf
+/Volumes/Macintosh_HD1/opt/apache2/conf/httpd.conf,OS X,Apache,Web Servers,conf
+/Volumes/Macintosh_HD1/opt/httpd/conf/httpd.conf,OS X,Apache,Web Servers,conf
+/Volumes/Macintosh_HD1/usr/local/php/httpd.conf.php,OS X,Apache,Web Servers,conf
+/Volumes/Macintosh_HD1/usr/local/php4/httpd.conf.php,OS X,Apache,Web Servers,conf
+/Volumes/Macintosh_HD1/usr/local/php5/httpd.conf.php,OS X,Apache,Web Servers,conf
+/Volumes/webBackup/opt/apache2/conf/httpd.conf,OS X,Apache,Web Servers,conf
+/Volumes/webBackup/private/etc/httpd/httpd.conf,OS X,Apache,Web Servers,conf
+/Volumes/webBackup/private/etc/httpd/httpd.conf.default,OS X,Apache,Web Servers,conf
+/usr/local/etc/apache/vhosts.conf,OS X,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache/apache.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache/apache2.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache/conf/apache.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache/conf/apache2.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache/conf/httpd.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache2/conf/apache.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache2/conf/apache2.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Group/Apache2/conf/httpd.conf,Windows,Apache,Web Servers,conf
+/Program Files/Apache Software Foundation/Apache2.2/conf/httpd.conf,Windows,Apache,Web Servers,conf
+/Program Files/xampp/apache/conf/apache.conf,Windows,Apache,Web Servers,conf
+/Program Files/xampp/apache/conf/apache2.conf,Windows,Apache,Web Servers,conf
+/Program Files/xampp/apache/conf/httpd.conf,Windows,Apache,Web Servers,conf
+/apache/logs/access.log,*NIX,Apache,Web Servers,log
+/apache/logs/error.log,*NIX,Apache,Web Servers,log
+/apache2/logs/access.log,*NIX,Apache,Web Servers,log
+/apache2/logs/error.log,*NIX,Apache,Web Servers,log
+/etc/httpd/logs/access.log,*NIX,Apache,Web Servers,log
+/etc/httpd/logs/access_log,*NIX,Apache,Web Servers,log
+/etc/httpd/logs/error.log,*NIX,Apache,Web Servers,log
+/etc/httpd/logs/error_log,*NIX,Apache,Web Servers,log
+/logs/access.log,*NIX,Apache,Web Servers,log
+/logs/error.log,*NIX,Apache,Web Servers,log
+/opt/lampp/logs/access.log,*NIX,Apache,Web Servers,log
+/opt/lampp/logs/access_log,*NIX,Apache,Web Servers,log
+/opt/lampp/logs/error.log,*NIX,Apache,Web Servers,log
+/opt/lampp/logs/error_log,*NIX,Apache,Web Servers,log
+/opt/xampp/logs/access.log,*NIX,Apache,Web Servers,log
+/opt/xampp/logs/access_log,*NIX,Apache,Web Servers,log
+/opt/xampp/logs/error.log,*NIX,Apache,Web Servers,log
+/opt/xampp/logs/error_log,*NIX,Apache,Web Servers,log
+/usr/local/apache/logs/access.log,*NIX,Apache,Web Servers,log
+/usr/local/apache/logs/access_log,*NIX,Apache,Web Servers,log
+/usr/local/apache/logs/error.log,*NIX,Apache,Web Servers,log
+/usr/local/apache/logs/error_log,*NIX,Apache,Web Servers,log
+/usr/local/apache2/logs/access.log,*NIX,Apache,Web Servers,log
+/usr/local/apache2/logs/access_log,*NIX,Apache,Web Servers,log
+/usr/local/apache2/logs/error.log,*NIX,Apache,Web Servers,log
+/usr/local/apache2/logs/error_log,*NIX,Apache,Web Servers,log
+/var/log/access.log,*NIX,Apache,Web Servers,log
+/var/log/access_log,*NIX,Apache,Web Servers,log
+/var/log/apache/access.log,*NIX,Apache,Web Servers,log
+/var/log/apache/access_log,*NIX,Apache,Web Servers,log
+/var/log/apache/error.log,*NIX,Apache,Web Servers,log
+/var/log/apache/error_log,*NIX,Apache,Web Servers,log
+/var/log/apache2/access.log,*NIX,Apache,Web Servers,log
+/var/log/apache2/access_log,*NIX,Apache,Web Servers,log
+/var/log/apache2/error.log,*NIX,Apache,Web Servers,log
+/var/log/apache2/error_log,*NIX,Apache,Web Servers,log
+/var/log/error.log,*NIX,Apache,Web Servers,log
+/var/log/error_log,*NIX,Apache,Web Servers,log
+/var/log/httpd/access.log,*NIX,Apache,Web Servers,log
+/var/log/httpd/access_log,*NIX,Apache,Web Servers,log
+/var/log/httpd/error.log,*NIX,Apache,Web Servers,log
+/var/log/httpd/error_log,*NIX,Apache,Web Servers,log
+/var/www/logs/access.log,*NIX,Apache,Web Servers,log
+/var/www/logs/access_log,*NIX,Apache,Web Servers,log
+/var/www/logs/error.log,*NIX,Apache,Web Servers,log
+/var/www/logs/error_log,*NIX,Apache,Web Servers,log
+/Program Files/Apache Group/Apache/logs/access.log,Windows,Apache,Web Servers,log
+/Program Files/Apache Group/Apache/logs/error.log,Windows,Apache,Web Servers,log
+/Program Files/Apache Software Foundation/Apache2.2/logs/access.log,Windows,Apache,Web Servers,log
+/Program Files/Apache Software Foundation/Apache2.2/logs/error.log,Windows,Apache,Web Servers,log
+/etc/apache2/apache2.conf,*NIX,General,Web Servers,conf
+/etc/apache2/ports.conf,*NIX,General,Web Servers,conf
+/etc/apache2/sites-available/default,*NIX,General,Web Servers,conf
+/etc/apache2/sites-available/default-ssl,*NIX,General,Web Servers,conf
+/etc/apache2/sites-enabled/000-default,*NIX,General,Web Servers,conf
+/etc/apache2/sites-enabled/default,*NIX,General,Web Servers,conf
+/usr/local/etc/apache/httpd.conf,*NIX,General,Web Servers,conf
+/usr/pkg/etc/httpd/httpd-default.conf,*NIX,General,Web Servers,conf
+/usr/pkg/etc/httpd/httpd-vhosts.conf,*NIX,General,Web Servers,conf
+/usr/pkg/etc/httpd/httpd.conf,*NIX,General,Web Servers,conf
+/apache/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/etc/apache/access.conf,FreeBSD,General,Web Servers,conf
+/etc/apache/default-server.conf,FreeBSD,General,Web Servers,conf
+/etc/apache/httpd.conf,FreeBSD,General,Web Servers,conf
+/etc/apache2/default-server.conf,FreeBSD,General,Web Servers,conf
+/etc/apache2/httpd2.conf,FreeBSD,General,Web Servers,conf
+/etc/apache2/ssl-global.conf,FreeBSD,General,Web Servers,conf
+/etc/apache2/vhosts.d/00_default_vhost.conf,FreeBSD,General,Web Servers,conf
+/etc/apache22/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/etc/apache22/httpd.conf,FreeBSD,General,Web Servers,conf
+/etc/httpd/conf,FreeBSD,General,Web Servers,conf
+/etc/httpd/conf.d,FreeBSD,General,Web Servers,conf
+/etc/init.d,FreeBSD,General,Web Servers,conf
+/etc/rc.conf,FreeBSD,General,Web Servers,conf
+/http/httpd.conf,FreeBSD,General,Web Servers,conf
+/opt/apache22/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache/conf/access.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache/conf/httpd.conf.default,FreeBSD,General,Web Servers,conf
+/usr/local/apache/conf/vhosts-custom.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache/conf/vhosts.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache1.3/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache2/conf/extra/httpd-ssl.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache2/conf/ssl.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache2/conf/vhosts-custom.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache2/conf/vhosts.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache22/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apache22/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/apps/apache22/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/etc/apache2/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/etc/apache2/vhosts.conf,FreeBSD,General,Web Servers,conf
+/usr/local/etc/apache22/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/etc/apache22/httpd.conf,FreeBSD,General,Web Servers,conf
+/usr/local/etc/httpd/conf,FreeBSD,General,Web Servers,conf
+/var/apache/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/var/www/conf,FreeBSD,General,Web Servers,conf
+/www/apache/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/www/conf/httpd.conf,FreeBSD,General,Web Servers,conf
+/Library/WebServer/Documents/.htaccess,OS X,General,Web Servers,conf
+/System/Library/WebObjects/Adaptors/Apache2.2/apache.conf,OS X,General,Web Servers,conf
+/etc/osxhttpd/osxhttpd.conf,OS X,General,Web Servers,conf
+/etc/httpd/extra/httpd-ssl.conf,Slackware,General,Web Servers,conf
+/etc/httpd/mod_php.conf,Slackware,General,Web Servers,conf
+/etc/rc.d/rc.httpd,Slackware,General,Web Servers,conf
+/www/logs/freebsddiary-access_log,FreeBSD,General,Web Servers,log
+/www/logs/freebsddiary-error.log,FreeBSD,General,Web Servers,log
+/Library/WebServer/Documents/default.htm,OS X,General,Web Servers,other
+/Library/WebServer/Documents/default.html,OS X,General,Web Servers,other
+/Library/WebServer/Documents/default.php,OS X,General,Web Servers,other
+/Library/WebServer/Documents/index.htm,OS X,General,Web Servers,other
+/Library/WebServer/Documents/index.html,OS X,General,Web Servers,other
+/Library/WebServer/Documents/index.php,OS X,General,Web Servers,other
+/WINDOWS/system32/logfiles/W3SVC/inetsvn1.log,Windows,IIS,Web Servers,log
+/WINDOWS/system32/logfiles/W3SVC1/inetsvn1.log,Windows,IIS,Web Servers,log
+/WINDOWS/system32/logfiles/W3SVC2/inetsvn1.log,Windows,IIS,Web Servers,log
+/WINDOWS/system32/logfiles/W3SVC3/inetsvn1.log,Windows,IIS,Web Servers,log
+/WINNT/system32/logfiles/W3SVC/inetsvn1.log,Windows,IIS,Web Servers,log
+/WINNT/system32/logfiles/W3SVC1/inetsvn1.log,Windows,IIS,Web Servers,log
+/WINNT/system32/logfiles/W3SVC2/inetsvn1.log,Windows,IIS,Web Servers,log
+/WINNT/system32/logfiles/W3SVC3/inetsvn1.log,Windows,IIS,Web Servers,log
+/opt/[JBOSS]/server/default/conf/jboss-minimal.xml,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/conf/jboss-service.xml,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/conf/jndi.properties,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/conf/log4j.xml,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/conf/login-config.xml,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/conf/server.log.properties,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/conf/standardjaws.xml,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/conf/standardjboss.xml,*NIX,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/deploy/jboss-logging.xml,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/jboss-minimal.xml,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/jboss-service.xml,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/jndi.properties,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/log4j.xml,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/login-config.xml,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/server.log.properties,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/standardjaws.xml,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/conf/standardjboss.xml,*NIX,JBoss,Web Servers,conf
+/private/tmp/[JBOSS]/server/default/deploy/jboss-logging.xml,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/jboss-minimal.xml,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/jboss-service.xml,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/jndi.properties,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/log4j.xml,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/login-config.xml,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/server.log.properties,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/standardjaws.xml,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/conf/standardjboss.xml,*NIX,JBoss,Web Servers,conf
+/tmp/[JBOSS]/server/default/deploy/jboss-logging.xml,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/jboss-minimal.xml,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/jboss-service.xml,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/jndi.properties,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/log4j.xml,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/login-config.xml,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/server.log.properties,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/standardjaws.xml,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/conf/standardjboss.xml,*NIX,JBoss,Web Servers,conf
+/usr/local/[JBOSS]/server/default/deploy/jboss-logging.xml,*NIX,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/jboss-minimal.xml,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/jboss-service.xml,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/jndi.properties,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/log4j.xml,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/login-config.xml,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/server.log.properties,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/standardjaws.xml,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/conf/standardjboss.xml,Windows,JBoss,Web Servers,conf
+/Program Files/[JBOSS]/server/default/deploy/jboss-logging.xml,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/jboss-minimal.xml,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/jboss-service.xml,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/jndi.properties,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/log4j.xml,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/login-config.xml,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/server.log.properties,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/standardjaws.xml,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/conf/standardjboss.xml,Windows,JBoss,Web Servers,conf
+/[JBOSS]/server/default/deploy/jboss-logging.xml,Windows,JBoss,Web Servers,conf
+/opt/[JBOSS]/server/default/log/boot.log,*NIX,JBoss,Web Servers,log
+/opt/[JBOSS]/server/default/log/server.log,*NIX,JBoss,Web Servers,log
+/private/tmp/[JBOSS]/server/default/log/boot.log,*NIX,JBoss,Web Servers,log
+/private/tmp/[JBOSS]/server/default/log/server.log,*NIX,JBoss,Web Servers,log
+/tmp/[JBOSS]/server/default/log/boot.log,*NIX,JBoss,Web Servers,log
+/tmp/[JBOSS]/server/default/log/server.log,*NIX,JBoss,Web Servers,log
+/usr/local/[JBOSS]/server/default/log/boot.log,*NIX,JBoss,Web Servers,log
+/usr/local/[JBOSS]/server/default/log/server.log,*NIX,JBoss,Web Servers,log
+/Program Files/[JBOSS]/server/default/log/boot.log,Windows,JBoss,Web Servers,log
+/Program Files/[JBOSS]/server/default/log/server.log,Windows,JBoss,Web Servers,log
+/[JBOSS]/server/default/log/boot.log,Windows,JBoss,Web Servers,log
+/[JBOSS]/server/default/log/server.log,Windows,JBoss,Web Servers,log
+/opt/lsws/conf/httpd_conf.xml,*NIX,LiteSpeed Web Server,Web Servers,conf
+/usr/local/lsws/conf/httpd_conf.xml,*NIX,LiteSpeed Web Server,Web Servers,conf
+/opt/lsws/logs/access.log,*NIX,LiteSpeed Web Server,Web Servers,log
+/opt/lsws/logs/error.log,*NIX,LiteSpeed Web Server,Web Servers,log
+/usr/local/logs/access.log,*NIX,LiteSpeed Web Server,Web Servers,log
+/usr/local/lsws/logs/error.log,*NIX,LiteSpeed Web Server,Web Servers,log
+/usr/local/jakarta/dist/tomcat/conf/context.xml,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/dist/tomcat/conf/jakarta.conf,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/dist/tomcat/conf/logging.properties,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/dist/tomcat/conf/server.xml,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/dist/tomcat/conf/workers.properties,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/tomcat/conf/context.xml,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/tomcat/conf/jakarta.conf,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/tomcat/conf/logging.properties,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/tomcat/conf/server.xml,*NIX,Tomcat,Web Servers,conf
+/usr/local/jakarta/tomcat/conf/workers.properties,*NIX,Tomcat,Web Servers,conf
+/usr/share/tomcat6/conf/context.xml,*NIX,Tomcat,Web Servers,conf
+/usr/share/tomcat6/conf/logging.properties,*NIX,Tomcat,Web Servers,conf
+/usr/share/tomcat6/conf/server.xml,*NIX,Tomcat,Web Servers,conf
+/usr/share/tomcat6/conf/workers.properties,*NIX,Tomcat,Web Servers,conf
+/var/cpanel/tomcat.options,*NIX,Tomcat,Web Servers,conf
+/var/log/tomcat6/catalina.out,*NIX,Tomcat,Web Servers,conf
+/opt/tomcat/logs/catalina.err,*NIX,Tomcat,Web Servers,log
+/opt/tomcat/logs/catalina.out,*NIX,Tomcat,Web Servers,log
+/usr/local/apache/logs/mod_jk.log,*NIX,Tomcat,Web Servers,log
+/usr/local/jakarta/dist/tomcat/logs/mod_jk.log,*NIX,Tomcat,Web Servers,log
+/usr/local/jakarta/tomcat/logs/catalina.err,*NIX,Tomcat,Web Servers,log
+/usr/local/jakarta/tomcat/logs/catalina.out,*NIX,Tomcat,Web Servers,log
+/usr/local/jakarta/tomcat/logs/mod_jk.log,*NIX,Tomcat,Web Servers,log
+/usr/share/logs/catalina.err,*NIX,Tomcat,Web Servers,log
+/usr/share/logs/catalina.out,*NIX,Tomcat,Web Servers,log
+/usr/share/tomcat/logs/catalina.err,*NIX,Tomcat,Web Servers,log
+/usr/share/tomcat/logs/catalina.out,*NIX,Tomcat,Web Servers,log
+/usr/share/tomcat6/logs/catalina.err,*NIX,Tomcat,Web Servers,log
+/usr/share/tomcat6/logs/catalina.out,*NIX,Tomcat,Web Servers,log
+/etc/webmin/miniserv.conf,*NIX,Webmin,Web Servers,conf
+/etc/webmin/miniserv.users,*NIX,Webmin,Web Servers,conf
+/usr/local/etc/webmin/miniserv.conf,*NIX,Webmin,Web Servers,conf
+/usr/local/etc/webmin/miniserv.users,*NIX,Webmin,Web Servers,conf
+/var/log/webmin/miniserv.log,*NIX,Webmin,Web Servers,log
+/usr/local/zeus/web/global.cfg,*NIX,Zeus Web Server (ZWS),Web Servers,conf
+/usr/local/zeus/web/log/errors,*NIX,Zeus Web Server (ZWS),Web Servers,log
+/etc/lighttpd/lighthttpd.conf,*NIX,lighthttpd,Web Servers,conf
+/home/user/lighttpd/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
+/usr/home/user/lighttpd/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
+/usr/local/etc/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
+/usr/local/etc/lighttpd.conf.new,*NIX,lighthttpd,Web Servers,conf
+/usr/local/lighttpd/conf/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
+/var/www/.lighttpdpassword,*NIX,lighthttpd,Web Servers,conf
+/usr/home/user/var/log/apache.log,*NIX,lighthttpd,Web Servers,log
+/usr/home/user/var/log/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
+/usr/local/apache/logs/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
+/usr/local/apache/logs/lighttpd.log,*NIX,lighthttpd,Web Servers,log
+/usr/local/apache2/logs/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
+/usr/local/apache2/logs/lighttpd.log,*NIX,lighthttpd,Web Servers,log
+/usr/local/lighttpd/log/access.log,*NIX,lighthttpd,Web Servers,log
+/usr/local/lighttpd/log/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
+/var/lighttpd.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd.access.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd/,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd/access.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd/access.www.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd/error.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd/error.www.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd/{DOMAIN}/access.log,*NIX,lighthttpd,Web Servers,log
+/var/log/lighttpd/{DOMAIN}/error.log,*NIX,lighthttpd,Web Servers,log
+/var/logs/access.log,*NIX,lighthttpd,Web Servers,log
+/etc/nginx/nginx.conf,*NIX,nginx,Web Servers,conf
+/usr/local/etc/nginx/nginx.conf,*NIX,nginx,Web Servers,conf
+/usr/local/nginx/conf/nginx.conf,*NIX,nginx,Web Servers,conf
+/logs/access_log,*NIX,nginx,Web Servers,log
+/logs/error_log,*NIX,nginx,Web Servers,log
+/var/log/nginx.access_log,*NIX,nginx,Web Servers,log
+/var/log/nginx.error_log,*NIX,nginx,Web Servers,log
+/var/log/nginx/access.log,*NIX,nginx,Web Servers,log
+/var/log/nginx/access_log,*NIX,nginx,Web Servers,log
+/var/log/nginx/error.log,*NIX,nginx,Web Servers,log
+/var/log/nginx/error_log,*NIX,nginx,Web Servers,log
+/WINDOWS/system32/drivers/etc/hosts,Windows,Windows,Win NT,conf
+/WINDOWS/system32/drivers/etc/lmhosts.sam,Windows,Windows,Win NT,conf
+/WINDOWS/system32/drivers/etc/networks,Windows,Windows,Win NT,conf
+/WINDOWS/system32/drivers/etc/protocol,Windows,Windows,Win NT,conf
+/WINDOWS/system32/drivers/etc/services,Windows,Windows,Win NT,conf
+/boot.ini,Windows,Windows,Win NT,conf
+/WINDOWS/Debug/NetSetup.LOG,Windows,Windows,Win NT,log
+/WINDOWS/ODBC.INI,Windows,Windows,Win NT,log
+/WINDOWS/WindowsUpdate.log,Windows,Windows,Win NT,log
+/WINDOWS/comsetup.log,Windows,Windows,Win NT,log
+/WINDOWS/repair/setup.log,Windows,Windows,Win NT,log
+/WINDOWS/setupact.log,Windows,Windows,Win NT,log
+/WINDOWS/setupapi.log,Windows,Windows,Win NT,log
+/WINDOWS/setuperr.log,Windows,Windows,Win NT,log
+/WINDOWS/updspapi.log,Windows,Windows,Win NT,log
+/WINDOWS/wmsetup.log,Windows,Windows,Win NT,log

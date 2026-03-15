@@ -28,7 +28,7 @@ Panoptic is an open source penetration testing tool that automates the process o
 ## Requirements
 
 * Python 3.10+
-* Dependencies: `httpx[socks]`, `rich`, `rich-argparse`, `defusedxml`
+* Dependencies: `httpx[socks]`, `rich`, `rich-argparse`
 
 ## Installation
 

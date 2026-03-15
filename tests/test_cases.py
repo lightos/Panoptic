@@ -1,4 +1,4 @@
-"""Tests for panoptic.cases — XML case parsing and filtering."""
+"""Tests for panoptic.cases — CSV case parsing, validation, and filtering."""
 
 import pytest
 
@@ -52,10 +52,6 @@ class TestLoadVersions:
         assert len(versions["JBOSS"]) > 0
 
 
-def test_file_type_has_mix() -> None:
-    assert FileType.MIX.value == "mix"
-
-
 class TestLoadCustomList:
     def test_load_from_file(self, tmp_path: pytest.TempPathFactory) -> None:
         listfile = tmp_path / "custom.txt"  # type: ignore[operator]
@@ -77,3 +73,98 @@ class TestLoadCustomList:
     def test_directory_raises(self, tmp_path: pytest.TempPathFactory) -> None:
         with pytest.raises(ValueError, match="regular file"):
             load_custom_list(str(tmp_path))
+
+
+class TestCsvValidation:
+    def test_parse_cases_returns_expected_count(self) -> None:
+        """CSV parser returns expected number of cases."""
+        config = ScanConfig(url="http://example.com")
+        cases = parse_cases(config)
+        assert len(cases) == 1024
+
+    def test_all_cases_have_metadata(self) -> None:
+        """Every case from CSV has all metadata fields populated."""
+        config = ScanConfig(url="http://example.com")
+        cases = parse_cases(config)
+        for case in cases:
+            assert case.os is not None, f"Missing os: {case.location}"
+            assert case.software is not None, f"Missing software: {case.location}"
+            assert case.category is not None, f"Missing category: {case.location}"
+            assert case.file_type is not None, f"Missing file_type: {case.location}"
+
+    def test_bash_entries_are_typed_other(self) -> None:
+        """Bash entries (formerly 'mix') are classified as 'other'."""
+        config = ScanConfig(url="http://example.com", software_filter="Bash")
+        cases = parse_cases(config)
+        assert len(cases) > 0
+        assert all(c.file_type == FileType.OTHER for c in cases)
+
+
+class TestListFunctions:
+    def test_list_values_os(self) -> None:
+        from panoptic.cases import list_values
+
+        values = list_values("os")
+        assert "*NIX" in values
+        assert "Windows" in values
+
+    def test_list_values_software(self) -> None:
+        from panoptic.cases import list_values
+
+        values = list_values("software")
+        assert "PHP" in values
+        assert "nginx" in values
+
+    def test_list_values_unknown_group(self) -> None:
+        from panoptic.cases import list_values
+
+        values = list_values("nonexistent")
+        assert values == set()
+
+    def test_list_all_files(self) -> None:
+        from panoptic.cases import list_all_files
+
+        files = list_all_files()
+        assert len(files) > 0
+        assert all(isinstance(f, str) for f in files)
+
+
+class TestCsvValidationErrors:
+    """Negative-path tests for CSV validation."""
+
+    def test_missing_column_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from panoptic.cases import _load_csv
+
+        monkeypatch.setattr(
+            "panoptic.cases.load_data_file",
+            lambda _: "path,os,software\n/etc/passwd,*NIX,PHP\n",
+        )
+        with pytest.raises(ValueError, match="missing required columns"):
+            _load_csv()
+
+    def test_empty_field_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from panoptic.cases import _load_csv
+
+        monkeypatch.setattr(
+            "panoptic.cases.load_data_file",
+            lambda _: "path,os,software,category,type\n/etc/passwd,,PHP,Programming,conf\n",
+        )
+        with pytest.raises(ValueError, match="empty 'os' field"):
+            _load_csv()
+
+    def test_invalid_type_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from panoptic.cases import _load_csv
+
+        monkeypatch.setattr(
+            "panoptic.cases.load_data_file",
+            lambda _: "path,os,software,category,type\n/etc/passwd,*NIX,PHP,Programming,bogus\n",
+        )
+        with pytest.raises(ValueError, match="unknown type 'bogus'"):
+            _load_csv()
+
+    def test_empty_csv_raises(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        from panoptic.cases import _load_csv
+
+        monkeypatch.setattr("panoptic.cases.load_data_file", lambda _: "")
+        with pytest.raises(ValueError, match="missing required columns"):
+            _load_csv()

@@ -215,6 +215,7 @@ async scan(config, cases, client):
 ```
 
 Key improvements over original:
+
 - No mutable global state — `ScanConfig` passed explicitly
 - No race conditions — single async event loop, no shared mutable state
 - `asyncio.Queue` enables dynamic case injection (passwd users, binlog files) without pre-committing all work
@@ -354,6 +355,7 @@ asyncio_mode = "auto"
 2. Data files (`cases.xml`, etc.) moved to `panoptic/data/`
 3. Old `panoptic.py`, `thirdparty/`, root data files removed after integration tests pass
 4. A thin `panoptic.py` shim kept at repo root for backwards compatibility (`./panoptic.py` invocation):
+
    ```python
    #!/usr/bin/env python3
    """Compatibility shim — delegates to the panoptic package."""
@@ -361,6 +363,7 @@ asyncio_mode = "auto"
    if __name__ == "__main__":
        main()
    ```
+
 5. `agents.txt`, `versions.ini`, `home.txt`, `cases.xml` content unchanged — only location moves
 
 ## What's NOT Changing
@@ -370,3 +373,22 @@ asyncio_mode = "auto"
 - Core detection algorithm (difflib heuristic comparison)
 - CLI flag names for existing features (backwards compatible)
 - MIT license
+
+## Compatibility Notes
+
+- **Header format change:** Original used `Name=Value` for `--header`, new uses standard HTTP `Name: Value` format. Accept both during migration with deprecation warning for `=` syntax.
+- **Parameter autodetection:** Original auto-detects the vulnerable parameter from URL query string when `--param` is not specified. This behavior is preserved in v2.
+- **`--ext-param` validation:** Original validates that the extension parameter exists in the query/POST data. This is preserved in v2.
+
+## Review Findings (2026-03-14)
+
+Plan was reviewed by deep manual analysis + Codex (gpt-5.4). Key architectural fixes applied:
+
+1. **Queue termination:** Sentinel-based worker stop replaced with drain-check pattern to support dynamic case injection from passwd/binlog parsing
+2. **Heuristic baseline consistency:** Invalid filename stored and reused (not regenerated per-case)
+3. **POST baseline parity:** Baseline fetch uses same HTTP method as scan requests
+4. **Resume for dynamic cases:** Checkpoint IDs checked before enqueueing derived cases
+5. **Rate limiting:** `--random-delay MIN-MAX` implemented with `random.uniform()` in scan loop
+6. **Parameter autodetection:** Ported from original — auto-detects `--param` from URL query string
+
+See implementation plan appendix for full findings table.

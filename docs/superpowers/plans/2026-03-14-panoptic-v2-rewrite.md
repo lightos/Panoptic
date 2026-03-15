@@ -53,6 +53,7 @@
 ### Task 1: Project Scaffolding
 
 **Files:**
+
 - Create: `pyproject.toml`
 - Create: `panoptic/__init__.py`
 - Create: `panoptic/__main__.py`
@@ -65,7 +66,7 @@
 ```toml
 [build-system]
 requires = ["setuptools>=68.0"]
-build-backend = "setuptools.backends._legacy:_Backend"
+build-backend = "setuptools.build_meta"
 
 [project]
 name = "panoptic"
@@ -116,6 +117,7 @@ asyncio_mode = "auto"
 - [ ] **Step 2: Create package init**
 
 Create `panoptic/__init__.py`:
+
 ```python
 """Panoptic — search and retrieve content of common files via path traversal vulnerability."""
 
@@ -144,7 +146,7 @@ if __name__ == "__main__":
     main()
 ```
 
-- [ ] **Step 4: Move data files**
+- [ ] **Step 4: Move data files and create data package init**
 
 ```bash
 mkdir -p panoptic/data
@@ -154,11 +156,18 @@ cp versions.ini panoptic/data/
 cp home.txt panoptic/data/
 ```
 
+Create `panoptic/data/__init__.py`:
+
+```python
+# Required for importlib.resources to treat this as a package.
+```
+
 - [ ] **Step 5: Create test scaffolding**
 
 Create `tests/__init__.py` (empty file).
 
 Create `tests/conftest.py`:
+
 ```python
 """Shared test fixtures for Panoptic tests."""
 
@@ -207,12 +216,14 @@ git commit -m "feat: scaffold panoptic v2 package structure with pyproject.toml"
 ### Task 2: Data Models (`models.py`)
 
 **Files:**
+
 - Create: `panoptic/models.py`
 - Create: `tests/test_models.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_models.py`:
+
 ```python
 """Tests for panoptic.models."""
 
@@ -264,6 +275,9 @@ class TestScanResult:
         assert result.status_code == 200
 
 
+import pytest
+
+
 class TestScanConfig:
     def test_defaults(self) -> None:
         config = ScanConfig(url="http://example.com")
@@ -292,9 +306,6 @@ class TestEnums:
         assert OutputFormat.TEXT.value == "text"
         assert OutputFormat.JSON.value == "json"
         assert OutputFormat.CSV.value == "csv"
-
-
-import pytest
 ```
 
 - [ ] **Step 2: Run tests to verify they fail**
@@ -302,6 +313,7 @@ import pytest
 ```bash
 pytest tests/test_models.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError: No module named 'panoptic.models'`
 
 - [ ] **Step 3: Write `panoptic/models.py`**
@@ -420,6 +432,7 @@ class ScanConfig:
 ```bash
 pytest tests/test_models.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -434,12 +447,14 @@ git commit -m "feat: add data models (Case, ScanResult, ScanConfig)"
 ### Task 3: Utilities (`utils.py`)
 
 **Files:**
+
 - Create: `panoptic/utils.py`
 - Create: `tests/test_utils.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_utils.py`:
+
 ```python
 """Tests for panoptic.utils."""
 
@@ -538,6 +553,7 @@ class TestGetRandomAgent:
 ```bash
 pytest tests/test_utils.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/utils.py`**
@@ -642,23 +658,18 @@ def normalize_url(url: str) -> str:
     return url
 ```
 
-- [ ] **Step 4: Create `panoptic/data/__init__.py`**
-
-```python
-# Required for importlib.resources to treat this as a package.
-```
-
-- [ ] **Step 5: Run tests to verify they pass**
+- [ ] **Step 4: Run tests to verify they pass**
 
 ```bash
 pytest tests/test_utils.py -v
 ```
+
 Expected: All tests PASS
 
-- [ ] **Step 6: Commit**
+- [ ] **Step 5: Commit**
 
 ```bash
-git add panoptic/utils.py panoptic/data/__init__.py tests/test_utils.py
+git add panoptic/utils.py tests/test_utils.py
 git commit -m "feat: add utility functions (URL validation, header parsing, data loading)"
 ```
 
@@ -667,12 +678,14 @@ git commit -m "feat: add utility functions (URL validation, header parsing, data
 ### Task 4: Heuristic Engine (`heuristic.py`)
 
 **Files:**
+
 - Create: `panoptic/heuristic.py`
 - Create: `tests/test_heuristic.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_heuristic.py`:
+
 ```python
 """Tests for panoptic.heuristic — the core detection logic."""
 
@@ -766,6 +779,7 @@ class TestFilterContent:
 ```bash
 pytest tests/test_heuristic.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/heuristic.py`**
@@ -867,6 +881,7 @@ def filter_content(html: str, original_response: str) -> str:
 ```bash
 pytest tests/test_heuristic.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -883,12 +898,14 @@ git commit -m "feat: add heuristic engine with fixed re.sub flags bug"
 ### Task 5: Case Parser (`cases.py`)
 
 **Files:**
+
 - Create: `panoptic/cases.py`
 - Create: `tests/test_cases.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_cases.py`:
+
 ```python
 """Tests for panoptic.cases — XML case parsing and filtering."""
 
@@ -971,6 +988,7 @@ class TestLoadCustomList:
 ```bash
 pytest tests/test_cases.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/cases.py`**
@@ -1176,6 +1194,7 @@ def _determine_file_type(
 ```bash
 pytest tests/test_cases.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -1190,12 +1209,14 @@ git commit -m "feat: add case parser with defusedxml, filtering, placeholder exp
 ### Task 6: Parsers (`parsers.py`)
 
 **Files:**
+
 - Create: `panoptic/parsers.py`
 - Create: `tests/test_parsers.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_parsers.py`:
+
 ```python
 """Tests for panoptic.parsers — passwd and binlog extraction."""
 
@@ -1270,6 +1291,7 @@ class TestExtractBinlogCases:
 ```bash
 pytest tests/test_parsers.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/parsers.py`**
@@ -1374,6 +1396,7 @@ def _load_home_files() -> list[str]:
 ```bash
 pytest tests/test_parsers.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -1390,12 +1413,14 @@ git commit -m "feat: add passwd and binlog content parsers"
 ### Task 7: Network Client (`network.py`)
 
 **Files:**
+
 - Create: `panoptic/network.py`
 - Create: `tests/test_network.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_network.py`:
+
 ```python
 """Tests for panoptic.network — async HTTP client."""
 
@@ -1487,6 +1512,7 @@ class TestNetworkClient:
 ```bash
 pytest tests/test_network.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/network.py`**
@@ -1576,9 +1602,6 @@ class NetworkClient:
             raise RuntimeError("NetworkClient must be used as async context manager")
 
         async with self._semaphore:
-            if self.config.delay > 0:
-                await asyncio.sleep(self.config.delay)
-
             try:
                 if data is not None:
                     return await self._client.post(
@@ -1619,6 +1642,7 @@ class NetworkClient:
 ```bash
 pytest tests/test_network.py -v
 ```
+
 Expected: Most tests PASS. The SSL internals test may need adjustment depending on httpx version — if it fails, adapt the assertion to check `config.invalid_ssl` flag instead of internal SSL context.
 
 - [ ] **Step 5: Commit**
@@ -1633,12 +1657,14 @@ git commit -m "feat: add async HTTP client with timeout, retry, proxy, header va
 ### Task 8: Configuration (`config.py`)
 
 **Files:**
+
 - Create: `panoptic/config.py`
 - Create: `tests/test_config.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_config.py`:
+
 ```python
 """Tests for panoptic.config — TOML config loading and merge."""
 
@@ -1707,6 +1733,7 @@ class TestMergeConfig:
 ```bash
 pytest tests/test_config.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/config.py`**
@@ -1803,6 +1830,7 @@ def merge_config(cli_args: dict, file_config: dict) -> ScanConfig:
 ```bash
 pytest tests/test_config.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -1819,12 +1847,14 @@ git commit -m "feat: add TOML config loading with CLI merge"
 ### Task 9: Output Layer (`output.py`)
 
 **Files:**
+
 - Create: `panoptic/output.py`
 - Create: `tests/test_output.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_output.py`:
+
 ```python
 """Tests for panoptic.output — text, JSON, CSV formatters."""
 
@@ -1937,6 +1967,7 @@ class TestTextFormatter:
 ```bash
 pytest tests/test_output.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/output.py`**
@@ -2063,6 +2094,7 @@ class CsvFormatter:
 ```bash
 pytest tests/test_output.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -2077,12 +2109,14 @@ git commit -m "feat: add text/JSON/CSV output formatters"
 ### Task 10: CLI (`cli.py`)
 
 **Files:**
+
 - Create: `panoptic/cli.py`
 - Create: `tests/test_cli.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_cli.py`:
+
 ```python
 """Tests for panoptic.cli — argument parsing and validation."""
 
@@ -2154,6 +2188,7 @@ class TestValidateArgs:
 ```bash
 pytest tests/test_cli.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/cli.py`**
@@ -2239,6 +2274,8 @@ def parse_args(argv: list[str] | None = None) -> dict:
     perf.add_argument("--threads", type=int, default=None, dest="_threads_deprecated",
                       help="Deprecated: use --concurrency instead")
     perf.add_argument("--delay", type=float, default=None, help="Delay between requests in seconds")
+    perf.add_argument("--random-delay", type=str, default=None, dest="random_delay",
+                      metavar="MIN-MAX", help="Random delay range in seconds (e.g. '0.5-2.0')")
 
     # Output
     out = parser.add_argument_group("Output")
@@ -2268,9 +2305,9 @@ def parse_args(argv: list[str] | None = None) -> dict:
     result = vars(parsed)
 
     # Handle deprecated --threads
-    if result.pop("_threads_deprecated", None) is not None:
-        if result["concurrency"] is None:
-            result["concurrency"] = result["_threads_deprecated"]
+    threads_val = result.pop("_threads_deprecated", None)
+    if threads_val is not None and result.get("concurrency") is None:
+        result["concurrency"] = threads_val
 
     # Normalize URL
     if result.get("url") and not result["url"].lower().startswith(("http://", "https://")):
@@ -2279,6 +2316,15 @@ def parse_args(argv: list[str] | None = None) -> dict:
     # Apply prefix multiplier
     if result.get("prefix"):
         result["prefix"] = result["prefix"] * result.get("multiplier", 1)
+
+    # Parse --random-delay "MIN-MAX" into tuple
+    if result.get("random_delay") and isinstance(result["random_delay"], str):
+        try:
+            parts = result["random_delay"].split("-")
+            result["random_delay"] = (float(parts[0]), float(parts[1]))
+        except (ValueError, IndexError):
+            print(f"[!] Invalid --random-delay format. Use 'MIN-MAX' (e.g. '0.5-2.0')", file=sys.stderr)
+            sys.exit(1)
 
     return result
 
@@ -2336,6 +2382,37 @@ async def run(argv: list[str] | None = None) -> None:
     file_config = load_config(args.pop("config_file", None))
     config = merge_config(args, file_config)
 
+    # Auto-detect vulnerable parameter if not specified (ported from original)
+    if not config.path_based and not config.param:
+        from urllib.parse import urlsplit as _urlsplit
+        import re as _re
+        _parsed = _urlsplit(config.url)
+        _params = config.data if config.data else _parsed.query
+        _match = _re.match(r"(?P<param>[^=&]+)=(?P<value>[^=&]+)", _params)
+        if _match:
+            config = ScanConfig(**{
+                **{f.name: getattr(config, f.name)
+                   for f in config.__dataclass_fields__.values()},
+                "param": _match.group("param"),
+            })
+        else:
+            print("[!] No usable GET/POST parameters found.", file=sys.stderr)
+            print("[!] If this is a path-based URL, use --path-based", file=sys.stderr)
+            sys.exit(1)
+
+    # Validate --ext-param exists in query/data
+    if config.ext_param:
+        import re as _re
+        from urllib.parse import urlsplit as _urlsplit
+        _parsed = _urlsplit(config.url)
+        _params = config.data if config.data else _parsed.query
+        if not _re.search(
+            r"(?P<param>%s)=(?P<value>[^=&]*)" % _re.escape(config.ext_param),
+            _params,
+        ):
+            print(f"[!] Extension parameter '{config.ext_param}' not found.", file=sys.stderr)
+            sys.exit(1)
+
     # Dispatch to scanner
     from panoptic.core import Scanner
     scanner = Scanner(config)
@@ -2347,6 +2424,7 @@ async def run(argv: list[str] | None = None) -> None:
 ```bash
 pytest tests/test_cli.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -2363,12 +2441,14 @@ git commit -m "feat: add CLI with argparse, rich help, validation"
 ### Task 11: Scanner Core (`core.py`)
 
 **Files:**
+
 - Create: `panoptic/core.py`
 - Create: `tests/test_core.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_core.py`:
+
 ```python
 """Tests for panoptic.core — async scanner orchestrator."""
 
@@ -2463,6 +2543,7 @@ class TestScanner:
 ```bash
 pytest tests/test_core.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/core.py`**
@@ -2576,9 +2657,11 @@ class Scanner:
         self.results: list[ScanResult] = []
         self.original_response: str = ""
         self.invalid_response: str = ""
+        self.invalid_filename: str = ""  # Store for reuse in heuristic cleaning
         self.restrict_os: str | None = config.os_filter
         self.first_found = False
         self.completed_ids: set[str] = set()
+        self.enqueued_ids: set[str] = set()  # Track all enqueued case_ids (initial + dynamic)
         self.total_queued = 0
         self.total_processed = 0
 
@@ -2627,24 +2710,26 @@ class Scanner:
         text_out.write_info("Checking original response...")
 
         async with NetworkClient(self.config) as client:
-            # Baseline responses
-            orig_resp = await client.fetch(self.config.url)
+            # Baseline responses — must use same HTTP method as scan requests
+            base_url = f"{parsed.scheme}://{parsed.netloc}{parsed.path}"
+            if self.config.data:
+                orig_resp = await client.fetch(base_url, data=self.config.data)
+            else:
+                orig_resp = await client.fetch(self.config.url)
             if orig_resp is None:
                 text_out.write_warning("Cannot connect to target. Check connection settings.")
                 return
             self.original_response = orig_resp.text
 
-            invalid_filename = generate_invalid_filename()
-            invalid_url = build_payload(
-                self.config, invalid_filename, request_params
+            # Store invalid filename for reuse in heuristic cleaning
+            self.invalid_filename = generate_invalid_filename()
+            invalid_payload = build_payload(
+                self.config, self.invalid_filename, request_params
             )
             if self.config.data:
-                inv_resp = await client.fetch(
-                    f"{parsed.scheme}://{parsed.netloc}{parsed.path}",
-                    data=invalid_url,
-                )
+                inv_resp = await client.fetch(base_url, data=invalid_payload)
             else:
-                inv_resp = await client.fetch(invalid_url)
+                inv_resp = await client.fetch(invalid_payload)
 
             if inv_resp is None:
                 text_out.write_warning("Cannot retrieve invalid response baseline.")
@@ -2653,16 +2738,15 @@ class Scanner:
 
             text_out.write_info(f"Scanning {len(cases)} file paths with {self.config.concurrency} workers...")
 
-            # Queue + workers
-            queue: asyncio.Queue[Case | None] = asyncio.Queue()
+            # Queue + workers (using task_done/join pattern, NOT sentinels,
+            # because dynamically injected cases from passwd/binlog parsing
+            # would be enqueued AFTER sentinels and never processed)
+            queue: asyncio.Queue[Case] = asyncio.Queue()
             for case in cases:
                 if case.case_id not in self.completed_ids:
                     await queue.put(case)
+                    self.enqueued_ids.add(case.case_id)
                     self.total_queued += 1
-
-            # Sentinel values to stop workers
-            for _ in range(self.config.concurrency):
-                await queue.put(None)
 
             with Progress(
                 SpinnerColumn(),
@@ -2675,15 +2759,23 @@ class Scanner:
 
                 async def worker() -> None:
                     while True:
-                        case = await queue.get()
-                        if case is None:
-                            break
+                        try:
+                            case = queue.get_nowait()
+                        except asyncio.QueueEmpty:
+                            # Brief yield to let other tasks enqueue work
+                            await asyncio.sleep(0.05)
+                            if queue.empty():
+                                break
+                            continue
 
-                        await self._process_case(
-                            case, client, request_params, queue, text_out
-                        )
-                        self.total_processed += 1
-                        progress.update(task, completed=self.total_processed)
+                        try:
+                            await self._process_case(
+                                case, client, request_params, queue, text_out
+                            )
+                            self.total_processed += 1
+                            progress.update(task, completed=self.total_processed)
+                        finally:
+                            queue.task_done()
 
                 workers = [
                     asyncio.create_task(worker())
@@ -2707,13 +2799,14 @@ class Scanner:
             import sys
             stream = open(self.config.output_file, "w", encoding="utf-8") if self.config.output_file else sys.stdout
 
+            from panoptic.models import OutputFormat
             match self.config.output_format:
-                case self.config.output_format.JSON:
+                case OutputFormat.JSON:
                     JsonFormatter(stream).write_results(found_results)
-                case self.config.output_format.CSV:
+                case OutputFormat.CSV:
                     CsvFormatter(stream).write_results(found_results)
-                case _:
-                    pass
+                case OutputFormat.TEXT:
+                    TextFormatter(stream).write_summary(found_results, self.total_processed)
 
             if self.config.output_file and stream is not sys.stdout:
                 stream.close()
@@ -2723,10 +2816,17 @@ class Scanner:
         case: Case,
         client: NetworkClient,
         request_params: str,
-        queue: asyncio.Queue[Case | None],
+        queue: asyncio.Queue[Case],
         text_out: TextFormatter,
     ) -> None:
         """Process a single case: fetch, compare, record result."""
+        # Apply delay (fixed or random) between requests
+        if self.config.random_delay:
+            delay = random.uniform(*self.config.random_delay)
+            await asyncio.sleep(delay)
+        elif self.config.delay > 0:
+            await asyncio.sleep(self.config.delay)
+
         # OS restriction check
         if self.restrict_os and case.os and case.os != self.restrict_os:
             return
@@ -2754,9 +2854,9 @@ class Scanner:
         if self.config.bad_string and self.config.bad_string in html:
             return
 
-        # Heuristic comparison
+        # Heuristic comparison — reuse the SAME invalid filename used for baseline
         cleaned_html = clean_response(html, case.location)
-        cleaned_invalid = clean_response(self.invalid_response, generate_invalid_filename())
+        cleaned_invalid = clean_response(self.invalid_response, self.invalid_filename)
 
         if is_match(cleaned_html, cleaned_invalid, self.config.heuristic_ratio):
             result = ScanResult(
@@ -2782,22 +2882,28 @@ class Scanner:
             if self.config.write_files and html:
                 self._write_file(case, html)
 
-            # Passwd parsing
+            # Passwd parsing — check resume checkpoint before enqueueing
             if (
                 case.location in PASSWD_FILES
                 and not self.config.skip_parsing
             ):
                 new_cases = extract_home_file_cases(html, case)
                 for new_case in new_cases:
-                    await queue.put(new_case)
-                    self.total_queued += 1
+                    cid = new_case.case_id
+                    if cid not in self.completed_ids and cid not in self.enqueued_ids:
+                        await queue.put(new_case)
+                        self.enqueued_ids.add(cid)
+                        self.total_queued += 1
 
-            # Binlog parsing
+            # Binlog parsing — check resume checkpoint before enqueueing
             if "mysql-bin.index" in case.location and not self.config.skip_parsing:
                 new_cases = extract_binlog_cases(html, case)
                 for new_case in new_cases:
-                    await queue.put(new_case)
-                    self.total_queued += 1
+                    cid = new_case.case_id
+                    if cid not in self.completed_ids and cid not in self.enqueued_ids:
+                        await queue.put(new_case)
+                        self.enqueued_ids.add(cid)
+                        self.total_queued += 1
 
         # Checkpoint
         if self.config.resume_file:
@@ -2825,6 +2931,7 @@ class Scanner:
 ```bash
 pytest tests/test_core.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -2839,12 +2946,14 @@ git commit -m "feat: add async scanner core with Queue workers, checkpoint, dyna
 ### Task 12: Self-Update (`update.py`)
 
 **Files:**
+
 - Create: `panoptic/update.py`
 - Create: `tests/test_update.py`
 
 - [ ] **Step 1: Write failing tests**
 
 Create `tests/test_update.py`:
+
 ```python
 """Tests for panoptic.update — git self-update."""
 
@@ -2894,6 +3003,7 @@ class TestGetRevision:
 ```bash
 pytest tests/test_update.py -v
 ```
+
 Expected: FAIL with `ModuleNotFoundError`
 
 - [ ] **Step 3: Write `panoptic/update.py`**
@@ -2968,6 +3078,7 @@ def get_revision() -> str | None:
 ```bash
 pytest tests/test_update.py -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 5: Commit**
@@ -2984,6 +3095,7 @@ git commit -m "feat: add self-update with git/pip detection"
 ### Task 13: CI Pipeline
 
 **Files:**
+
 - Create: `.github/workflows/ci.yml`
 
 - [ ] **Step 1: Create CI workflow**
@@ -3038,6 +3150,7 @@ git commit -m "ci: add GitHub Actions workflow for lint, type check, tests"
 ### Task 14: Compatibility Shim & Cleanup
 
 **Files:**
+
 - Create: `panoptic.py` (new shim, replacing old file)
 - Remove: `thirdparty/`
 - Remove: root-level `cases.xml`, `agents.txt`, `versions.ini`, `home.txt`
@@ -3047,11 +3160,13 @@ git commit -m "ci: add GitHub Actions workflow for lint, type check, tests"
 ```bash
 pytest -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 2: Create compatibility shim**
 
 Replace root `panoptic.py` with thin shim:
+
 ```python
 #!/usr/bin/env python3
 """Compatibility shim — delegates to the panoptic package."""
@@ -3073,6 +3188,7 @@ rm cases.xml agents.txt versions.ini home.txt
 ```bash
 pytest -v
 ```
+
 Expected: All tests PASS (data files now loaded from `panoptic/data/`)
 
 - [ ] **Step 5: Commit**
@@ -3087,11 +3203,13 @@ git commit -m "chore: replace old panoptic.py with shim, remove vendored thirdpa
 ### Task 15: Integration Tests
 
 **Files:**
+
 - Create: `tests/test_integration.py`
 
 - [ ] **Step 1: Write integration tests**
 
 Create `tests/test_integration.py`:
+
 ```python
 """Integration tests — end-to-end scan against mocked HTTP server."""
 
@@ -3158,6 +3276,7 @@ class TestEndToEnd:
 ```bash
 pytest -v
 ```
+
 Expected: All tests PASS
 
 - [ ] **Step 3: Run linting and type checking**
@@ -3166,6 +3285,7 @@ Expected: All tests PASS
 ruff check panoptic/ tests/
 mypy panoptic/
 ```
+
 Expected: No errors (fix any that appear)
 
 - [ ] **Step 4: Commit**
@@ -3202,3 +3322,48 @@ python -m panoptic --list-all-files | head -5
 # Verify shim works
 ./panoptic.py --help
 ```
+
+---
+
+## Appendix: Review Findings & Fixes Applied
+
+This plan was reviewed on 2026-03-14 by both deep manual analysis and Codex (gpt-5.4).
+The following issues were found and addressed:
+
+### Fixes Applied Inline
+
+| # | Severity | Issue | Fix |
+|---|----------|-------|-----|
+| 1 | CRITICAL | Queue sentinel ordering: sentinels enqueued before dynamic cases from passwd/binlog parsing → workers exit before processing injected cases | Replaced sentinel-based termination with `get_nowait()` + empty-check pattern; workers only exit when queue is truly drained |
+| 2 | CRITICAL | `generate_invalid_filename()` called again in `_process_case` → heuristic compares against wrong token, causing false positives/negatives | Store `self.invalid_filename` on Scanner, reuse the exact value from baseline fetch |
+| 3 | CRITICAL | POST baseline fetched as GET: `client.fetch(self.config.url)` always uses GET even for POST scans | Baseline now sends `config.data` via POST when configured |
+| 4 | CRITICAL | `match/case` syntax error: `case self.config.output_format.JSON:` is not valid Python pattern matching | Changed to `case OutputFormat.JSON:` (use enum class directly) |
+| 5 | CRITICAL | `--threads` deprecated handling: `result.pop()` discards value, then tries to re-access deleted key | Store popped value in variable before checking |
+| 6 | CRITICAL | `build-backend` in pyproject.toml was `setuptools.backends._legacy:_Backend` (invalid) | Changed to standard `setuptools.build_meta` |
+| 7 | HIGH | `import pytest` at bottom of `test_models.py` after usage in `pytest.raises` | Moved import to top of file |
+| 8 | HIGH | Parameter autodetection missing: original auto-detects `--param` from URL query, plan didn't port this | Added autodetect logic in `cli.py:run()` before scanner dispatch |
+| 9 | HIGH | `random_delay` field declared but never used; `--random-delay` CLI flag missing | Added `--random-delay MIN-MAX` CLI flag, parsing, and `asyncio.sleep(random.uniform(...))` in `_process_case` |
+| 10 | HIGH | Resume checkpoint not applied to dynamically injected cases → repeated work on resume | Added `enqueued_ids` set; derived cases checked against both `completed_ids` and `enqueued_ids` before enqueueing |
+| 11 | HIGH | `panoptic/data/__init__.py` created in Task 3 but needed from Task 1 for `importlib.resources` | Moved to Task 1, Step 4 |
+| 12 | HIGH | Delay logic was in `NetworkClient` (wrong place for per-case delay) | Moved to `Scanner._process_case`, supporting both fixed and random delay |
+| 13 | HIGH | `--ext-param` validation missing (original validates it exists in query params) | Added validation in `cli.py:run()` before scanner dispatch |
+
+### Remaining Items (to address during implementation)
+
+These issues are valid but require design decisions or larger changes best made during implementation:
+
+| # | Severity | Issue | Guidance |
+|---|----------|-------|----------|
+| A | HIGH | CLI defaults (`False`, `""`, `1`) override config file values because `merge_config` checks `is not None` | Use `argparse.SUPPRESS` as default for optional args, or track which args were explicitly set via a custom `argparse.Action`. Only explicitly-set CLI args should override file config. |
+| B | HIGH | `--output-file` with `output_format=text` opens file but writes nothing | Add `TextFormatter.write_results()` method, or always use JSON/CSV for file output. Implement `--log-file` as a tee to file alongside stderr console output. |
+| C | HIGH | `--log-file` parsed but never wired to output | Implement log tee in `output.py`: wrap stderr console with a `TeeWriter` that duplicates to both stderr and the log file. |
+| D | MEDIUM | Content-Length threshold skip not implemented | In `_process_case`, after fetching response, check `Content-Length` header. If `content_length - max(len(original), len(invalid)) > SKIP_RETRIEVE_THRESHOLD` and `not config.write_files`, skip full body retrieval and classify as found by status alone. |
+| E | MEDIUM | Integration tests don't cover POST mode, dynamic queue injection, resume, or output routing | Add `test_integration.py` tests that: (1) run `Scanner.run()` against mocked POST targets, (2) verify passwd-derived cases are processed, (3) verify resume skips completed cases, (4) verify JSON/CSV output file contains expected data. |
+| F | MEDIUM | Double semaphore: both Scanner worker count and `NetworkClient._semaphore` limit concurrency | Remove `_semaphore` from `NetworkClient` — let Scanner control concurrency via worker pool size. |
+| G | MEDIUM | Header format compatibility break: original uses `Name=Value`, new uses `Name: Value` | Accept both syntaxes in `validate_header()` with deprecation warning for `=` format. Log warning when `=` format detected. |
+| H | MEDIUM | Error response bodies discarded: original reads error body from HTTP exceptions | In `NetworkClient.fetch()`, catch `httpx.HTTPStatusError` separately and return the response (which contains the body) instead of `None`. Only return `None` for connection/timeout errors. |
+| I | MEDIUM | POST data not URL-encoded like original | In `NetworkClient.fetch()`, apply `urlencode(parse_qsl(data))` before sending POST body, matching original behavior. |
+| J | MEDIUM | Checkpoint writes entire file after every single case (performance) | Batch checkpoint writes: only write every N cases (e.g., 50) or every T seconds (e.g., 5s), plus a final write at scan completion. |
+| K | LOW | mypy strict will fail on `defusedxml` and `rich_argparse` (no type stubs) | Add to `mypy.ini`: `[[tool.mypy.overrides]] module = ["defusedxml.*", "rich_argparse"] ignore_missing_imports = true` |
+| L | LOW | `test_load_nonexistent_raises` expects `FileNotFoundError` but `importlib.resources` may raise different exception | Use `pytest.raises(Exception)` or check the actual exception type from `importlib.resources` |
+| M | LOW | OS restriction user prompt not implemented for non-automatic mode | Add `input()` prompt in `_process_case` when first file found with OS set and `not config.automatic`. Use `asyncio.to_thread(input, ...)` to avoid blocking the event loop. |

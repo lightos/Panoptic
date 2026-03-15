@@ -1,17 +1,38 @@
-"""XML case parsing, filtering, version expansion, and custom list loading."""
+"""CSV case parsing, filtering, version expansion, and custom list loading."""
 
 from __future__ import annotations
 
+import csv
 import os
 import re
-from typing import Any
 from urllib.parse import urlsplit
-from xml.etree.ElementTree import Element
-
-import defusedxml.ElementTree as ET
 
 from panoptic.models import Case, FileType, ScanConfig
 from panoptic.utils import load_data_file
+
+REQUIRED_COLUMNS = frozenset({"path", "os", "software", "category", "type"})
+VALID_TYPES = frozenset(t.value for t in FileType)
+
+
+def _validate_csv(rows: list[dict[str, str]]) -> None:
+    """Validate CSV data on first load. Raises ValueError on bad data."""
+    for i, row in enumerate(rows, start=2):  # line 1 is header
+        for col in REQUIRED_COLUMNS:
+            if not row.get(col):
+                raise ValueError(f"cases.csv line {i}: empty '{col}' field")
+        if row["type"] not in VALID_TYPES:
+            raise ValueError(f"cases.csv line {i}: unknown type '{row['type']}', expected one of {sorted(VALID_TYPES)}")
+
+
+def _load_csv() -> list[dict[str, str]]:
+    """Load and validate cases.csv. Returns list of row dicts."""
+    content = load_data_file("cases.csv")
+    reader = csv.DictReader(content.splitlines())
+    if reader.fieldnames is None or not REQUIRED_COLUMNS.issubset(set(reader.fieldnames)):
+        raise ValueError(f"cases.csv: missing required columns {sorted(REQUIRED_COLUMNS)}, got {reader.fieldnames}")
+    rows = list(reader)
+    _validate_csv(rows)
+    return rows
 
 
 def load_versions() -> dict[str, list[str]]:
@@ -34,19 +55,12 @@ def load_versions() -> dict[str, list[str]]:
 
 
 def parse_cases(config: ScanConfig) -> list[Case]:
-    """Parse cases.xml and return test cases filtered by config.
+    """Parse cases.csv and return test cases filtered by config.
 
-    Uses defusedxml for XML bomb protection.
-    Builds a filtered list instead of mutating the tree in-place.
+    Validates CSV structure on load. Applies OS/software/category/type filters.
+    Expands {HOST} placeholders and [SECTION] version patterns.
     """
-    xml_content = load_data_file("cases.xml")
-    root = ET.fromstring(xml_content)
-
-    # Build parent map for ancestor lookups
-    parent_map: dict[Any, Any] = {}
-    for parent in root.iter():
-        for child in parent:
-            parent_map[child] = parent
+    rows = _load_csv()
 
     # Build replacements dict for placeholder expansion
     replacements: dict[str, str] = {}
@@ -58,25 +72,21 @@ def parse_cases(config: ScanConfig) -> list[Case]:
 
     cases: list[Case] = []
 
-    for file_elem in root.iter("file"):
-        location = file_elem.get("value", "")
-        if not location:
-            continue
-
-        # Walk ancestors to find os, software, category, type
-        os_val = _find_ancestor_attr(file_elem, "os", parent_map)
-        software_val = _find_ancestor_attr(file_elem, "software", parent_map)
-        category_val = _find_ancestor_attr(file_elem, "category", parent_map)
-        file_type = _determine_file_type(file_elem, parent_map)
+    for row in rows:
+        os_val = row["os"]
+        software_val = row["software"]
+        category_val = row["category"]
+        file_type = FileType(row["type"])
+        location = row["path"]
 
         # Apply filters
-        if config.os_filter and os_val and os_val.lower() != config.os_filter.lower():
+        if config.os_filter and os_val.lower() != config.os_filter.lower():
             continue
-        if config.software_filter and software_val and software_val.lower() != config.software_filter.lower():
+        if config.software_filter and software_val.lower() != config.software_filter.lower():
             continue
-        if config.category_filter and category_val and category_val.lower() != config.category_filter.lower():
+        if config.category_filter and category_val.lower() != config.category_filter.lower():
             continue
-        if config.type_filter and file_type and file_type.value != config.type_filter.lower():
+        if config.type_filter and file_type.value.lower() != config.type_filter.lower():
             continue
 
         # Placeholder expansion ({HOST}, etc.)
@@ -133,70 +143,21 @@ def list_values(group: str, config: ScanConfig | None = None) -> set[str]:
     When config is provided, respects active filters (matching original behavior).
     Used by --list command.
     """
+    if group not in {"os", "software", "category"}:
+        return set()
+
     if config is not None:
-        # Parse cases with current filters applied, then extract unique values
         cases = parse_cases(config)
-        values: set[str] = set()
-        for case in cases:
-            val = getattr(case, group, None)
-            if val:
-                values.add(val)
-        return values
+        return {getattr(c, group) for c in cases if getattr(c, group)}
 
-    # No config — return all values globally
-    xml_content = load_data_file("cases.xml")
-    root = ET.fromstring(xml_content)
-
-    all_values: set[str] = set()
-    for elem in root.iter(group):
-        val_attr = elem.get("value")
-        if val_attr:
-            all_values.add(val_attr)
-
-    return all_values
+    rows = _load_csv()
+    return {row[group] for row in rows if row.get(group)}
 
 
 def list_all_files() -> list[str]:
-    """List all file paths in cases.xml.
+    """List all file paths in cases.csv.
 
     Used by --list-all-files command.
     """
-    xml_content = load_data_file("cases.xml")
-    root = ET.fromstring(xml_content)
-
-    return [elem.get("value", "") for elem in root.iter("file") if elem.get("value")]
-
-
-def _find_ancestor_attr(
-    element: Element,
-    tag: str,
-    parent_map: dict[Any, Any],
-) -> str | None:
-    """Walk up the parent chain to find the nearest ancestor with the given tag."""
-    current = element
-    while current in parent_map:
-        parent = parent_map[current]
-        if parent.tag == tag:
-            result: str | None = parent.get("value")
-            return result
-        current = parent
-    return None
-
-
-def _determine_file_type(
-    element: Element,
-    parent_map: dict[Any, Any],
-) -> FileType | None:
-    """Determine the file type (conf/log/other) from ancestor tags."""
-    current = element
-    while current in parent_map:
-        parent = parent_map[current]
-        match parent.tag:
-            case "conf":
-                return FileType.CONF
-            case "log":
-                return FileType.LOG
-            case "other":
-                return FileType.OTHER
-        current = parent
-    return None
+    rows = _load_csv()
+    return [row["path"] for row in rows]

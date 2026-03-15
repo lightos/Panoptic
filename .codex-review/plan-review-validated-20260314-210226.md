@@ -56,11 +56,13 @@
 **Category:** VALID-FIX
 **Codex Said:** `_threads_deprecated` is popped before it is read, so `--threads` raises `KeyError`.
 **Validation:** Confirmed at plan line 2271-2273:
+
 ```python
 if result.pop("_threads_deprecated", None) is not None:
     if result["concurrency"] is None:
         result["concurrency"] = result["_threads_deprecated"]  # KeyError!
 ```
+
 The `pop()` removes the key and returns the value, but the returned value is discarded. Then line 2273 tries to access `result["_threads_deprecated"]` which no longer exists.
 **Recommendation:** Capture the popped value: `threads_val = result.pop("_threads_deprecated", None)` then use `threads_val` on line 2273. Alternatively, use `argparse` dest aliasing to map both flags to the same destination.
 
@@ -70,6 +72,7 @@ The `pop()` removes the key and returns the value, but the returned value is dis
 **Category:** VALID-FIX
 **Codex Said:** `--log-file` is never wired up, text output with `--output-file` writes nothing, and `match self.config.output_format: case self.config.output_format.JSON` is invalid Python.
 **Validation:** Confirmed across multiple plan sections:
+
 - `--log-file` is defined in CLI (line 2257) but never referenced in `core.py` or `output.py`.
 - At plan lines 2710-2716, the match statement uses `case self.config.output_format.JSON:` which is not valid Python -- match/case requires bare enum member references like `case OutputFormat.JSON:`.
 - When `output_format` is `text` (the default) and `output_file` is set, the condition at line 2706 (`self.config.output_format.value != "text" or self.config.output_file`) enters the block but the match falls through to `case _: pass`, writing nothing.
