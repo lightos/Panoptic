@@ -107,9 +107,20 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
 
 
 def save_checkpoint(filepath: str, completed_ids: set[str]) -> None:
-    """Save completed case IDs to a checkpoint file."""
-    with open(filepath, "w", encoding="utf-8") as f:
-        json.dump(sorted(completed_ids), f)
+    """Save completed case IDs to a checkpoint file atomically."""
+    import contextlib
+    import tempfile
+
+    dir_name = os.path.dirname(filepath) or "."
+    fd, tmp_path = tempfile.mkstemp(dir=dir_name, suffix=".tmp")
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            json.dump(sorted(completed_ids), f)
+        os.replace(tmp_path, filepath)
+    except BaseException:
+        with contextlib.suppress(OSError):
+            os.unlink(tmp_path)
+        raise
 
 
 def load_checkpoint(filepath: str) -> set[str]:
@@ -140,6 +151,9 @@ class Scanner:
         self.enqueued_ids: set[str] = set()
         self.total_queued = 0
         self.total_processed = 0
+        self._checkpoint_dirty = False
+        self._last_checkpoint_time = 0.0
+        self._checkpoint_lock = asyncio.Lock()
 
     async def run(self) -> None:
         """Execute the full scan workflow."""
@@ -254,9 +268,12 @@ class Scanner:
                 worker_tasks = [asyncio.create_task(worker()) for _ in range(self.config.concurrency)]
 
                 # Wait until all enqueued work (including dynamically injected) is done
-                await queue.join()
-                stop_event.set()
-                await asyncio.gather(*worker_tasks)
+                try:
+                    await queue.join()
+                finally:
+                    await self._flush_checkpoint()
+                    stop_event.set()
+                    await asyncio.gather(*worker_tasks, return_exceptions=True)
 
         found_results = [r for r in self.results if r.found]
 
@@ -424,13 +441,25 @@ class Scanner:
 
     async def _mark_completed(self, case: Case) -> None:
         """Record a case as completed for resume/checkpoint support."""
+        self.completed_ids.add(case.case_id)
         if self.config.resume_file:
-            self.completed_ids.add(case.case_id)
+            self._checkpoint_dirty = True
+            now = time.monotonic()
+            if now - self._last_checkpoint_time >= 5.0:
+                async with self._checkpoint_lock:
+                    if time.monotonic() - self._last_checkpoint_time >= 5.0:
+                        await self._flush_checkpoint()
+
+    async def _flush_checkpoint(self) -> None:
+        """Flush checkpoint to disk if dirty."""
+        if self._checkpoint_dirty and self.config.resume_file:
             await asyncio.to_thread(
                 save_checkpoint,
                 self.config.resume_file,
                 self.completed_ids.copy(),
             )
+            self._checkpoint_dirty = False
+            self._last_checkpoint_time = time.monotonic()
 
     async def _enqueue_new_cases(self, cases: list[Case], queue: asyncio.Queue[Case]) -> None:
         """Add newly discovered cases to the queue, skipping duplicates."""

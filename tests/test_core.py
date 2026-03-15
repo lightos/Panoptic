@@ -1,6 +1,8 @@
 """Tests for panoptic.core — async scanner orchestrator."""
 
 import asyncio
+import json
+import time
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
@@ -151,3 +153,61 @@ class TestFirstFoundRace:
 
         assert scanner.restrict_os == "*NIX"
         assert scanner.first_found is True
+
+
+class TestAtomicCheckpoint:
+    def test_save_checkpoint_atomic(self, tmp_path: Path) -> None:
+        """Checkpoint writes must be atomic (temp file + rename)."""
+        filepath = str(tmp_path / "checkpoint.json")
+        save_checkpoint(filepath, {"id1", "id2"})
+        with open(filepath) as f:
+            data = json.load(f)
+        assert set(data) == {"id1", "id2"}
+
+    def test_save_checkpoint_no_partial_writes(self, tmp_path: Path) -> None:
+        """If process dies mid-write, old checkpoint must survive."""
+        filepath = str(tmp_path / "checkpoint.json")
+        save_checkpoint(filepath, {"id1"})
+        save_checkpoint(filepath, {"id1", "id2", "id3"})
+        with open(filepath) as f:
+            data = json.load(f)
+        assert len(data) == 3
+
+
+class TestCheckpointThrottling:
+    async def test_rapid_marks_throttle_writes(self, tmp_path: Path) -> None:
+        """Rapid _mark_completed calls should not write on every call."""
+        checkpoint_file = str(tmp_path / "checkpoint.json")
+        config = ScanConfig(url="http://example.com", resume_file=checkpoint_file)
+        scanner = Scanner(config)
+        scanner._last_checkpoint_time = time.monotonic()  # Pretend we just wrote
+
+        write_count = 0
+        original_save = save_checkpoint
+
+        def counting_save(*args: object, **kwargs: object) -> None:
+            nonlocal write_count
+            write_count += 1
+            original_save(*args, **kwargs)
+
+        with patch("panoptic.core.save_checkpoint", side_effect=counting_save):
+            for i in range(20):
+                case = Case(location=f"/etc/file{i}", os="*NIX")
+                await scanner._mark_completed(case)
+
+        assert write_count <= 1, f"Expected <=1 writes during throttle window, got {write_count}"
+
+    async def test_flush_on_shutdown(self, tmp_path: Path) -> None:
+        """_flush_checkpoint must write dirty state even without time threshold."""
+        checkpoint_file = str(tmp_path / "checkpoint.json")
+        config = ScanConfig(url="http://example.com", resume_file=checkpoint_file)
+        scanner = Scanner(config)
+        scanner.completed_ids = {"id1", "id2", "id3"}
+        scanner._checkpoint_dirty = True
+
+        await scanner._flush_checkpoint()
+
+        with open(checkpoint_file) as f:
+            data = json.load(f)
+        assert set(data) == {"id1", "id2", "id3"}
+        assert scanner._checkpoint_dirty is False
