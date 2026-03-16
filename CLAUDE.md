@@ -10,13 +10,17 @@ pip install -e ".[dev]"          # Install with dev deps
 python3 -m pytest tests/ -x -q   # Run tests (<1s)
 python3 -m mypy panoptic/        # Type check (strict mode)
 python3 -m ruff check panoptic/  # Lint
+python3 -m ruff format panoptic/ # Format
+pre-commit run --all-files       # Run all hooks
 python3 -m panoptic --help       # CLI usage
+python3 -m pytest tests/test_output.py -x -q  # Single test file
 ```
 
 ## Architecture
 
 ```text
 panoptic/
+  __main__.py  → Entry point (python3 -m panoptic)
   cli.py       → Argument parsing, validation, dispatch
   config.py    → TOML config loading, CLI/config merge (CLI > file > defaults)
   core.py      → Scanner: async queue + worker pool, build_payload(), FUZZ marker
