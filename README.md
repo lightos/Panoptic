@@ -13,27 +13,29 @@ Panoptic is an open source penetration testing tool that automates
 the search and retrieval of common log and config files through
 path traversal vulnerabilities.
 
+![Panoptic Demo](assets/demo.gif)
+
 ## Features
 
-* **Async concurrent scanning** with configurable worker pool
+* Async concurrent scanning with configurable worker pool
   (`--concurrency`)
 * Automatic discovery of common log and configuration files via
   parameter-based, path-based, POST, cookie, header, and JSON
   body injection
-* **FUZZ marker** for arbitrary injection points — place `FUZZ`
+* FUZZ marker for arbitrary injection points — place `FUZZ`
   in any `--header` or `--data` value
-* **Base64 encoding** for endpoints that decode file paths
+* Base64 encoding for endpoints that decode file paths
   (`--base64`)
 * Automatic OS detection with option to restrict further scans
 * Heuristic response comparison with status code filtering to
   reduce false positives
 * Dynamic case injection — parse `/etc/passwd` for home directory
   files, `mysql-bin.index` for binlog files
-* **Multiple output formats**: text (rich), JSON, CSV
+* Multiple output formats: text (rich), JSON, CSV
   (`--output-format`)
-* **Resume/checkpoint** support for long-running scans
+* Resume/checkpoint support for long-running scans
   (`--resume-file`)
-* **TOML config files** for persistent settings (`--config`)
+* TOML config files for persistent settings (`--config`)
 * Multiple traversal bypass techniques: prefixes, postfixes,
   multiplier, slash replacement, double encoding
 * HTTP/HTTPS and SOCKS4/SOCKS5 proxy support with validation
