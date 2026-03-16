@@ -13,7 +13,7 @@ from typing import TextIO
 from rich.console import Console
 from rich.markup import escape as rich_escape
 
-from panoptic.models import ScanResult
+from panoptic.models import ScanConfig, ScanResult
 from panoptic.utils import _PARAM_VALUE_RE, redact_url
 
 
@@ -36,16 +36,26 @@ class TeeWriter:
         return self.primary.fileno()
 
 
+def _redact_json_values(obj: object) -> object:
+    """Recursively replace all string values in a JSON structure with '***'."""
+    if isinstance(obj, dict):
+        return {k: _redact_json_values(v) for k, v in obj.items()}
+    if isinstance(obj, list):
+        return [_redact_json_values(v) for v in obj]
+    if isinstance(obj, str):
+        return "***"
+    return obj
+
+
 def _redact_field(url: str) -> str:
     """Redact a URL or POST body for safe serialization."""
     if url.startswith(("http://", "https://")):
         return redact_url(url)
-    # JSON body: redact all string values
+    # JSON body: redact all string values by parsing then recursively replacing
     if url.lstrip().startswith("{"):
         try:
-            import re as _re
-
-            return _re.sub(r'(?<=: )"[^"]*"', '"***"', json.dumps(json.loads(url)))
+            obj = json.loads(url)
+            return json.dumps(_redact_json_values(obj))
         except (json.JSONDecodeError, ValueError):
             pass
     # POST body: redact form-encoded values (key=VALUE → key=***)
@@ -68,6 +78,48 @@ def _result_to_dict(r: ScanResult) -> dict[str, object]:
     }
 
 
+_FUZZ_MARKER = "FUZZ"
+
+
+def _has_fuzz(config: ScanConfig) -> bool:
+    """Check if FUZZ marker is present in data or headers."""
+    if config.data and _FUZZ_MARKER in config.data:
+        return True
+    if config.headers:
+        return any(_FUZZ_MARKER in h for h in config.headers)
+    return False
+
+
+def _scan_mode_pupil(config: ScanConfig | None) -> str:
+    """Return a contextual eye pupil based on scan mode."""
+    if config is None:
+        return "()"
+    if _has_fuzz(config):
+        return "><"
+    if config.path_based:
+        return "//"
+    if config.base64_encode:
+        return "=="
+    if config.data:
+        return "{}"
+    return "()"
+
+
+def _scan_mode_label(config: ScanConfig | None) -> str:
+    """Return a short label describing the scan mode."""
+    if config is None:
+        return ""
+    if _has_fuzz(config):
+        return "FUZZ"
+    if config.path_based:
+        return "path-based"
+    if config.base64_encode:
+        return "base64"
+    if config.data:
+        return "POST"
+    return "GET"
+
+
 class TextFormatter:
     """Rich-powered text output for terminal display."""
 
@@ -80,14 +132,21 @@ class TextFormatter:
         self._console = console or Console(file=stream or sys.stderr, highlight=False)
         self._quiet = quiet
 
-    def write_banner(self, version: str, url: str) -> None:
+    def write_banner(
+        self,
+        version: str,
+        url: str,
+        config: ScanConfig | None = None,
+    ) -> None:
         if self._quiet:
             return
+        pupil = _scan_mode_pupil(config) if config else "()"
+        mode = _scan_mode_label(config) if config else ""
+        mode_str = f" [dim]·[/dim] [cyan]{mode}[/cyan]" if mode else ""
         self._console.print(
-            f"[bold cyan] .-',--.`-.[/]\n"
-            f"[bold cyan]<_ | () | _>[/]\n"
-            f"[bold cyan]  `-`=='-'[/]\n"
-            f"\n[bold]Panoptic {version}[/] ({url})\n"
+            f"[bold cyan] .-',--.`-.[/]   [bold]Panoptic[/] {version}\n"
+            f"[bold cyan]<_ | {pupil} | _>[/]   [dim]{url}[/dim]\n"
+            f"[bold cyan]  `-`=='-'[/]  {mode_str}\n"
         )
 
     def write_info(self, message: str) -> None:

@@ -329,7 +329,7 @@ async def run(argv: list[str] | None = None) -> None:
         from panoptic.cases import list_values
 
         _file_config = load_config(args.get("config_file"))
-        _config = merge_config({k: v for k, v in args.items() if v is not None}, _file_config)
+        _config = merge_config(args, _file_config)
         values = list_values(args["list"], config=_config)
         fmt = args.get("output_format") or "text"
 

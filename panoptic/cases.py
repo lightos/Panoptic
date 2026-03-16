@@ -91,7 +91,7 @@ def parse_cases(config: ScanConfig) -> list[Case]:
 
         # Placeholder expansion ({HOST}, etc.)
         for variable in re.findall(r"\{[^}]+\}", location):
-            key = variable.strip("{}")
+            key = variable[1:-1]
             if key in replacements:
                 location = location.replace(variable, replacements[key])
 

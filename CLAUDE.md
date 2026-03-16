@@ -15,7 +15,7 @@ python3 -m panoptic --help       # CLI usage
 
 ## Architecture
 
-```
+```text
 panoptic/
   cli.py       → Argument parsing, validation, dispatch
   config.py    → TOML config loading, CLI/config merge (CLI > file > defaults)

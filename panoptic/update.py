@@ -93,7 +93,7 @@ def get_revision() -> str | None:
         )
         if result.returncode == 0:
             stdout = result.stdout.decode("utf-8", errors="replace").strip()
-            if re.match(r"[0-9a-f]{40}", stdout, re.I):
+            if re.match(r"[0-9a-f]{40}", stdout):
                 return stdout[:7]
     except FileNotFoundError:
         pass

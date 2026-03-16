@@ -206,7 +206,7 @@ class Scanner:
         # Show git revision in banner if available
         rev = get_revision()
         banner_version = f"{version}-{rev}" if rev else version
-        text_out.write_banner(banner_version, redact_url(self.config.url))
+        text_out.write_banner(banner_version, redact_url(self.config.url), self.config)
 
         if self.config.random_agent and not self.config.user_agent:
             self.config = self.config.replace(user_agent=get_random_agent())
@@ -405,6 +405,7 @@ class Scanner:
         if (
             not self.config.write_files
             and not self.config.match_string
+            and not self.config.bad_string
             and content_length > 0
             and content_length - baseline_length > SKIP_RETRIEVE_THRESHOLD
         ):
@@ -489,7 +490,12 @@ class Scanner:
         for hdr in self.config.headers:
             if FUZZ_MARKER in hdr:
                 name, value = validate_header(hdr)
-                fuzz_hdrs[name] = value.replace(FUZZ_MARKER, processed)
+                substituted = value.replace(FUZZ_MARKER, processed)
+                # Re-validate after substitution: case locations from custom
+                # lists could inject control characters via the FUZZ marker.
+                if any(c in substituted for c in "\r\n\x00"):
+                    continue
+                fuzz_hdrs[name] = substituted
         return fuzz_hdrs or None
 
     async def _fetch(

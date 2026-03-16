@@ -75,9 +75,7 @@ def extract_binlog_cases(
         return []
 
     # Match entries like '.\mysql-bin.000001' (dot then backslash prefix).
-    # Using a non-raw string so '\\\\' represents a literal backslash in the regex,
-    # matching the single backslash in the index file content.
-    binlogs = re.findall("\\.\\\\(?P<binlog>mysql-bin\\.\\d{1,6})", index_content)
+    binlogs = re.findall(r"\.\\(?P<binlog>mysql-bin\.\d{1,6})", index_content)
 
     # Extract directory from parent case location
     last_slash = parent_case.location.rfind("/")

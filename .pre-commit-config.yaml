@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.12
+    rev: v0.15.6
     hooks:
       - id: ruff
         args: [--fix]
@@ -16,6 +16,13 @@ repos:
           - rich
           - types-defusedxml
         args: [--strict]
+
+  - repo: https://github.com/igorshubovych/markdownlint-cli
+    rev: v0.44.0
+    hooks:
+      - id: markdownlint
+        args: [--fix]
+        exclude: ^(docs/superpowers/|\.claire/)
 
   - repo: https://github.com/pypa/pip-audit
     rev: v2.10.0
