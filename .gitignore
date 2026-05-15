@@ -5,6 +5,7 @@ output/
 .venv/
 panoptic.egg-info/
 .mcp.json
+.claire/
 .codex-review/
 .coderabbit-results/
 docs/
