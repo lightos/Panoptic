@@ -14,7 +14,7 @@ authors = [
     {name = "Miroslav Stampar"},
 ]
 dependencies = [
-    "httpx[socks]>=0.27",
+    "httpx[socks]>=0.28.1",
     "rich>=13.0",
     "rich-argparse>=1.4",
     "tomli>=2.0; python_version < '3.11'",
