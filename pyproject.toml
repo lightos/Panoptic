@@ -27,7 +27,7 @@ dev = [
     "pytest-httpx>=0.30",
     "ruff>=0.4",
     "mypy>=1.10",
-    "pre-commit>=4.0",
+    "pre-commit>=4.6.0",
     "pip-audit>=2.7",
 ]
 
