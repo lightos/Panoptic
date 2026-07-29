@@ -64,10 +64,11 @@ python -m pip install -e .
 panoptic --version
 ```
 
-On Windows, activate with `.venv\Scripts\activate`. The editable install
-keeps Panoptic connected to this checkout for `--update`, so keep the
-directory in place. Do not run `pip install panoptic`: that PyPI name
-belongs to an unrelated project.
+On Windows Command Prompt, activate with `.venv\Scripts\activate.bat`;
+in PowerShell, use `.venv\Scripts\Activate.ps1`. The editable install keeps
+Panoptic connected to this checkout for `--update`, so keep the directory
+in place. Do not run `pip install panoptic`: that PyPI name belongs to an
+unrelated project.
 
 For development:
 
