@@ -7,6 +7,7 @@ import pytest
 
 from panoptic.update import (
     GIT_UPSTREAM_REF,
+    PIP_UPDATE_COMMAND,
     _normalise_git_url,
     _uses_secure_git_transport,
     do_update,
@@ -44,7 +45,8 @@ class TestDoUpdate:
     def test_pip_installed_prints_guidance(self, mock_exists: Any, capsys: pytest.CaptureFixture[str]) -> None:
         assert do_update() == 0
         captured = capsys.readouterr()
-        assert "pip" in captured.out.lower()
+        assert PIP_UPDATE_COMMAND in captured.out
+        assert "pip install -U panoptic" not in captured.out
 
     def test_ssh_and_https_remotes_are_equivalent(self) -> None:
         assert _normalise_git_url("git@github.com:lightos/Panoptic.git") == _normalise_git_url(

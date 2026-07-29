@@ -14,6 +14,8 @@ from urllib.parse import urlsplit
 GIT_REPOSITORY_URL = "https://github.com/lightos/Panoptic.git"
 GIT_UPSTREAM_BRANCH = "main"
 GIT_UPSTREAM_REF = f"refs/heads/{GIT_UPSTREAM_BRANCH}"
+PIP_UPDATE_URL = f"https://github.com/lightos/Panoptic/archive/refs/heads/{GIT_UPSTREAM_BRANCH}.zip"
+PIP_UPDATE_COMMAND = f"python -m pip install --upgrade {PIP_UPDATE_URL}"
 
 _PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_PACKAGE_DIR)
@@ -51,7 +53,7 @@ def do_update() -> int:
 
     if not os.path.exists(git_dir):
         print("[i] Panoptic appears to be installed via pip.")
-        print("[i] To update, run: pip install -U panoptic")
+        print(f"[i] To update, run: {PIP_UPDATE_COMMAND}")
         return 0
 
     print("[i] Checking for updates...")
@@ -67,7 +69,7 @@ def do_update() -> int:
         )
     except FileNotFoundError:
         print("[!] 'git' is not installed or not in PATH.")
-        print("[i] Please install git or update via: pip install -U panoptic")
+        print(f"[i] Please install git or update via: {PIP_UPDATE_COMMAND}")
         return 2
     except subprocess.TimeoutExpired:
         print("[!] Timed out while checking the git remote.")

@@ -49,20 +49,30 @@ path traversal vulnerabilities.
 ## Requirements
 
 * Python 3.10+
-* Dependencies: `httpx[socks]`, `rich`, `rich-argparse`
+* Git
+* Dependencies: `httpx[socks]`, `rich`, `rich-argparse`, and
+  `tomli` on Python 3.10
 
 ## Installation
 
 ```bash
 git clone https://github.com/lightos/Panoptic.git
 cd Panoptic
-pip install -e .
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install -e .
+panoptic --version
 ```
+
+On Windows, activate with `.venv\Scripts\activate`. The editable install
+keeps Panoptic connected to this checkout for `--update`, so keep the
+directory in place. Do not run `pip install panoptic`: that PyPI name
+belongs to an unrelated project.
 
 For development:
 
 ```bash
-pip install -e ".[dev]"
+python -m pip install -e ".[dev]"
 ```
 
 ## Usage
@@ -343,10 +353,16 @@ panoptic --update    # fast-forward update from the official GitHub repo
 `--update` only works from a git checkout whose `origin` remote uses
 HTTPS or SSH and matches the official upstream (verified before pulling,
 to resist insecure or tampered remote configuration). It fast-forwards
-the checked-out `main` branch from the explicit upstream `main` ref; for
-pip installs it prints the correct
-`pip install -U` command instead. When run from a checkout, the banner
-also shows the current short git revision.
+the checked-out `main` branch from the explicit upstream `main` ref.
+Non-checkout installations can be refreshed safely from the official
+GitHub archive:
+
+```bash
+python -m pip install --upgrade https://github.com/lightos/Panoptic/archive/refs/heads/main.zip
+```
+
+When run from a checkout, the banner also shows the current short git
+revision.
 
 ## Exit Codes
 
