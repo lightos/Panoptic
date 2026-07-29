@@ -74,8 +74,13 @@ def extract_binlog_cases(
     if not index_content:
         return []
 
-    # Match entries like '.\mysql-bin.000001' (dot then backslash prefix).
-    binlogs = re.findall(r"\.\\(?P<binlog>mysql-bin\.\d{1,6})", index_content)
+    # Support Windows and Unix relative entries plus the modern MySQL 8
+    # default "binlog" basename.
+    binlogs = re.findall(
+        r"(?:^|[\r\n])(?:\.[\\/])?(?P<binlog>(?:mysql-bin|binlog)\.\d{1,9})(?:\r?$)",
+        index_content,
+        flags=re.MULTILINE,
+    )
 
     # Extract directory from parent case location
     last_slash = parent_case.location.rfind("/")

@@ -5,7 +5,6 @@ Wraps httpx with retry, timeout, proxy support, and header validation.
 
 from __future__ import annotations
 
-import ssl
 import sys
 from types import TracebackType
 
@@ -28,29 +27,19 @@ class NetworkClient:
         self._client: httpx.AsyncClient | None = None
 
     async def __aenter__(self) -> NetworkClient:
-        timeout = httpx.Timeout(self.config.timeout, connect=5.0)
-
-        proxy = self.config.proxy
-
-        # SSL verification
-        ssl_verify: bool | ssl.SSLContext = True
-        if self.config.invalid_ssl:
-            ctx = ssl.create_default_context()
-            ctx.check_hostname = False
-            ctx.verify_mode = ssl.CERT_NONE
-            ssl_verify = ctx
-
-        # Transport with retry
-        transport = httpx.AsyncHTTPTransport(retries=self.config.retries)
+        timeout = httpx.Timeout(self.config.timeout)
 
         # Build default headers
         headers = self._build_headers()
 
+        # Do not pass an explicit transport here. In HTTPX, doing so makes
+        # client-level verify/trust_env settings inapplicable to direct requests
+        # and prevents environment proxy mounts from being created. Retries are
+        # handled uniformly in fetch() so they also work with proxy transports.
         self._client = httpx.AsyncClient(
             timeout=timeout,
-            proxy=proxy,
-            verify=ssl_verify,
-            transport=transport,
+            proxy=self.config.proxy,
+            verify=not self.config.invalid_ssl,
             headers=headers,
             follow_redirects=self.config.follow_redirects,
             trust_env=not self.config.ignore_proxy,
@@ -81,27 +70,31 @@ class NetworkClient:
         if self._client is None:
             raise RuntimeError("NetworkClient must be used as async context manager")
 
-        try:
-            if data is not None:
-                # Infer content type from payload: JSON bodies get application/json,
-                # everything else defaults to form-encoded.
-                content_type = "application/x-www-form-urlencoded"
-                stripped = data.lstrip()
-                if stripped.startswith(("{", "[")):
-                    content_type = "application/json"
-                post_headers = {"Content-Type": content_type}
-                if headers:
-                    post_headers.update(headers)
-                response = await self._client.post(
-                    url,
-                    content=data.encode("utf-8"),
-                    headers=post_headers,
-                )
-            else:
-                response = await self._client.get(url, headers=headers)
-            return response
-        except httpx.HTTPError:
-            return None
+        for attempt in range(self.config.retries + 1):
+            try:
+                if data is not None:
+                    # Infer content type from payload: JSON bodies get application/json,
+                    # everything else defaults to form-encoded.
+                    content_type = "application/x-www-form-urlencoded"
+                    stripped = data.lstrip()
+                    if stripped.startswith(("{", "[")):
+                        content_type = "application/json"
+                    post_headers = {"Content-Type": content_type}
+                    if headers:
+                        post_headers.update(headers)
+                    return await self._client.post(
+                        url,
+                        content=data.encode("utf-8"),
+                        headers=post_headers,
+                    )
+                return await self._client.get(url, headers=headers)
+            except (httpx.ConnectError, httpx.ConnectTimeout):
+                if attempt >= self.config.retries:
+                    return None
+            except httpx.HTTPError:
+                return None
+
+        return None
 
     def _build_headers(self) -> dict[str, str]:
         """Build default headers from config, with validation."""

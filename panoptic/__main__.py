@@ -9,7 +9,7 @@ def main() -> None:
     from panoptic.cli import run
 
     try:
-        asyncio.run(run())
+        sys.exit(asyncio.run(run()))
     except KeyboardInterrupt:
         sys.exit(130)
 

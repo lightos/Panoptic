@@ -98,6 +98,14 @@ class TestScanConfig:
         config = ScanConfig(url="http://example.com", random_delay=(0.5, 2.0))
         assert config.random_delay == (0.5, 2.0)
 
+    def test_negative_retries_rejected(self) -> None:
+        with pytest.raises(ValueError, match="retries must be >= 0"):
+            ScanConfig(url="http://example.com", retries=-1)
+
+    def test_zero_multiplier_rejected(self) -> None:
+        with pytest.raises(ValueError, match="multiplier must be >= 1"):
+            ScanConfig(url="http://example.com", multiplier=0)
+
 
 class TestEnums:
     def test_file_type_values(self) -> None:

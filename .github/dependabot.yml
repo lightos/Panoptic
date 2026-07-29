@@ -1,14 +1,22 @@
 version: 2
 updates:
-  - package-ecosystem: "pip"
-    directory: "/"
+  - package-ecosystem: pip
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
     commit-message:
-      prefix: "deps"
-  - package-ecosystem: "github-actions"
-    directory: "/"
+      prefix: deps
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+  - package-ecosystem: github-actions
+    directory: /
     schedule:
-      interval: "weekly"
+      interval: weekly
     commit-message:
-      prefix: "ci"
+      prefix: ci
+    groups:
+      github-actions:
+        patterns:
+          - "*"

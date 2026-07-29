@@ -60,6 +60,15 @@ class TestExtractBinlogCases:
         cases = extract_binlog_cases(content, parent_case)
         assert cases[0].location.startswith("/var/lib/mysql/")
 
+    def test_extracts_unix_and_modern_binlog_entries(self) -> None:
+        content = "./mysql-bin.000001\n./binlog.000002\n/absolute/binlog.000003\n"
+        parent_case = Case(location="/var/lib/mysql/mysql-bin.index", os="*NIX")
+        cases = extract_binlog_cases(content, parent_case)
+        assert [case.location for case in cases] == [
+            "/var/lib/mysql/mysql-bin.000001",
+            "/var/lib/mysql/binlog.000002",
+        ]
+
     def test_empty_content_returns_empty(self) -> None:
         parent_case = Case(location="/var/lib/mysql/mysql-bin.index")
         assert extract_binlog_cases("", parent_case) == []

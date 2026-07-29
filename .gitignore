@@ -4,10 +4,15 @@ output/
 .worktrees/
 .venv/
 panoptic.egg-info/
+build/
+dist/
+.coverage
+htmlcov/
 .mcp.json
 CLAUDE.md
 .claude/
 .claire/
 .codex-review/
 .coderabbit-results/
+.fathom/
 docs/

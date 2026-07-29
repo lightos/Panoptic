@@ -5,25 +5,62 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from panoptic.update import do_update, get_revision
+from panoptic.update import (
+    GIT_UPSTREAM_REF,
+    _normalise_git_url,
+    _uses_secure_git_transport,
+    do_update,
+    get_revision,
+)
 
 
 class TestDoUpdate:
     @patch("panoptic.update.subprocess.run")
     @patch("panoptic.update.os.path.exists", return_value=True)
     def test_git_checkout_runs_git_pull(self, mock_exists: Any, mock_run: Any) -> None:
-        mock_run.return_value = MagicMock(returncode=0, stdout=b"Already up to date.\n")
-        do_update()
-        mock_run.assert_called()
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout=b"git@github.com:lightos/Panoptic.git\n"),
+            MagicMock(returncode=0, stdout=b"main\n"),
+            MagicMock(returncode=0, stdout=b"Already up to date.\n"),
+            MagicMock(returncode=0, stdout=b"abc1234567890abcdef1234567890abcdef123456\n"),
+        ]
+        assert do_update() == 0
+        assert mock_run.call_count == 4
         # Should use list args, not shell=True
-        args = mock_run.call_args
-        assert isinstance(args[0][0], list)
+        pull_args = mock_run.call_args_list[2]
+        assert pull_args[0][0] == ["git", "pull", "--ff-only", "origin", GIT_UPSTREAM_REF]
+
+    @patch("panoptic.update.subprocess.run")
+    @patch("panoptic.update.os.path.exists", return_value=True)
+    def test_git_checkout_rejects_non_main_branch(self, mock_exists: Any, mock_run: Any) -> None:
+        mock_run.side_effect = [
+            MagicMock(returncode=0, stdout=b"git@github.com:lightos/Panoptic.git\n"),
+            MagicMock(returncode=0, stdout=b"feature\n"),
+        ]
+        assert do_update() == 2
+        assert mock_run.call_count == 2
 
     @patch("panoptic.update.os.path.exists", return_value=False)
     def test_pip_installed_prints_guidance(self, mock_exists: Any, capsys: pytest.CaptureFixture[str]) -> None:
-        do_update()
+        assert do_update() == 0
         captured = capsys.readouterr()
         assert "pip" in captured.out.lower()
+
+    def test_ssh_and_https_remotes_are_equivalent(self) -> None:
+        assert _normalise_git_url("git@github.com:lightos/Panoptic.git") == _normalise_git_url(
+            "https://github.com/lightos/Panoptic.git"
+        )
+
+    @pytest.mark.parametrize(
+        "url",
+        [
+            "http://github.com/lightos/Panoptic.git",
+            "git://github.com/lightos/Panoptic.git",
+            "file://github.com/lightos/Panoptic.git",
+        ],
+    )
+    def test_insecure_remote_transports_are_rejected(self, url: str) -> None:
+        assert _uses_secure_git_transport(url) is False
 
 
 class TestGetRevision:

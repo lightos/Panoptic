@@ -63,6 +63,12 @@ class TestIsMatch:
         """Guard: if invalid_response is None, return False."""
         assert is_match("some html", None) is False
 
+    def test_reordered_body_uses_full_similarity_ratio(self) -> None:
+        """Bodies with identical character counts but different structure must differ."""
+        found = "A" * 5000 + "B" * 5000
+        invalid = "AB" * 5000
+        assert is_match(found, invalid) is True
+
 
 class TestFilterContent:
     def test_strips_common_prefix_suffix(self) -> None:

@@ -2,6 +2,7 @@
 
 from panoptic.cli import parse_args, validate_args
 from panoptic.config import merge_config
+from panoptic.core import build_payload
 from panoptic.models import ScanConfig
 
 
@@ -32,7 +33,9 @@ class TestEndToEnd:
 
         assert config.url == "http://target.test/vuln.php?file=test.txt"
         assert config.param == "file"
-        assert config.prefix == "../../../"
+        assert config.prefix == "../"
+        assert config.multiplier == 3
+        assert "../../../etc/passwd" in build_payload(config, "/etc/passwd", "file=test.txt")
         assert config.timeout == 5.0
         assert config.concurrency == 2
         assert config.automatic is True
@@ -66,6 +69,7 @@ class TestEndToEnd:
         assert len(cases) > 0
         for case in cases:
             if case.os:
-                assert case.os == "*NIX"
+                # *NIX filter keeps the Unix family (FreeBSD, OS X, ...) but excludes Windows.
+                assert case.os != "Windows"
             if case.file_type:
                 assert case.file_type.value == "conf"

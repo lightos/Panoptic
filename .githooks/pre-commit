@@ -1,0 +1,27 @@
+#!/bin/bash
+# Pre-commit hook for Panoptic
+#
+# This hook delegates to the pre-commit framework for consistent tool configuration.
+# The canonical check definitions are in .pre-commit-config.yaml.
+#
+# Setup options:
+#   Option A (recommended): Use pre-commit framework directly
+#     pip install pre-commit && pre-commit install
+#
+#   Option B: Use this script via git config
+#     git config core.hooksPath .githooks
+#
+#   Option C: Copy to .git/hooks
+#     cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
+
+# All setup options require the pre-commit package. Keeping one execution path
+# ensures the pinned hooks and arguments in .pre-commit-config.yaml are always
+# used, including Ruff fixes, formatting, strict mypy, Markdown linting, and the
+# project dependency audit.
+if ! command -v pre-commit >/dev/null 2>&1; then
+    echo "Error: pre-commit is required to run the Panoptic checks." >&2
+    echo "Install it with: python -m pip install pre-commit" >&2
+    exit 1
+fi
+
+exec pre-commit run

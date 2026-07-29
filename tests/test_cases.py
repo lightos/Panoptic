@@ -22,10 +22,32 @@ class TestParseCases:
         with pytest.raises(AttributeError):
             cases[0].location = "modified"  # type: ignore[misc]
 
-    def test_filter_by_os(self) -> None:
+    def test_filter_by_os_nix_includes_unix_family(self) -> None:
+        """A *NIX filter excludes Windows but keeps the whole Unix family."""
         config = ScanConfig(url="http://example.com", os_filter="*NIX")
         cases = parse_cases(config)
-        assert all(c.os == "*NIX" for c in cases if c.os is not None)
+        os_values = {c.os for c in cases if c.os is not None}
+        assert "Windows" not in os_values
+        assert "*NIX" in os_values
+        assert "FreeBSD" in os_values  # specific Unix OS retained under *NIX
+
+    def test_filter_by_specific_unix_includes_generic_nix(self) -> None:
+        """A specific Unix filter still includes the generic *NIX cases (matches runtime)."""
+        config = ScanConfig(url="http://example.com", os_filter="FreeBSD")
+        cases = parse_cases(config)
+        os_values = {c.os for c in cases if c.os is not None}
+        assert "FreeBSD" in os_values
+        assert "*NIX" in os_values
+        assert "Windows" not in os_values
+
+    def test_filter_by_lowercase_os_alias_keeps_os_x_cases(self) -> None:
+        config = ScanConfig(url="http://example.com", os_filter="osx")
+        cases = parse_cases(config)
+        os_values = {case.os for case in cases}
+        assert "OS X" in os_values
+        assert "*NIX" in os_values
+        assert "Windows" not in os_values
+        assert any(case.location == "/usr/local/mysql/data/mysql.log" for case in cases)
 
     def test_filter_by_software(self) -> None:
         config = ScanConfig(url="http://example.com", software_filter="PHP")
@@ -43,6 +65,37 @@ class TestParseCases:
         cases = parse_cases(config)
         for case in cases:
             assert "{HOST}" not in case.location
+
+    def test_domain_placeholder_expansion(self) -> None:
+        config = ScanConfig(url="http://target.example.com:8080/test.php?f=x")
+        cases = parse_cases(config)
+        domain_cases = [case for case in cases if "/var/log/lighttpd/target.example.com/" in case.location]
+        assert len(domain_cases) == 2
+        assert all("{" not in case.location for case in cases)
+
+    def test_version_templates_are_skipped_unless_requested(self) -> None:
+        default_cases = parse_cases(ScanConfig(url="http://example.com"))
+        versioned_cases = parse_cases(ScanConfig(url="http://example.com", all_versions=True))
+        assert all("[" not in case.location for case in default_cases)
+        assert len(versioned_cases) > len(default_cases)
+        assert any("JBoss-6.0.0.Final" in case.location for case in versioned_cases)
+
+    def test_unknown_version_template_fails_fast(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setattr(
+            "panoptic.cases._load_csv",
+            lambda: [
+                {
+                    "path": "/opt/[UNKNOWN]/config",
+                    "os": "*NIX",
+                    "software": "Example",
+                    "category": "Other",
+                    "type": "conf",
+                }
+            ],
+        )
+        monkeypatch.setattr("panoptic.cases.load_versions", lambda: {"KNOWN": ["1.0"]})
+        with pytest.raises(ValueError, match="unknown version section 'UNKNOWN'"):
+            parse_cases(ScanConfig(url="http://example.com", all_versions=True))
 
 
 class TestLoadVersions:
@@ -82,7 +135,19 @@ class TestCsvValidation:
         """CSV parser returns expected number of cases."""
         config = ScanConfig(url="http://example.com")
         cases = parse_cases(config)
-        assert len(cases) == 1024
+        assert len(cases) == 958
+
+    def test_composite_os_rows_emit_one_case_per_location(self) -> None:
+        cases = parse_cases(ScanConfig(url="http://example.com"))
+        locations = {
+            "/usr/ports/ftp/pure-ftpd/pure-ftpd.conf",
+            "/usr/ports/ftp/pure-ftpd/pureftpd.passwd",
+            "/usr/ports/ftp/pure-ftpd/pureftpd.pdb",
+        }
+        composite_cases = [case for case in cases if case.location in locations]
+        assert len(composite_cases) == len(locations)
+        assert {case.location for case in composite_cases} == locations
+        assert all(case.os == "DragonFly BSD, FreeBSD" for case in composite_cases)
 
     def test_all_cases_have_metadata(self) -> None:
         """Every case from CSV has all metadata fields populated."""
@@ -109,6 +174,15 @@ class TestListFunctions:
         values = list_values("os")
         assert "*NIX" in values
         assert "Windows" in values
+        assert "OS X" in values
+        assert "OSX" not in values
+        assert "DragonFly BSD" in values
+        assert "DragonflyBSD, FreeBSD" not in values
+
+        filtered_values = list_values("os", ScanConfig(url="http://example.com"))
+        assert "DragonFly BSD" in filtered_values
+        assert "FreeBSD" in filtered_values
+        assert "DragonFly BSD, FreeBSD" not in filtered_values
 
     def test_list_values_software(self) -> None:
         from panoptic.cases import list_values
