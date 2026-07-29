@@ -367,6 +367,13 @@ Panoptic uses conventional process exit codes so it can be scripted:
 Contributions are welcome! Please open issues or pull requests on
 [GitHub](https://github.com/lightos/Panoptic).
 
+## Testbed
+
+For safe, reproducible end-to-end testing, see the
+[Panoptic LFI Testbed](https://github.com/lightos/panoptic-lfi-testbed).
+It provides deliberately vulnerable endpoints covering Panoptic's supported
+injection methods and traversal transformations.
+
 ## License
 
 This project is licensed under the MIT License - see the
