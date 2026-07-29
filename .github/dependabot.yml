@@ -4,6 +4,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: deps
     groups:
       python-dependencies:
         patterns:
@@ -12,6 +14,8 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    commit-message:
+      prefix: ci
     groups:
       github-actions:
         patterns:

@@ -28,5 +28,7 @@ repos:
     rev: v2.10.1
     hooks:
       - id: pip-audit
+        # Audit the project's declared dependencies rather than pip-audit's
+        # ambient hook environment.
         args: [--desc=on, .]
         pass_filenames: false
