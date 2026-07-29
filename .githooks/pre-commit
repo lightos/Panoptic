@@ -14,111 +14,14 @@
 #   Option C: Copy to .git/hooks
 #     cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
-# Do not use set -e; we want to capture all failures and report them
-
-echo "Running pre-commit checks..."
-
-EXIT_CODE=0
-CHECKS_RAN=0
-
-# Prefer pre-commit framework if available (uses .pre-commit-config.yaml)
-if command -v pre-commit &> /dev/null; then
-    echo "Using pre-commit framework..."
-    if ! pre-commit run; then
-        EXIT_CODE=1
-    fi
-    CHECKS_RAN=1
-else
-    echo "Note: pre-commit framework not installed."
-    echo "Install with: pip install pre-commit && pre-commit install"
-    echo "Falling back to direct tool invocation..."
-    echo ""
-
-    # Get list of staged Python files
-    STAGED_PY=()
-    while IFS= read -r file; do
-        [ -n "$file" ] && STAGED_PY+=("$file")
-    done < <(git diff --cached --name-only --diff-filter=ACM | grep '\.py$' || true)
-
-    # Get list of staged Markdown files
-    STAGED_MD=()
-    while IFS= read -r file; do
-        [ -n "$file" ] && STAGED_MD+=("$file")
-    done < <(git diff --cached --name-only --diff-filter=ACM | grep '\.md$' || true)
-
-    # Python checks
-    if [ "${#STAGED_PY[@]}" -gt 0 ]; then
-        echo "Checking Python files: ${STAGED_PY[*]}"
-
-        # Run ruff check (replaces flake8 - no need for both)
-        echo "Running ruff check..."
-        if command -v ruff &> /dev/null; then
-            if ! ruff check "${STAGED_PY[@]}"; then
-                EXIT_CODE=1
-            fi
-            CHECKS_RAN=1
-        else
-            echo "Warning: ruff not installed, skipping ruff check"
-        fi
-
-        # Run ruff format check (don't auto-fix in hook, just check)
-        echo "Running ruff format check..."
-        if command -v ruff &> /dev/null; then
-            if ! ruff format --check "${STAGED_PY[@]}"; then
-                EXIT_CODE=1
-            fi
-            CHECKS_RAN=1
-        else
-            echo "Warning: ruff not installed, skipping format check"
-        fi
-
-        # Run pyright
-        echo "Running pyright..."
-        if command -v pyright &> /dev/null; then
-            if ! pyright "${STAGED_PY[@]}"; then
-                EXIT_CODE=1
-            fi
-            CHECKS_RAN=1
-        else
-            echo "Warning: pyright not installed, skipping type checking"
-        fi
-    else
-        echo "No Python files staged."
-    fi
-
-    # Markdown checks
-    if [ "${#STAGED_MD[@]}" -gt 0 ]; then
-        echo "Checking Markdown files: ${STAGED_MD[*]}"
-
-        echo "Running markdownlint..."
-        if command -v markdownlint &> /dev/null; then
-            if ! markdownlint "${STAGED_MD[@]}"; then
-                EXIT_CODE=1
-            fi
-            CHECKS_RAN=1
-        elif command -v npx >/dev/null 2>&1; then
-            if ! npx --no-install markdownlint-cli "${STAGED_MD[@]}"; then
-                echo "Error: markdownlint-cli is not installed locally."
-                echo "Install markdownlint-cli before committing Markdown changes."
-                EXIT_CODE=1
-            fi
-            CHECKS_RAN=1
-        else
-            echo "Warning: markdownlint not installed, skipping markdown lint"
-        fi
-    else
-        echo "No Markdown files staged."
-    fi
+# All setup options require the pre-commit package. Keeping one execution path
+# ensures the pinned hooks and arguments in .pre-commit-config.yaml are always
+# used, including Ruff fixes, formatting, strict mypy, Markdown linting, and the
+# project dependency audit.
+if ! command -v pre-commit >/dev/null 2>&1; then
+    echo "Error: pre-commit is required to run the Panoptic checks." >&2
+    echo "Install it with: python -m pip install pre-commit" >&2
+    exit 1
 fi
 
-# Summary
-echo ""
-if [ "$CHECKS_RAN" -eq 0 ]; then
-    echo "No checks were run (no tools installed or no files staged)."
-elif [ "$EXIT_CODE" -eq 0 ]; then
-    echo "All checks passed!"
-else
-    echo "Some checks failed. Please fix the issues above before committing."
-fi
-
-exit $EXIT_CODE
+exec pre-commit run
