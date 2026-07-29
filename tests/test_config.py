@@ -71,6 +71,9 @@ class TestMergeConfig:
         config = merge_config(cli_args, {})
         assert config.output_format == OutputFormat.JSON
 
+        enum_config = merge_config({"url": "http://example.com", "output_format": OutputFormat.CSV}, {})
+        assert enum_config.output_format == OutputFormat.CSV
+
     def test_cli_false_overrides_true_boolean(self) -> None:
         config = merge_config(
             {"url": "http://example.com", "automatic": False},
@@ -105,6 +108,8 @@ class TestMergeConfig:
             ({"defaults": {"os_filter": 123}}, "os_filter must be a string"),
             ({"defaults": {"automatic": "yes"}}, "automatic must be a boolean"),
             ({"defaults": {"concurrency": 4.5}}, "concurrency must be an integer"),
+            ({"defaults": {"header": 123}}, "defaults.header must be a string or a list of strings"),
+            ({"defaults": {"output_format": 123}}, "output_format must be a string"),
         ],
     )
     def test_invalid_config_types_raise(self, file_config: dict[str, object], message: str) -> None:

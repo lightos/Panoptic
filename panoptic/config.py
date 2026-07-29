@@ -134,6 +134,8 @@ def merge_config(cli_args: dict[str, Any], file_config: dict[str, Any]) -> ScanC
             merged["headers"] = [legacy_headers]
         elif isinstance(legacy_headers, list):
             merged["headers"] = legacy_headers
+        else:
+            raise ValueError("defaults.header must be a string or a list of strings")
 
     # Map proxy and header sections to flat ScanConfig fields
     proxy_section = file_config.get("proxy", {})
@@ -175,7 +177,9 @@ def merge_config(cli_args: dict[str, Any], file_config: dict[str, Any]) -> ScanC
                 merged[key] = value
 
     # Handle output_format enum conversion
-    if "output_format" in merged and isinstance(merged["output_format"], str):
+    if "output_format" in merged and not isinstance(merged["output_format"], OutputFormat):
+        if not isinstance(merged["output_format"], str):
+            raise ValueError("output_format must be a string")
         try:
             merged["output_format"] = OutputFormat(merged["output_format"])
         except ValueError as e:

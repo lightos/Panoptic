@@ -243,7 +243,8 @@ class TestWriteFile:
         output_dir = tmp_path / "output" / "example.com"
         files = list(output_dir.iterdir())
         assert len(files) == 2, f"Expected 2 files, got {len(files)}: {files}"
-        assert all(os.stat(path).st_mode & 0o777 == 0o600 for path in files)
+        if os.name == "posix":
+            assert all(os.stat(path).st_mode & 0o777 == 0o600 for path in files)
 
     @pytest.mark.skipif(os.name != "posix", reason="requires POSIX symlinks")
     def test_discovered_file_write_refuses_symlink(self, tmp_path: Path) -> None:
@@ -621,8 +622,8 @@ class TestCheckpointThrottling:
 
         with patch("panoptic.core.save_checkpoint", side_effect=blocking_save):
             flush_task = asyncio.create_task(scanner._flush_checkpoint())
-            while not save_started.is_set():
-                await asyncio.sleep(0)
+            save_observed = await asyncio.wait_for(asyncio.to_thread(save_started.wait, 1), timeout=2)
+            assert save_observed, "checkpoint save did not start"
             await scanner._mark_completed(second)
             allow_save.set()
             await asyncio.wait_for(flush_task, timeout=2)

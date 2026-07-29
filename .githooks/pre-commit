@@ -97,7 +97,7 @@ else
             fi
             CHECKS_RAN=1
         elif command -v npx >/dev/null 2>&1; then
-            if ! npx markdownlint "${STAGED_MD[@]}"; then
+            if ! npx markdownlint-cli "${STAGED_MD[@]}"; then
                 EXIT_CODE=1
             fi
             CHECKS_RAN=1
