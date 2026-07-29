@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=68.0"]
+requires = ["setuptools>=77.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -7,28 +7,35 @@ name = "panoptic"
 version = "2.0.0"
 description = "Search and retrieve content of common log and config files via path traversal vulnerability"
 readme = "README.md"
-license = {text = "MIT"}
+license = "MIT"
 requires-python = ">=3.10"
 authors = [
     {name = "Roberto Christopher Salgado Bjerre"},
     {name = "Miroslav Stampar"},
 ]
 dependencies = [
-    "httpx[socks]>=0.27",
-    "rich>=13.0",
+    "httpx[socks]>=0.28.1",
+    "rich>=15.0.0",
     "rich-argparse>=1.4",
     "tomli>=2.0; python_version < '3.11'",
 ]
 
+[project.urls]
+Homepage = "https://github.com/lightos/Panoptic"
+Issues = "https://github.com/lightos/Panoptic/issues"
+Source = "https://github.com/lightos/Panoptic"
+
 [project.optional-dependencies]
 dev = [
     "pytest>=8.0",
-    "pytest-asyncio>=0.23",
+    "pytest-asyncio>=1.4.0",
     "pytest-httpx>=0.30",
     "ruff>=0.4",
     "mypy>=1.10",
-    "pre-commit>=4.0",
-    "pip-audit>=2.7",
+    "pre-commit>=4.6.0",
+    "pip-audit>=2.10.1",
+    "build>=1.2",
+    "twine>=5.0",
 ]
 
 [tool.setuptools.packages.find]

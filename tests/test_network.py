@@ -1,5 +1,7 @@
 """Tests for panoptic.network — async HTTP client."""
 
+from unittest.mock import AsyncMock, patch
+
 import httpx
 import pytest
 from pytest_httpx import HTTPXMock
@@ -44,9 +46,42 @@ class TestNetworkClient:
 
     async def test_fetch_connection_error_returns_none(self, config: ScanConfig, httpx_mock: HTTPXMock) -> None:
         httpx_mock.add_exception(httpx.ConnectError("refused"))
+        httpx_mock.add_exception(httpx.ConnectError("refused again"))
         async with NetworkClient(config) as client:
             response = await client.fetch("http://example.com/down")
             assert response is None
+
+    async def test_connect_error_is_retried(self, config: ScanConfig, httpx_mock: HTTPXMock) -> None:
+        httpx_mock.add_exception(httpx.ConnectError("temporary"))
+        httpx_mock.add_response(url="http://example.com/retry", text="recovered")
+        async with NetworkClient(config) as client:
+            response = await client.fetch("http://example.com/retry")
+        assert response is not None
+        assert response.text == "recovered"
+
+    async def test_ssl_and_environment_proxy_options_reach_httpx(self) -> None:
+        config = ScanConfig(
+            url="https://example.com",
+            invalid_ssl=True,
+            ignore_proxy=False,
+        )
+        mock_client = AsyncMock()
+        with patch("panoptic.network.httpx.AsyncClient", return_value=mock_client) as client_cls:
+            async with NetworkClient(config):
+                pass
+
+        kwargs = client_cls.call_args.kwargs
+        assert kwargs["verify"] is False
+        assert kwargs["trust_env"] is True
+        assert "transport" not in kwargs
+
+    async def test_ignore_proxy_disables_environment_proxies(self) -> None:
+        config = ScanConfig(url="https://example.com", ignore_proxy=True)
+        mock_client = AsyncMock()
+        with patch("panoptic.network.httpx.AsyncClient", return_value=mock_client) as client_cls:
+            async with NetworkClient(config):
+                pass
+        assert client_cls.call_args.kwargs["trust_env"] is False
 
     async def test_custom_user_agent(self, httpx_mock: HTTPXMock) -> None:
         config = ScanConfig(url="http://example.com", user_agent="CustomBot/1.0")

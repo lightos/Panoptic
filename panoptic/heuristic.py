@@ -11,9 +11,6 @@ import re
 # Default similarity ratio above which responses are considered "the same"
 DEFAULT_HEURISTIC_RATIO = 0.9
 
-# Content-Length threshold for skipping full body retrieval
-SKIP_RETRIEVE_THRESHOLD = 1000
-
 
 def clean_response(response: str, filepath: str) -> str:
     """Remove occurrences of a filepath from a response string.
@@ -58,8 +55,17 @@ def is_match(
     if html is None or invalid_response is None:
         return False
 
+    if html == invalid_response:
+        return False
+
+    # quick_ratio() is an upper bound: when it is already below the threshold,
+    # the full ratio must also be below it and can safely be skipped. A high
+    # quick ratio is not conclusive (reordered bodies can score 1.0), so those
+    # responses still require the full comparison.
     matcher = difflib.SequenceMatcher(None, html, invalid_response)
-    return matcher.quick_ratio() < ratio
+    if matcher.quick_ratio() < ratio:
+        return True
+    return matcher.ratio() < ratio
 
 
 def filter_content(html: str, original_response: str) -> str:

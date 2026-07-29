@@ -94,13 +94,13 @@ path,os,software,category,type
 /var/log/mysqlderror.log,*NIX,MySQL,Databases,log
 /var/mysql-bin.index,*NIX,MySQL,Databases,log
 /var/mysql.log,*NIX,MySQL,Databases,log
-/usr/local/mysql/data/mysql-bin.index,OSX,MySQL,Databases,log
-/usr/local/mysql/data/mysql-bin.log,OSX,MySQL,Databases,log
-/usr/local/mysql/data/mysql-slow.log,OSX,MySQL,Databases,log
-/usr/local/mysql/data/mysql.err,OSX,MySQL,Databases,log
-/usr/local/mysql/data/mysql.log,OSX,MySQL,Databases,log
-/usr/local/mysql/data/mysqlderror.log,OSX,MySQL,Databases,log
-/usr/local/mysql/data/{HOST}.err,OSX,MySQL,Databases,log
+/usr/local/mysql/data/mysql-bin.index,OS X,MySQL,Databases,log
+/usr/local/mysql/data/mysql-bin.log,OS X,MySQL,Databases,log
+/usr/local/mysql/data/mysql-slow.log,OS X,MySQL,Databases,log
+/usr/local/mysql/data/mysql.err,OS X,MySQL,Databases,log
+/usr/local/mysql/data/mysql.log,OS X,MySQL,Databases,log
+/usr/local/mysql/data/mysqlderror.log,OS X,MySQL,Databases,log
+/usr/local/mysql/data/{HOST}.err,OS X,MySQL,Databases,log
 /MySQL/data/mysql-bin.index,Windows,MySQL,Databases,log
 /MySQL/data/mysql-bin.log,Windows,MySQL,Databases,log
 /MySQL/data/mysql.err,Windows,MySQL,Databases,log
@@ -427,7 +427,7 @@ path,os,software,category,type
 /usr/local/php5/lib/php.ini,*NIX,PHP,Programming,conf
 /var/local/www/conf/php.ini,*NIX,PHP,Programming,conf
 /web/conf/php.ini,*NIX,PHP,Programming,conf
-/Volumes/Macintosh_HD1/usr/local/php/lib/php.ini,OSX,PHP,Programming,conf
+/Volumes/Macintosh_HD1/usr/local/php/lib/php.ini,OS X,PHP,Programming,conf
 /NetServer/bin/stable/apache/php.ini,Windows,PHP,Programming,conf
 /PHP/php.ini,Windows,PHP,Programming,conf
 /WINDOWS/php.ini,Windows,PHP,Programming,conf
@@ -970,32 +970,32 @@ path,os,software,category,type
 /var/log/webmin/miniserv.log,*NIX,Webmin,Web Servers,log
 /usr/local/zeus/web/global.cfg,*NIX,Zeus Web Server (ZWS),Web Servers,conf
 /usr/local/zeus/web/log/errors,*NIX,Zeus Web Server (ZWS),Web Servers,log
-/etc/lighttpd/lighthttpd.conf,*NIX,lighthttpd,Web Servers,conf
-/home/user/lighttpd/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
-/usr/home/user/lighttpd/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
-/usr/local/etc/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
-/usr/local/etc/lighttpd.conf.new,*NIX,lighthttpd,Web Servers,conf
-/usr/local/lighttpd/conf/lighttpd.conf,*NIX,lighthttpd,Web Servers,conf
-/var/www/.lighttpdpassword,*NIX,lighthttpd,Web Servers,conf
-/usr/home/user/var/log/apache.log,*NIX,lighthttpd,Web Servers,log
-/usr/home/user/var/log/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
-/usr/local/apache/logs/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
-/usr/local/apache/logs/lighttpd.log,*NIX,lighthttpd,Web Servers,log
-/usr/local/apache2/logs/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
-/usr/local/apache2/logs/lighttpd.log,*NIX,lighthttpd,Web Servers,log
-/usr/local/lighttpd/log/access.log,*NIX,lighthttpd,Web Servers,log
-/usr/local/lighttpd/log/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
-/var/lighttpd.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd.access.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd.error.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd/,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd/access.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd/access.www.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd/error.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd/error.www.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd/{DOMAIN}/access.log,*NIX,lighthttpd,Web Servers,log
-/var/log/lighttpd/{DOMAIN}/error.log,*NIX,lighthttpd,Web Servers,log
-/var/logs/access.log,*NIX,lighthttpd,Web Servers,log
+/etc/lighttpd/lighthttpd.conf,*NIX,lighttpd,Web Servers,conf
+/home/user/lighttpd/lighttpd.conf,*NIX,lighttpd,Web Servers,conf
+/usr/home/user/lighttpd/lighttpd.conf,*NIX,lighttpd,Web Servers,conf
+/usr/local/etc/lighttpd.conf,*NIX,lighttpd,Web Servers,conf
+/usr/local/etc/lighttpd.conf.new,*NIX,lighttpd,Web Servers,conf
+/usr/local/lighttpd/conf/lighttpd.conf,*NIX,lighttpd,Web Servers,conf
+/var/www/.lighttpdpassword,*NIX,lighttpd,Web Servers,conf
+/usr/home/user/var/log/apache.log,*NIX,lighttpd,Web Servers,log
+/usr/home/user/var/log/lighttpd.error.log,*NIX,lighttpd,Web Servers,log
+/usr/local/apache/logs/lighttpd.error.log,*NIX,lighttpd,Web Servers,log
+/usr/local/apache/logs/lighttpd.log,*NIX,lighttpd,Web Servers,log
+/usr/local/apache2/logs/lighttpd.error.log,*NIX,lighttpd,Web Servers,log
+/usr/local/apache2/logs/lighttpd.log,*NIX,lighttpd,Web Servers,log
+/usr/local/lighttpd/log/access.log,*NIX,lighttpd,Web Servers,log
+/usr/local/lighttpd/log/lighttpd.error.log,*NIX,lighttpd,Web Servers,log
+/var/lighttpd.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd.access.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd.error.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd/,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd/access.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd/access.www.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd/error.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd/error.www.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd/{DOMAIN}/access.log,*NIX,lighttpd,Web Servers,log
+/var/log/lighttpd/{DOMAIN}/error.log,*NIX,lighttpd,Web Servers,log
+/var/logs/access.log,*NIX,lighttpd,Web Servers,log
 /etc/nginx/nginx.conf,*NIX,nginx,Web Servers,conf
 /usr/local/etc/nginx/nginx.conf,*NIX,nginx,Web Servers,conf
 /usr/local/nginx/conf/nginx.conf,*NIX,nginx,Web Servers,conf

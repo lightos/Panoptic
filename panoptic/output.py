@@ -14,7 +14,7 @@ from rich.console import Console
 from rich.markup import escape as rich_escape
 
 from panoptic.models import ScanConfig, ScanResult
-from panoptic.utils import _PARAM_VALUE_RE, redact_url
+from panoptic.utils import redact_parameter_values, redact_url, validate_header
 
 
 class TeeWriter:
@@ -37,29 +37,42 @@ class TeeWriter:
 
 
 def _redact_json_values(obj: object) -> object:
-    """Recursively replace all string values in a JSON structure with '***'."""
+    """Recursively redact every scalar leaf in a JSON structure.
+
+    Strings, numbers, and booleans are all replaced with '***' — a credential
+    can be a numeric PIN or a bare token just as easily as a string, so redacting
+    only strings would leak scalar secrets. ``null`` is preserved because it
+    carries no value and keeps the structure faithful.
+    """
     if isinstance(obj, dict):
         return {k: _redact_json_values(v) for k, v in obj.items()}
     if isinstance(obj, list):
         return [_redact_json_values(v) for v in obj]
-    if isinstance(obj, str):
-        return "***"
-    return obj
+    if obj is None:
+        return None
+    return "***"
 
 
 def _redact_field(url: str) -> str:
     """Redact a URL or POST body for safe serialization."""
-    if url.startswith(("http://", "https://")):
+    if url.lower().startswith(("http://", "https://")):
         return redact_url(url)
-    # JSON body: redact all string values by parsing then recursively replacing
-    if url.lstrip().startswith("{"):
-        try:
-            obj = json.loads(url)
+    # JSON body: redact every leaf value, preserving container structure and keys.
+    try:
+        obj = json.loads(url)
+    except (json.JSONDecodeError, ValueError):
+        pass
+    else:
+        if isinstance(obj, (dict, list)):
             return json.dumps(_redact_json_values(obj))
-        except (json.JSONDecodeError, ValueError):
-            pass
-    # POST body: redact form-encoded values (key=VALUE → key=***)
-    return _PARAM_VALUE_RE.sub("***", url)
+        # Bare JSON scalar (number, quoted string, bool, null): nothing structural
+        # to keep, so redact the whole field.
+        return "***"
+    # Form-encoded body: redact values while keeping keys for context (key=VALUE → key=***).
+    if "=" in url:
+        return redact_parameter_values(url)
+    # Opaque body with no recognizable structure (e.g. a raw token): redact entirely.
+    return "***" if url else url
 
 
 def _result_to_dict(r: ScanResult) -> dict[str, object]:
@@ -86,7 +99,13 @@ def _has_fuzz(config: ScanConfig) -> bool:
     if config.data and _FUZZ_MARKER in config.data:
         return True
     if config.headers:
-        return any(_FUZZ_MARKER in h for h in config.headers)
+        for header in config.headers:
+            try:
+                _name, value = validate_header(header, warn_deprecated=False)
+            except ValueError:
+                continue
+            if _FUZZ_MARKER in value:
+                return True
     return False
 
 
@@ -143,19 +162,21 @@ class TextFormatter:
         pupil = _scan_mode_pupil(config) if config else "()"
         mode = _scan_mode_label(config) if config else ""
         mode_str = f" [dim]·[/dim] [cyan]{mode}[/cyan]" if mode else ""
+        # The URL is attacker-influenced (target, redacted userinfo, IPv6 brackets)
+        # and must be escaped so it cannot inject or break Rich markup.
         self._console.print(
-            f"[bold cyan] .-',--.`-.[/]   [bold]Panoptic[/] {version}\n"
-            f"[bold cyan]<_ | {pupil} | _>[/]   [dim]{url}[/dim]\n"
+            f"[bold cyan] .-',--.`-.[/]   [bold]Panoptic[/] {rich_escape(version)}\n"
+            f"[bold cyan]<_ | {pupil} | _>[/]   [dim]{rich_escape(url)}[/dim]\n"
             f"[bold cyan]  `-`=='-'[/]  {mode_str}\n"
         )
 
     def write_info(self, message: str) -> None:
         if self._quiet:
             return
-        self._console.print(f"[blue][i][/blue] {message}")
+        self._console.print(f"[blue][i][/blue] {rich_escape(message)}")
 
     def write_warning(self, message: str) -> None:
-        self._console.print(f"[red][!][/red] {message}")
+        self._console.print(f"[red][!][/red] {rich_escape(message)}")
 
     def write_found(self, result: ScanResult) -> None:
         case = result.case
@@ -167,7 +188,7 @@ class TextFormatter:
     def write_verbose(self, message: str) -> None:
         if self._quiet:
             return
-        self._console.print(f"[dim][*] {message}[/dim]")
+        self._console.print(f"[dim][*] {rich_escape(message)}[/dim]")
 
     def write_summary(self, found: list[ScanResult], total_cases: int) -> None:
         if self._quiet:
@@ -175,6 +196,23 @@ class TextFormatter:
         self._console.print("\n[bold]Scan Complete[/bold]")
         self._console.print(f"  Cases tested: {total_cases}")
         self._console.print(f"  Files found:  [green]{len(found)}[/green]")
+
+    def write_results(self, found: list[ScanResult], total_cases: int) -> None:
+        """Write complete plain-text results for files and redirected output."""
+        if self._quiet:
+            return
+        if found:
+            self._console.print("[bold]Findings[/bold]")
+            for result in found:
+                status = result.status_code if result.status_code is not None else "-"
+                length = result.content_length if result.content_length is not None else "-"
+                self._console.print(
+                    f"  {rich_escape(result.case.location)}  [dim](status={status}, length={length})[/dim]",
+                    soft_wrap=True,
+                )
+        else:
+            self._console.print("No files found.")
+        self.write_summary(found, total_cases)
 
 
 class JsonFormatter:

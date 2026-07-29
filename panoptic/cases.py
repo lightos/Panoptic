@@ -8,10 +8,15 @@ import re
 from urllib.parse import urlsplit
 
 from panoptic.models import Case, FileType, ScanConfig
-from panoptic.utils import load_data_file
+from panoptic.utils import load_data_file, normalize_os_name, normalize_os_names, os_matches_restriction
 
 REQUIRED_COLUMNS = frozenset({"path", "os", "software", "category", "type"})
 VALID_TYPES = frozenset(t.value for t in FileType)
+
+
+def _expand_os_values(raw: str) -> tuple[str, ...]:
+    """Expand comma-separated OS metadata and normalize known aliases."""
+    return normalize_os_names(raw)
 
 
 def _validate_csv(rows: list[dict[str, str]]) -> None:
@@ -65,7 +70,9 @@ def parse_cases(config: ScanConfig) -> list[Case]:
     # Build replacements dict for placeholder expansion
     replacements: dict[str, str] = {}
     if config.url:
-        replacements["HOST"] = urlsplit(config.url).netloc
+        hostname = urlsplit(config.url).hostname or ""
+        replacements["HOST"] = hostname
+        replacements["DOMAIN"] = hostname
 
     # Load versions for expansion
     versions = load_versions() if config.all_versions else {}
@@ -73,14 +80,19 @@ def parse_cases(config: ScanConfig) -> list[Case]:
     cases: list[Case] = []
 
     for row in rows:
-        os_val = row["os"]
+        os_values = _expand_os_values(row["os"])
         software_val = row["software"]
         category_val = row["category"]
         file_type = FileType(row["type"])
         location = row["path"]
 
-        # Apply filters
-        if config.os_filter and os_val.lower() != config.os_filter.lower():
+        # Apply filters. The OS prefilter uses the same Unix-family hierarchy as
+        # the runtime restriction (os_matches_restriction) so a "*NIX" filter
+        # keeps FreeBSD/OS X/... cases and a specific Unix filter still keeps the
+        # generic "*NIX" cases — otherwise the list would silently drop cases the
+        # scan would actually test.
+        normalized_filter = normalize_os_name(config.os_filter)
+        if normalized_filter and not any(os_matches_restriction(os_val, normalized_filter) for os_val in os_values):
             continue
         if config.software_filter and software_val.lower() != config.software_filter.lower():
             continue
@@ -97,13 +109,22 @@ def parse_cases(config: ScanConfig) -> list[Case]:
 
         # Version expansion ([SECTION] patterns)
         match = re.search(r"\[([^\]]+)\]", location)
-        if match and config.all_versions and match.group(1) in versions:
+        if match and config.all_versions:
+            if match.group(1) not in versions:
+                raise ValueError(f"cases.csv references unknown version section '{match.group(1)}'")
             locations = [location.replace(match.group(0), v) for v in versions[match.group(1)]]
+        elif match:
+            # Version templates are meaningful only when explicitly expanded.
+            # Sending the raw "[SECTION]" path can never find a real file.
+            continue
         else:
             locations = [location]
+        # A comma-separated OS field describes one case compatible with any of
+        # those systems; it must not fan out into duplicate requests.
+        case_os = ", ".join(os_values)
         for loc in locations:
             cases.append(
-                Case(location=loc, os=os_val, category=category_val, software=software_val, file_type=file_type)
+                Case(location=loc, os=case_os, category=category_val, software=software_val, file_type=file_type)
             )
 
     return cases
@@ -133,9 +154,13 @@ def list_values(group: str, config: ScanConfig | None = None) -> set[str]:
 
     if config is not None:
         cases = parse_cases(config)
+        if group == "os":
+            return {os_value for case in cases for os_value in normalize_os_names(case.os)}
         return {getattr(c, group) for c in cases if getattr(c, group)}
 
     rows = _load_csv()
+    if group == "os":
+        return {os_val for row in rows for os_val in _expand_os_values(row[group])}
     return {row[group] for row in rows if row.get(group)}
 
 

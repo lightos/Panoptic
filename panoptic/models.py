@@ -67,6 +67,10 @@ class ScanConfig:
     def __post_init__(self) -> None:
         if self.concurrency < 1:
             raise ValueError(f"concurrency must be >= 1, got {self.concurrency}")
+        if self.retries < 0:
+            raise ValueError(f"retries must be >= 0, got {self.retries}")
+        if self.multiplier < 1:
+            raise ValueError(f"multiplier must be >= 1, got {self.multiplier}")
         if not (0.0 < self.heuristic_ratio < 1.0):
             raise ValueError(f"heuristic_ratio must be between 0 and 1 (exclusive), got {self.heuristic_ratio}")
         if self.timeout <= 0:
