@@ -97,7 +97,9 @@ else
             fi
             CHECKS_RAN=1
         elif command -v npx >/dev/null 2>&1; then
-            if ! npx markdownlint-cli "${STAGED_MD[@]}"; then
+            if ! npx --no-install markdownlint-cli "${STAGED_MD[@]}"; then
+                echo "Error: markdownlint-cli is not installed locally."
+                echo "Install markdownlint-cli before committing Markdown changes."
                 EXIT_CODE=1
             fi
             CHECKS_RAN=1
