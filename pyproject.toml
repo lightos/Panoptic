@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=77.0"]
+requires = ["setuptools>=83.0.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -16,7 +16,7 @@ authors = [
 dependencies = [
     "httpx[socks]>=0.28.1",
     "rich>=15.0.0",
-    "rich-argparse>=1.4",
+    "rich-argparse>=1.8.0",
     "tomli>=2.0; python_version < '3.11'",
 ]
 
@@ -27,15 +27,15 @@ Source = "https://github.com/lightos/Panoptic"
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=8.0",
+    "pytest>=9.1.1",
     "pytest-asyncio>=1.4.0",
-    "pytest-httpx>=0.30",
-    "ruff>=0.4",
-    "mypy>=1.10",
-    "pre-commit>=4.6.0",
+    "pytest-httpx>=0.36.2",
+    "ruff>=0.16.1",
+    "mypy>=2.3.0",
+    "pre-commit>=4.6.1",
     "pip-audit>=2.10.1",
-    "build>=1.2",
-    "twine>=5.0",
+    "build>=1.5.0",
+    "twine>=7.0.0",
 ]
 
 [tool.setuptools.packages.find]
