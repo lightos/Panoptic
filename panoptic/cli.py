@@ -30,7 +30,8 @@ Examples:
   panoptic --url "http://localhost/include.php?file=test.txt"
   panoptic --url "http://localhost/include.php?file=test.txt&id=1" --param file
   panoptic --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
-  panoptic --url "http://localhost/files/view/test.txt" --path-based --prefix "..%%252f"
+  panoptic --url "http://localhost/files/view/test.txt" --path-based --prefix "../" --multiplier 6
+  panoptic --url "http://localhost/api/load" --data '{"file":"FUZZ"}'
   panoptic --url "http://localhost/include.php?file=test.txt" --auto --all-versions
   panoptic --list software
 """
@@ -40,6 +41,7 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     """Parse command-line arguments and return as a dict."""
     parser = argparse.ArgumentParser(
         prog="panoptic",
+        usage="%(prog)s -u URL [options]",
         description="Panoptic -- probe a URL for local files via path traversal vulnerability",
         epilog=EXAMPLES,
         formatter_class=RawDescriptionRichHelpFormatter,
@@ -66,7 +68,7 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         "--header",
         dest="headers",
         action="append",
-        help="Add custom HTTP header (e.g. 'X-Forwarded-For: 127.0.0.1'); repeatable",
+        help="Add custom HTTP header (e.g. 'X-Forwarded-For: 127.0.0.1'); repeatable; FUZZ marks an injection point",
     )
     conn.add_argument("--cookie", help="Add HTTP Cookie header (e.g. 'sid=foobar; auth=1')")
     conn.add_argument("--user-agent", dest="user_agent", help="Set specific User-Agent string")
@@ -80,6 +82,14 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         help="Follow HTTP redirects (default: don't follow)",
     )
 
+    conn.add_argument(
+        "-i",
+        "--invalid-ssl",
+        dest="invalid_ssl",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Ignore SSL certificate validation errors",
+    )
     # Filtering
     filt = parser.add_argument_group("Filtering / Listing")
     filt.add_argument(
@@ -87,11 +97,18 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         "--list",
         metavar="GROUP",
         choices=["software", "category", "os"],
-        help="Show available values for specified group",
+        help="Show available values for GROUP (os, software, category) and exit",
+    )
+    filt.add_argument(
+        "--list-all-files",
+        dest="list_all_files",
+        action="store_true",
+        help="List all file paths in the case database and exit",
     )
     filt.add_argument("-o", "--os", dest="os_filter", help="Only test files for specific OS")
     filt.add_argument("-s", "--software", dest="software_filter", help="Only test files for specific software")
     filt.add_argument("-c", "--category", dest="category_filter", help="Only test files for specific category")
+    filt.add_argument("-t", "--type", dest="type_filter", help="Only test files of this type ('conf', 'log', 'other')")
 
     # Scan options
     scan = parser.add_argument_group("Scan Options")
@@ -104,8 +121,9 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         default=None,
         help="Target file paths directly instead of query parameters",
     )
-    scan.add_argument("-d", "--data", help="Send parameters via POST instead of GET")
-    scan.add_argument("-t", "--type", dest="type_filter", help="Filter by type ('conf', 'log', 'other')")
+    scan.add_argument(
+        "-d", "--data", help="Send a POST body instead of GET; inject via --param or a FUZZ marker in the body"
+    )
     scan.add_argument("--prefix", default=None, help="Add prefix to file paths (e.g. '../')")
     scan.add_argument("--postfix", default=None, help="Add suffix to file paths (e.g. '%%00')")
     scan.add_argument("--multiplier", type=int, default=None, help="Repeat prefix N times (default: 1)")
@@ -140,6 +158,26 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         help="Test all versioned file paths",
     )
 
+    scan.add_argument(
+        "-x",
+        "--skip-parsing",
+        dest="skip_parsing",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Don't add files derived from found /etc/passwd (home dirs) and mysql-bin.index (binlogs)",
+    )
+    scan.add_argument(
+        "-a",
+        "--auto",
+        dest="automatic",
+        action=argparse.BooleanOptionalAction,
+        default=None,
+        help="Avoid user interaction by using default options",
+    )
+    scan.add_argument(
+        "--load", dest="list_file", help="Test file paths from FILE (one per line) instead of the built-in list"
+    )
+    scan.add_argument("--resume-file", dest="resume_file", help="Checkpoint file; re-run the same command to resume")
     # Performance
     perf = parser.add_argument_group("Performance")
     perf.add_argument("--concurrency", type=int, default=None, help="Number of concurrent requests (default: 4)")
@@ -178,30 +216,6 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         help="Save discovered files to local output directory",
     )
     out.add_argument(
-        "-x",
-        "--skip-parsing",
-        dest="skip_parsing",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="Don't extract users from passwd files",
-    )
-    out.add_argument(
-        "-i",
-        "--invalid-ssl",
-        dest="invalid_ssl",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="Ignore SSL certificate validation errors",
-    )
-    out.add_argument(
-        "-a",
-        "--auto",
-        dest="automatic",
-        action=argparse.BooleanOptionalAction,
-        default=None,
-        help="Avoid user interaction by using default options",
-    )
-    out.add_argument(
         "--output-format",
         dest="output_format",
         choices=["text", "json", "csv"],
@@ -215,21 +229,13 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         help="Directory for files saved with --write-files (default: ./output)",
     )
     out.add_argument("--log-file", dest="log_file", help="Save console output to file")
-    out.add_argument("--resume-file", dest="resume_file", help="Resume file for checkpoint/restart")
 
     # Other
-    parser.add_argument("--load", dest="list_file", help="Test custom file list from FILE")
     parser.add_argument("--config", dest="config_file", help="Path to TOML config file")
     parser.add_argument("--update", action="store_true", help="Update from GitHub repository")
     from panoptic import __version__
 
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
-    parser.add_argument(
-        "--list-all-files",
-        dest="list_all_files",
-        action="store_true",
-        help="List all file paths in the case database and exit",
-    )
 
     parsed = parser.parse_args(argv)
     result = vars(parsed)

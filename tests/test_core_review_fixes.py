@@ -36,6 +36,7 @@ PASSWD = "root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/b
 def _response(text: str, status: int = 200) -> MagicMock:
     response = MagicMock()
     response.text = text
+    response.content = text.encode("utf-8")
     response.status_code = status
     return response
 
@@ -358,6 +359,18 @@ class TestOsRestriction:
                 Case(location="/etc/issue", os="*NIX"), AsyncMock(), "f=x", asyncio.Queue(), text_out
             )
         assert scanner.restrict_os == "*NIX"
+
+    async def test_found_content_length_counts_bytes(self) -> None:
+        """Multibyte bodies report their byte size, matching the B/KB/MB display."""
+        scanner = Scanner(ScanConfig(url="http://example.com/?f=x", param="f", automatic=True, skip_parsing=True))
+        scanner.invalid_status_code = 200
+        body = "contraseña: ñ€😀"
+        with (
+            patch.object(scanner, "_fetch", new=AsyncMock(return_value=_response(body))),
+            patch("panoptic.core.is_match", return_value=True),
+        ):
+            await scanner._process_case(Case(location="/etc/shadow"), AsyncMock(), "f=x", asyncio.Queue(), MagicMock())
+        assert scanner.results[0].content_length == len(body.encode("utf-8"))
 
     async def test_skipped_case_does_not_sleep(self) -> None:
         scanner = Scanner(ScanConfig(url="http://example.com/?f=x", param="f", delay=30.0, os_filter="Windows"))

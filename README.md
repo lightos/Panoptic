@@ -27,8 +27,9 @@ path traversal vulnerabilities.
 * Base64 encoding for endpoints that decode file paths
   (`--base64`)
 * Automatic OS detection with option to restrict further scans
-* Heuristic response comparison with status code filtering to
-  reduce false positives
+* Heuristic response comparison that ignores dynamic tokens (CSRF
+  tokens, nonces, timestamps) and reflected payloads, with status code
+  and string filtering to reduce false positives
 * Dynamic case injection — parse `/etc/passwd` for home directory
   files, `mysql-bin.index` for binlog files
 * Multiple output formats: text (rich), JSON, CSV
@@ -101,8 +102,14 @@ panoptic --url "http://target/include.php" \
 
 ### Path-based LFI
 
+The file path replaces the last segment of the URL path. Traversal
+sequences such as `../` are sent exactly as written. Panoptic does not
+normalize them away, although the target server may.
+
 ```bash
 panoptic --url "http://target/view.php/test.txt" --path-based
+panoptic --url "http://target/files/view/test.txt" --path-based \
+  --prefix "../" --multiplier 6
 ```
 
 ### Base64-encoded parameter
@@ -163,6 +170,17 @@ panoptic --url "http://target/include.php?file=test.txt" \
   --output-format json --output-file results.json \
   --resume-file scan.checkpoint
 ```
+
+### Save retrieved files
+
+```bash
+panoptic --url "http://target/include.php?file=test.txt" \
+  --write-files --output-dir loot
+```
+
+Each found file is saved under `--output-dir` (default `./output`), with
+the surrounding page template stripped where possible. File names are
+sanitized and kept inside the output directory.
 
 ### Proxy with SSL errors ignored
 
@@ -289,7 +307,11 @@ panoptic --url "https://target/x.php?file=test.txt" \
 * SOCKS support comes from `aiohttp-socks`, which is installed by default.
 * By default Panoptic honours the standard `HTTP_PROXY` / `HTTPS_PROXY` /
   `NO_PROXY` environment variables. Pass `--ignore-proxy` to bypass them
-  and connect directly (this also disables any env-configured proxy).
+  and connect directly. An explicit `--proxy` takes precedence over the
+  environment. Credentials in `~/.netrc` are never sent to the target.
+* Redirects are not followed unless you pass `--follow-redirects`. When
+  a redirect leaves the original origin, your `--header`, `--cookie` and
+  `Authorization` values are dropped.
 * Combine with `--invalid-ssl` when intercepting HTTPS through a proxy
   with its own CA. This disables certificate verification and is unsafe
   on untrusted networks.
@@ -310,11 +332,25 @@ panoptic --url "http://target/x.php?file=test.txt" --auto --all-versions
 ## Response Comparison
 
 Panoptic does not classify a path from the target-controlled
-`Content-Length` header alone. It compares the complete normalized body
-against the invalid-path baseline. A cheap similarity upper bound avoids
-the full comparison only when it can already prove the bodies differ;
-ambiguous responses use the exact ratio to avoid reordered-body false
-negatives.
+`Content-Length` header alone. It compares each response body against a
+baseline taken from a random, nonexistent file name, and reports a file
+as found when the similarity falls below 0.9. Before comparing, it:
+
+* removes reflections of the requested path, including its prefixed,
+  slash-replaced, Base64-, URL- and JSON-encoded forms, so error pages
+  that echo the payload don't look like hits;
+* replaces volatile tokens (numbers, and long runs that mix letters and
+  digits, such as CSRF tokens, nonces and session IDs) with placeholders
+  of the same length. Dynamic pages therefore compare as identical, while
+  token-shaped file content such as key material still counts;
+* compares only the first 64 KiB of each response. Bodies are capped at
+  10 MiB when downloaded, compressed bodies included.
+
+The similarity is computed per line and tag, then character by
+character within the regions that differ, so large pages stay fast.
+
+Found files are printed with their HTTP status and size, e.g.
+`[+] Found '/etc/passwd' [200, 1.2 KB]`.
 
 ## Resume / Checkpoints
 
@@ -327,21 +363,31 @@ panoptic --url "http://target/x.php?file=test.txt" \
 # ... interrupt with Ctrl-C, then re-run the same command to resume
 ```
 
-The checkpoint stores only completed case IDs plus a SHA-256
-**fingerprint** of the scan definition (URL, injection parameters,
-detection options, headers, cookie, User-Agent, and the exact case set).
-It never stores credentials, headers, or URLs in plaintext.
+The checkpoint stores:
+
+* the completed case IDs;
+* the findings so far (file path, status, size and timestamp), so the
+  final output of a resumed scan includes them;
+* files queued from a found `/etc/passwd` or `mysql-bin.index`, and any
+  OS restriction chosen during the scan;
+* a SHA-256 **fingerprint** of the scan definition: the URL, injection
+  options, detection options, cookie, headers, `--write-files` and the
+  exact case set.
+
+It never stores credentials, headers, cookies or URLs in plaintext.
 
 On resume, the fingerprint is recomputed and compared. If anything that
-would change the meaning of the scan differs — a different target,
-parameter, header, cookie, filter set, or `--all-versions` toggle — the
-checkpoint is rejected with a warning and the scan starts fresh, so a
-stale checkpoint can never silently skip cases from a different scan.
-Legacy bare-list checkpoints are accepted with a warning and restricted
-to case IDs present in the current scan; because that old format has no
-fingerprint, users should replace it with the newly written format.
-Failed (network-error) requests are deliberately **not** checkpointed so
-they are retried on resume.
+would change the meaning of the scan differs, the checkpoint is rejected
+with a warning and the scan starts fresh. That covers a different target,
+parameter, filter set or `--all-versions` toggle, and also a different
+cookie or header, so a scan can't resume as another identity. A stale
+checkpoint therefore never silently skips cases from a different scan.
+The User-Agent (including `--random-agent`), proxy and TLS settings don't
+affect the fingerprint.
+
+Checkpoints written by older Panoptic versions are rejected, and the scan
+starts fresh. Failed (network-error) requests are deliberately **not**
+checkpointed, so they are retried on resume.
 
 ## Version and Update
 

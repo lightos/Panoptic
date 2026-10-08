@@ -7,7 +7,7 @@ import json
 import pytest
 
 from panoptic.models import Case, FileType, ScanConfig, ScanResult
-from panoptic.output import CsvFormatter, JsonFormatter, TeeWriter, TextFormatter, _scan_mode_label
+from panoptic.output import CsvFormatter, JsonFormatter, TeeWriter, TextFormatter, _format_size, _scan_mode_label
 
 
 @pytest.fixture
@@ -219,6 +219,17 @@ class TestTextFormatter:
         buf.seek(0)
         output = buf.read()
         assert "/etc/passwd" in output
+        assert "[200, 1.2 KB]" in output
+
+    def test_found_message_without_response_details(self) -> None:
+        buf = io.StringIO()
+        TextFormatter(buf).write_found(ScanResult(case=Case(location="/etc/hosts"), found=True, url="u"))
+        assert "Found '/etc/hosts'" in buf.getvalue()
+        assert "[" not in buf.getvalue().split("Found")[1]
+
+    @pytest.mark.parametrize(("size", "text"), [(812, "812 B"), (1234, "1.2 KB"), (3 * 1024 * 1024, "3.0 MB")])
+    def test_format_size(self, size: int, text: str) -> None:
+        assert _format_size(size) == text
 
     def test_summary(self, sample_results: list[ScanResult]) -> None:
         buf = io.StringIO()
