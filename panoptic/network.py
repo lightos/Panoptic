@@ -139,8 +139,9 @@ def _text_encoding(charset: str | None) -> str:
 # exactly as given. Query and path follow the WHATWG percent-encode sets.
 _QUERY_SAFE = frozenset(chr(i) for i in range(0x21, 0x7F)) - set('"#<>')
 _PATH_SAFE = _QUERY_SAFE - set("?`{}")
-# Traversal (raw) paths are restricted to RFC 3986 pchar plus "/" and "%".
-_RAW_PATH_SAFE = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!$&'()*+,;=:@/%-._~")
+# Traversal (raw) paths are restricted to RFC 3986 pchar plus "/", "%" and a
+# backslash, sent literally so Windows-style ..\ traversal is not turned into %5C.
+_RAW_PATH_SAFE = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!$&'()*+,;=:@/%-._~\\")
 
 
 def _percent_encode(value: str, safe: frozenset[str]) -> str:
