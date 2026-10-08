@@ -115,3 +115,39 @@ class TestMergeConfig:
     def test_invalid_config_types_raise(self, file_config: dict[str, object], message: str) -> None:
         with pytest.raises(ValueError, match=message):
             merge_config({"url": "http://example.com"}, file_config)
+
+
+class TestStrictConfigValidation:
+    @pytest.mark.parametrize(
+        ("defaults", "message"),
+        [
+            ({"match_codes": 200}, "invalid match_codes"),
+            ({"match_codes": [200.9]}, "invalid match_codes"),
+            ({"filter_codes": [True]}, "invalid filter_codes"),
+            ({"filter_codes": "404,abc"}, "invalid filter_codes"),
+            ({"match_codes": [99]}, "out of range"),
+            ({"random_delay": 5}, "random_delay must be"),
+            ({"random_delay": "0.5-2.0-9"}, "MIN-MAX"),
+            ({"random_delay": [0.5, "x"]}, "random_delay values must be numbers"),
+            ({"random_delay": [0.5, float("inf")]}, "finite"),
+            ({"timeout": float("nan")}, "timeout must be a finite number"),
+            ({"delay": float("inf")}, "delay must be a finite number"),
+            ({"output_dir": 5}, "output_dir must be a string"),
+        ],
+    )
+    def test_invalid_values_raise_clean_errors(self, defaults: dict[str, object], message: str) -> None:
+        with pytest.raises(ValueError, match=message):
+            merge_config({"url": "http://example.com"}, {"defaults": defaults})
+
+    def test_valid_codes_and_random_delay(self) -> None:
+        config = merge_config(
+            {"url": "http://example.com"},
+            {"defaults": {"match_codes": [200, 301], "filter_codes": "404", "random_delay": [1, 2]}},
+        )
+        assert config.match_codes == [200, 301]
+        assert config.filter_codes == [404]
+        assert config.random_delay == (1.0, 2.0)
+
+    def test_output_dir_from_config(self) -> None:
+        config = merge_config({"url": "http://example.com"}, {"defaults": {"output_dir": "loot"}})
+        assert config.output_dir == "loot"

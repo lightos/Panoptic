@@ -1,5 +1,9 @@
 """Tests for panoptic.parsers — passwd and binlog extraction."""
 
+from unittest.mock import patch
+
+import pytest
+
 from panoptic.models import Case
 from panoptic.parsers import extract_binlog_cases, extract_home_file_cases
 
@@ -72,3 +76,33 @@ class TestExtractBinlogCases:
     def test_empty_content_returns_empty(self) -> None:
         parent_case = Case(location="/var/lib/mysql/mysql-bin.index")
         assert extract_binlog_cases("", parent_case) == []
+
+
+class TestPasswdParserHardening:
+    parent = Case(location="/etc/passwd", os="*NIX")
+
+    def _homes(self, passwd: str) -> list[str]:
+        with patch("panoptic.parsers._load_home_files", return_value=(".bashrc",)):
+            cases = extract_home_file_cases(passwd, self.parent)
+        return [c.location.removesuffix("/.bashrc") for c in cases]
+
+    def test_entry_cannot_span_lines(self) -> None:
+        # Old regex let the info/home groups swallow a newline and stitch lines together.
+        passwd = "a:x:1:1:info\nb:/home/forged:/bin/sh\n"
+        assert extract_home_file_cases(passwd, self.parent) == []
+
+    @pytest.mark.parametrize(
+        "home",
+        ["relative/home", "/home/../etc", "/home/user/..", "/home/\x1b[2Juser", "/home/us\x9ber", "/home/us\x7fer"],
+    )
+    def test_rejects_unsafe_homes(self, home: str) -> None:
+        passwd = f"user:x:1000:1000::{home}:/bin/bash\n"
+        assert extract_home_file_cases(passwd, self.parent) == []
+
+    def test_dedupes_homes(self) -> None:
+        passwd = "a:x:1:1::/srv/shared:/bin/sh\nb:x:2:2::/srv/shared/:/bin/sh\n"
+        assert self._homes(passwd) == ["/srv/shared"]
+
+    def test_crlf_lines_parsed(self) -> None:
+        passwd = "root:x:0:0:root:/root:/bin/bash\r\nuser:x:1000:1000::/home/user:/bin/bash\r\n"
+        assert self._homes(passwd) == ["/root", "/home/user"]

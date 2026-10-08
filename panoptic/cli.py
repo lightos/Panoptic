@@ -8,9 +8,10 @@ from __future__ import annotations
 import argparse
 import csv
 import json
+import math
 import sys
 from pathlib import Path
-from typing import Any
+from typing import Any, NoReturn
 from urllib.parse import parse_qsl, urlsplit
 
 from rich_argparse import RawDescriptionRichHelpFormatter
@@ -208,6 +209,11 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
         help="Output format (default: text)",
     )
     out.add_argument("--output-file", dest="output_file", help="Write results to file")
+    out.add_argument(
+        "--output-dir",
+        dest="output_dir",
+        help="Directory for files saved with --write-files (default: ./output)",
+    )
     out.add_argument("--log-file", dest="log_file", help="Save console output to file")
     out.add_argument("--resume-file", dest="resume_file", help="Resume file for checkpoint/restart")
 
@@ -228,16 +234,21 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     parsed = parser.parse_args(argv)
     result = vars(parsed)
 
-    # Normalize URL
-    if result.get("url") and not result["url"].lower().startswith(("http://", "https://")):
+    # Normalize URL (adds http:// only when no scheme is present)
+    if result.get("url"):
         result["url"] = normalize_url(result["url"])
 
     # Parse --random-delay "MIN-MAX" into tuple
     if result.get("random_delay") and isinstance(result["random_delay"], str):
         try:
             parts = result["random_delay"].split("-")
-            result["random_delay"] = (float(parts[0]), float(parts[1]))
-        except (ValueError, IndexError):
+            if len(parts) != 2:
+                raise ValueError("expected exactly two values")
+            min_delay, max_delay = float(parts[0]), float(parts[1])
+            if not (math.isfinite(min_delay) and math.isfinite(max_delay)):
+                raise ValueError("values must be finite")
+            result["random_delay"] = (min_delay, max_delay)
+        except ValueError:
             print("[!] Invalid --random-delay format. Use 'MIN-MAX' (e.g. '0.5-2.0')", file=sys.stderr)
             sys.exit(1)
 
@@ -262,8 +273,80 @@ def parse_args(argv: list[str] | None = None) -> dict[str, Any]:
     return result
 
 
-def validate_args(args: dict[str, Any]) -> None:
-    """Validate parsed arguments, exiting on errors."""
+def _fail(message: str) -> NoReturn:
+    print(f"[!] {message}", file=sys.stderr)
+    sys.exit(1)
+
+
+def _is_number(value: object) -> bool:
+    return isinstance(value, int | float) and not isinstance(value, bool)
+
+
+def _resolve_path(path: str) -> str:
+    return str(Path(path).expanduser().resolve())
+
+
+def _validate_status_codes(args: dict[str, Any]) -> None:
+    """Strictly validate already-parsed match/filter codes (lists of ints in 100-599)."""
+    parsed_codes: dict[str, set[int]] = {}
+    for code_key, flag in (("match_codes", "--match-code"), ("filter_codes", "--filter-code")):
+        value = args.get(code_key)
+        if value is None:
+            parsed_codes[code_key] = set()
+            continue
+        if not isinstance(value, list):
+            _fail(f"Invalid {flag}: expected a list of HTTP status codes, got {type(value).__name__}")
+        try:
+            parsed_codes[code_key] = set(parse_status_codes(value))
+        except ValueError as e:
+            _fail(f"Invalid {flag}: {e}")
+    overlap = sorted(parsed_codes["match_codes"] & parsed_codes["filter_codes"])
+    if overlap:
+        _fail(f"Status codes cannot be both matched and filtered: {overlap}")
+
+
+def _validate_conflicting_flags(args: dict[str, Any]) -> None:
+    """Reject flag combinations whose semantics contradict each other."""
+    if args.get("path_based"):
+        for key, flag in (("data", "--data"), ("param", "--param"), ("ext_param", "--ext-param")):
+            if args.get(key):
+                _fail(f"--path-based cannot be combined with {flag}")
+    ext_param = args.get("ext_param")
+    if ext_param and ext_param == args.get("param"):
+        _fail("--ext-param must name a different parameter than --param")
+    if ext_param:
+        fuzz_sources = [args.get("url") or "", args.get("data") or ""]
+        for header in args.get("headers") or []:
+            try:
+                fuzz_sources.append(validate_header(header, warn_deprecated=False)[1])
+            except ValueError:
+                continue
+        if any("FUZZ" in source for source in fuzz_sources):
+            _fail("--ext-param cannot be combined with a FUZZ injection marker")
+
+
+def _validate_path_collisions(args: dict[str, Any], config_file: str | None) -> None:
+    """Ensure output files never overwrite each other or an input file."""
+    output_keys = ("output_file", "log_file", "resume_file")
+    outputs = [_resolve_path(args[key]) for key in output_keys if args.get(key)]
+    if len(outputs) != len(set(outputs)):
+        _fail("--output-file, --log-file, and --resume-file must use different paths")
+    inputs = {
+        _resolve_path(path): flag
+        for path, flag in ((args.get("list_file"), "--load"), (config_file, "--config"))
+        if path
+    }
+    for output in outputs:
+        if output in inputs:
+            _fail(f"Output/log/resume file must not overwrite the {inputs[output]} input file: {output}")
+
+
+def validate_args(args: dict[str, Any], config_file: str | None = None) -> None:
+    """Validate parsed arguments, exiting on errors.
+
+    ``config_file`` is the configuration file in use (if any) so output paths
+    can be checked against it.
+    """
     # Must have at least one action
     if not any((args.get("url"), args.get("list"), args.get("update"), args.get("list_all_files"))):
         print(
@@ -291,12 +374,24 @@ def validate_args(args: dict[str, Any]) -> None:
         print("[!] --multiplier must be at least 1", file=sys.stderr)
         sys.exit(1)
 
-    if args.get("timeout") is not None and args["timeout"] <= 0:
-        print("[!] --timeout must be greater than 0", file=sys.stderr)
-        sys.exit(1)
-    if args.get("delay") is not None and args["delay"] < 0:
-        print("[!] --delay must be non-negative", file=sys.stderr)
-        sys.exit(1)
+    timeout = args.get("timeout")
+    if timeout is not None and (not _is_number(timeout) or not math.isfinite(timeout) or timeout <= 0):
+        _fail("--timeout must be a finite number greater than 0")
+    delay = args.get("delay")
+    if delay is not None and (not _is_number(delay) or not math.isfinite(delay) or delay < 0):
+        _fail("--delay must be a finite, non-negative number")
+    random_delay = args.get("random_delay")
+    if random_delay is not None:
+        if (
+            not isinstance(random_delay, tuple | list)
+            or len(random_delay) != 2
+            or not all(_is_number(value) and math.isfinite(value) for value in random_delay)
+        ):
+            _fail("--random-delay must be two finite numbers in MIN-MAX format")
+        if random_delay[0] < 0 or random_delay[1] < 0:
+            _fail("--random-delay values must be non-negative")
+        if random_delay[0] >= random_delay[1]:
+            _fail("--random-delay MIN must be less than MAX")
 
     # Proxy scheme validation
     if args.get("proxy"):
@@ -346,18 +441,14 @@ def validate_args(args: dict[str, Any]) -> None:
         print("[!] --base64 and --ext-param cannot be combined", file=sys.stderr)
         sys.exit(1)
 
-    match_codes = set(args.get("match_codes") or [])
-    filter_codes = set(args.get("filter_codes") or [])
-    overlap = sorted(match_codes & filter_codes)
-    if overlap:
-        print(f"[!] Status codes cannot be both matched and filtered: {overlap}", file=sys.stderr)
-        sys.exit(1)
+    _validate_conflicting_flags(args)
+    _validate_status_codes(args)
 
-    output_paths = [args.get(key) for key in ("output_file", "log_file", "resume_file")]
-    normalized_paths = [str(Path(path).expanduser().resolve()) for path in output_paths if path]
-    if len(normalized_paths) != len(set(normalized_paths)):
-        print("[!] --output-file, --log-file, and --resume-file must use different paths", file=sys.stderr)
-        sys.exit(1)
+    output_dir = args.get("output_dir")
+    if output_dir is not None and (not isinstance(output_dir, str) or not output_dir or "\x00" in output_dir):
+        _fail("--output-dir must be a non-empty path")
+
+    _validate_path_collisions(args, config_file)
 
 
 def _write_list_output(values: list[str], header: str, fmt: str, output_file: str | None) -> int:
@@ -395,24 +486,27 @@ async def run(argv: list[str] | None = None) -> int:
     if args.get("update"):
         from panoptic.update import do_update
 
-        validate_args(args)
+        validate_args(args, args.get("config_file"))
         return do_update()
 
     # Lazy import — only needed for scan and --list modes
-    from panoptic.config import load_config, merge_config
+    from panoptic.config import DEFAULT_CONFIG_PATH, load_config, merge_config
 
     config_file = args.pop("config_file", None)
     file_config = load_config(config_file)
+    # The config file actually in use, so outputs can never overwrite it.
+    active_config_file = config_file or (str(DEFAULT_CONFIG_PATH) if DEFAULT_CONFIG_PATH.exists() else None)
+    list_mode_args = {"list": args.get("list"), "list_all_files": args.get("list_all_files")}
 
     if args.get("list_all_files"):
         from panoptic.cases import list_all_files
 
-        validate_args(args)
         try:
             list_config = merge_config(args, file_config)
         except (TypeError, ValueError) as exc:
             print(f"[!] Invalid configuration: {exc}", file=sys.stderr)
             return 2
+        validate_args({**vars(list_config), **list_mode_args}, active_config_file)
         return _write_list_output(
             list_all_files(),
             "path",
@@ -423,12 +517,12 @@ async def run(argv: list[str] | None = None) -> int:
     if args.get("list"):
         from panoptic.cases import list_values
 
-        validate_args(args)
         try:
             _config = merge_config(args, file_config)
         except (TypeError, ValueError) as exc:
             print(f"[!] Invalid configuration: {exc}", file=sys.stderr)
             return 2
+        validate_args({**vars(_config), **list_mode_args}, active_config_file)
         values = list_values(args["list"], config=_config)
         fmt = _config.output_format.value
         sorted_values = sorted(values)
@@ -443,7 +537,7 @@ async def run(argv: list[str] | None = None) -> int:
         print(f"[!] Invalid configuration: {exc}", file=sys.stderr)
         return 2
 
-    validate_args(vars(config))
+    validate_args(vars(config), active_config_file)
 
     # Shared URL parsing for param detection and ext-param validation
     parsed = urlsplit(config.url)

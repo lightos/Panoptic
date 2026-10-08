@@ -117,3 +117,32 @@ class TestEnums:
         assert OutputFormat.TEXT.value == "text"
         assert OutputFormat.JSON.value == "json"
         assert OutputFormat.CSV.value == "csv"
+
+
+class TestHardenedModels:
+    def test_timestamp_is_timezone_aware_utc(self) -> None:
+        from datetime import datetime, timedelta
+
+        result = ScanResult(case=Case(location="/etc/passwd"), found=True, url="http://example.com")
+        parsed = datetime.fromisoformat(result.timestamp)
+        assert parsed.tzinfo is not None
+        assert parsed.utcoffset() == timedelta(0)
+        assert result.timestamp.endswith("+00:00")
+
+    @pytest.mark.parametrize(
+        "overrides",
+        [
+            {"timeout": float("nan")},
+            {"timeout": float("inf")},
+            {"delay": float("inf")},
+            {"delay": float("nan")},
+            {"random_delay": (0.5, float("inf"))},
+            {"output_dir": ""},
+        ],
+    )
+    def test_non_finite_or_empty_values_rejected(self, overrides: dict[str, object]) -> None:
+        with pytest.raises(ValueError):
+            ScanConfig(url="http://example.com", **overrides)  # type: ignore[arg-type]
+
+    def test_output_dir_default(self) -> None:
+        assert ScanConfig(url="http://example.com").output_dir == "output"

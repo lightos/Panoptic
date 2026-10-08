@@ -6,10 +6,13 @@ from pathlib import Path
 import pytest
 
 from panoptic.utils import (
+    escape_control_chars,
     get_random_agent,
     load_data_file,
     normalize_os_name,
+    normalize_url,
     open_secure_write,
+    parse_status_codes,
     redact_url,
     sanitize_filename,
     validate_header,
@@ -205,3 +208,67 @@ class TestOpenSecureWrite:
             open_secure_write(str(target))
         # The pre-existing content must not have been truncated.
         assert target.read_text(encoding="utf-8") == "original content"
+
+
+class TestNormalizeUrl:
+    def test_adds_scheme_when_missing(self) -> None:
+        assert normalize_url("example.com/x?f=1") == "http://example.com/x?f=1"
+
+    def test_host_port_without_scheme_gets_http(self) -> None:
+        assert normalize_url("localhost:8080/x") == "http://localhost:8080/x"
+
+    @pytest.mark.parametrize("url", ["ftp://127.0.0.1/x", "file:///etc/passwd", "gopher://h/x"])
+    def test_existing_non_http_scheme_is_preserved_and_rejected(self, url: str) -> None:
+        normalized = normalize_url(url)
+        assert normalized == url
+        with pytest.raises(ValueError, match="Only http"):
+            validate_url_scheme(normalized)
+
+    def test_https_unchanged(self) -> None:
+        assert normalize_url("HTTPS://example.com/") == "HTTPS://example.com/"
+
+
+class TestSanitizeFilenameHardening:
+    def test_control_and_unicode_chars_replaced(self) -> None:
+        result = sanitize_filename("/etc/\x1b[31mpa\x00sséwd\n")
+        assert all(c.isalnum() or c in "._-" for c in result)
+        assert result.isascii()
+
+    @pytest.mark.parametrize("name", ["CON", "nul", "Com1.txt", "LPT9.log", "aux"])
+    def test_windows_reserved_names_neutralized(self, name: str) -> None:
+        result = sanitize_filename(name)
+        assert result.split(".", 1)[0].upper() not in {"CON", "NUL", "COM1", "LPT9", "AUX"}
+
+    def test_length_capped_in_utf8_bytes(self) -> None:
+        result = sanitize_filename("a" * 1000)
+        assert len(result.encode("utf-8")) <= 200
+
+    def test_trailing_dots_removed(self) -> None:
+        assert not sanitize_filename("file...").endswith(".")
+
+
+class TestRedactPathParameters:
+    def test_matrix_parameter_values_redacted(self) -> None:
+        redacted = redact_url("http://h/a;jsessionid=SECRET/b;x=1;bare?q=TOKEN")
+        assert "SECRET" not in redacted
+        assert "TOKEN" not in redacted
+        assert "/a;jsessionid=***/b;x=***;***" in redacted
+
+
+class TestParseStatusCodesStrict:
+    @pytest.mark.parametrize("raw", [200, 200.0, [200.9], [True], ["200"], "2e2", "200,abc", None])
+    def test_rejects_invalid_types(self, raw: object) -> None:
+        with pytest.raises(ValueError):
+            parse_status_codes(raw)
+
+    def test_accepts_string_and_int_list(self) -> None:
+        assert parse_status_codes("200, 301") == [200, 301]
+        assert parse_status_codes([200, 404]) == [200, 404]
+
+
+class TestEscapeControlChars:
+    def test_escapes_c0_c1_and_del(self) -> None:
+        assert escape_control_chars("a\x1b[2Jb\x9bc\x7f") == "a\\x1b[2Jb\\x9bc\\x7f"
+
+    def test_keep_preserves_selected(self) -> None:
+        assert escape_control_chars("a\nb\rc", keep="\n") == "a\nb\\x0dc"

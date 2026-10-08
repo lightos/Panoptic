@@ -1,24 +1,29 @@
 repos:
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.16.0
+    rev: v0.16.10
     hooks:
       - id: ruff
         args: [--fix]
       - id: ruff-format
 
   - repo: https://github.com/pre-commit/mirrors-mypy
-    rev: v2.3.0
+    rev: v2.4.0
     hooks:
       - id: mypy
-        exclude: ^(panoptic\.py|tests/|\.claire/)
+        exclude: ^(panoptic\.py|\.claire/)
+        # Keep these in sync with the lower bounds in pyproject.toml so the
+        # hook type-checks against the same library versions as CI.
         additional_dependencies:
-          - httpx
-          - rich
-          - types-defusedxml
+          - httpx[socks]==0.28.1
+          - rich==15.0.0
+          - rich-argparse==1.8.0
+          - pytest==9.1.1
+          - pytest-asyncio==1.4.0
+          - pytest-httpx==0.36.2
         args: [--strict]
 
   - repo: https://github.com/igorshubovych/markdownlint-cli
-    rev: v0.44.0
+    rev: v0.49.1
     hooks:
       - id: markdownlint
         args: [--fix]

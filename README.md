@@ -3,7 +3,7 @@
 ![Panoptic Logo](https://i.imgur.com/nQrtLkO.png)
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
-[![Python Versions](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/)
+[![Python Versions](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/)
 [![Ruff](https://img.shields.io/badge/linting-ruff-261230.svg)](https://github.com/astral-sh/ruff)
 [![mypy](https://img.shields.io/badge/type_check-mypy_strict-blue.svg)](https://mypy-lang.org/)
 [![GitHub last commit](https://img.shields.io/github/last-commit/lightos/Panoptic.svg)](https://github.com/lightos/Panoptic/commits/)
@@ -48,10 +48,9 @@ path traversal vulnerabilities.
 
 ## Requirements
 
-* Python 3.10+
+* Python 3.11+
 * Git
-* Dependencies: `httpx[socks]`, `rich`, `rich-argparse`, and
-  `tomli` on Python 3.10
+* Dependencies: `httpx[socks]`, `rich`, and `rich-argparse`
 
 ## Installation
 

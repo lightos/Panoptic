@@ -1,7 +1,10 @@
-# Lower bounds of the declared runtime dependencies (see pyproject.toml).
-# Used by the "minimum-versions" CI job to prove Panoptic works against the
-# oldest dependency releases it claims to support, not just the newest.
+# Lower bounds of the declared dependencies (see pyproject.toml). Panoptic
+# tracks the latest releases, so these floors are raised together with the
+# pyproject lower bounds. Used by the "minimum-versions" CI job to prove
+# Panoptic works against the oldest releases it claims to support.
 httpx==0.28.1
 rich==15.0.0
-rich-argparse==1.4
-tomli==2.0; python_version < "3.11"
+rich-argparse==1.8.0
+pytest==9.1.1
+pytest-asyncio==1.4.0
+pytest-httpx==0.36.2
