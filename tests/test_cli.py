@@ -161,7 +161,7 @@ class TestValidateArgs:
             )
 
     def test_rejects_socks4_proxy(self) -> None:
-        """httpx (socksio) only supports SOCKS5, so socks4:// must be rejected up front."""
+        """Only SOCKS5 proxies are accepted; socks4:// is rejected up front."""
         with pytest.raises(SystemExit):
             validate_args(
                 {

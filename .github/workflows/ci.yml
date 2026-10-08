@@ -48,7 +48,7 @@ jobs:
       # versions. Install only the test dependencies separately so unrelated
       # development tools cannot raise those runtime lower bounds.
       - run: python -m pip install -e . -c .github/constraints-min.txt
-      - run: python -m pip install pytest pytest-asyncio pytest-httpx -c .github/constraints-min.txt
+      - run: python -m pip install pytest pytest-asyncio pytest-aiohttp -c .github/constraints-min.txt
       - run: python -m pip check
       - run: pytest -q
 
