@@ -160,6 +160,15 @@ def _scan_mode_label(config: ScanConfig | None) -> str:
     return "GET"
 
 
+def _format_size(size: int) -> str:
+    """Format a byte count for display (e.g. 812 B, 1.2 KB, 3.4 MB)."""
+    if size < 1024:
+        return f"{size} B"
+    if size < 1024 * 1024:
+        return f"{size / 1024:.1f} KB"
+    return f"{size / (1024 * 1024):.1f} MB"
+
+
 class TextFormatter:
     """Rich-powered text output for terminal display."""
 
@@ -204,7 +213,13 @@ class TextFormatter:
         file_type_str = case.file_type.value if case.file_type else None
         parts = [p for p in (case.os, case.category, case.software, file_type_str) if p]
         context = f" ({'/'.join(parts)})" if parts else ""
-        self._console.print(f"[bold green][+][/bold green] Found '{_safe_text(case.location)}'{_safe_text(context)}")
+        details = [str(result.status_code)] if result.status_code is not None else []
+        if result.content_length is not None:
+            details.append(_format_size(result.content_length))
+        response = f" [dim]\\[{', '.join(details)}][/dim]" if details else ""
+        self._console.print(
+            f"[bold green][+][/bold green] Found '{_safe_text(case.location)}'{response}{_safe_text(context)}"
+        )
 
     def write_verbose(self, message: str) -> None:
         if self._quiet:
