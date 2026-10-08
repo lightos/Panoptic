@@ -157,8 +157,10 @@ panoptic --url "http://target/filtered.php?file=test.txt" \
 ### Encoded traversal (WAF / single-decode bypass)
 
 Prefixes are sent exactly as given, so encoded traversal sequences reach
-the target unchanged. For example, `..%252f` is `../` double-encoded,
-which gets past filters that only decode once:
+the target unchanged. For example, in `..%252f` the dots are literal and
+only the slash is double-encoded: the first decode turns `%252f` into
+`%2f`, so a filter that decodes once sees no `../`, and a second decode
+by the application turns it into `/`:
 
 ```bash
 panoptic --url "http://target/files/view/test.txt" --path-based \
