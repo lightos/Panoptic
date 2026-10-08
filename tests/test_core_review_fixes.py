@@ -65,6 +65,34 @@ class TestPathBasedWire:
         assert request.raw_path == "/a/b/" + "../" * 5 + "etc/passwd"
         assert request.method == "GET"
 
+    @pytest.mark.parametrize(
+        ("path_based", "prefix", "expected_payload"),
+        [
+            # Prefixes are sent byte-for-byte, so dotdotpwn-style encodings work.
+            (True, "..\\", "..\\..\\/etc/passwd"),
+            (True, "..%252f", "..%252f..%252f/etc/passwd"),
+            (True, "..%c0%af", "..%c0%af..%c0%af/etc/passwd"),
+            (True, "..;/", "..;/..;/etc/passwd"),
+            (False, "..\\", "..\\..\\/etc/passwd"),
+            (False, "%2e%2e%2f", "%2e%2e%2f%2e%2e%2f/etc/passwd"),
+            (False, "%uff0e%uff0e/", "%uff0e%uff0e/%uff0e%uff0e/etc/passwd"),
+        ],
+    )
+    async def test_encoded_prefixes_reach_the_server_verbatim(
+        self, server: RecordingServer, path_based: bool, prefix: str, expected_payload: str
+    ) -> None:
+        if path_based:
+            config = ScanConfig(url=server.url("/a/view"), path_based=True, prefix=prefix, multiplier=2, retries=0)
+            params = ""
+        else:
+            config = ScanConfig(url=server.url("/i.php?file=x"), param="file", prefix=prefix, multiplier=2, retries=0)
+            params = "file=x"
+        scanner = Scanner(config)
+        async with NetworkClient(config) as client:
+            await scanner._fetch(client, build_payload(config, "/etc/passwd", params))
+        sent = server.last.raw_path
+        assert sent == ("/a/" if path_based else "/i.php?file=") + expected_payload
+
     async def test_path_based_with_data_uses_get(self, server: RecordingServer) -> None:
         config = ScanConfig(url=server.url("/a/view"), path_based=True, data="x=1", retries=0)
         scanner = Scanner(config)

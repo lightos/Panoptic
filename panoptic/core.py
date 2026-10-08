@@ -112,10 +112,11 @@ def _encode_param_value(value: str) -> str:
     Safe chars (not encoded):
       /       : LFI path traversal separators must stay literal
       %       : Preserve pre-encoded sequences (e.g., --replace-slash "%2F")
+      \\       : Windows-style traversal (..\\) must reach the target as written
     The plus sign is always encoded because standard query and form parsers
     decode a literal '+' as a space, corrupting some Base64 payloads.
     """
-    return url_quote(value, safe="/%")
+    return url_quote(value, safe="/%\\")
 
 
 def _split_extension(full_path: str, replace_slash: str | None) -> tuple[str, str]:

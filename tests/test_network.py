@@ -211,7 +211,8 @@ class TestWirePaths:
     async def test_raw_path_encodes_only_invalid_characters(self, server: RecordingServer) -> None:
         async with NetworkClient(ScanConfig(url="http://example.com")) as client:
             await client.fetch(server.url("/a/../my file/é/..%2f..\\win.ini?q=a b"), raw_path=True)
-        assert server.last.raw_path == "/a/../my%20file/%C3%A9/..%2f..%5Cwin.ini?q=a%20b"
+        # Backslashes stay literal so Windows-style ..\ traversal is sent as written.
+        assert server.last.raw_path == "/a/../my%20file/%C3%A9/..%2f..\\win.ini?q=a%20b"
 
     @pytest.mark.parametrize(
         ("query", "expected"),
