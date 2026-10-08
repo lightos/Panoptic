@@ -165,6 +165,13 @@ by the application turns it into `/`:
 ```bash
 panoptic --url "http://target/files/view/test.txt" --path-based \
   --prefix "..%252f" --multiplier 6
+```
+
+A singly encoded prefix such as `%2e%2e%2f` becomes `../` after one
+decode. It only helps against filters that inspect the raw, undecoded
+request:
+
+```bash
 panoptic --url "http://target/include.php?file=test.txt" \
   --prefix "%2e%2e%2f" --multiplier 6
 ```
