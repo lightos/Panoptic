@@ -873,7 +873,7 @@ class Scanner:
                 url=payload_str,
                 status_code=response.status_code,
                 content=html if self.config.write_files else None,
-                content_length=len(html),
+                content_length=len(response.content),
             )
             self.results.append(result)
             text_out.write_found(result)
