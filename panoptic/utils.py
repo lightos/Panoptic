@@ -380,3 +380,18 @@ def parse_status_codes(raw: object) -> list[int]:
         if not 100 <= code <= 599:
             raise ValueError(f"HTTP status code out of range: {code}")
     return codes
+
+
+_URL_IN_TEXT = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://[^\s'\"<>]+")
+
+
+def redact_urls_in_text(message: str) -> str:
+    """Redact credentials and query values from any URLs embedded in a message."""
+
+    def _redact(match: re.Match[str]) -> str:
+        try:
+            return redact_url(match.group(0))
+        except ValueError:
+            return "<redacted-url>"
+
+    return _URL_IN_TEXT.sub(_redact, message)

@@ -9,7 +9,9 @@ from __future__ import annotations
 import asyncio
 import random
 import sys
+import zlib
 from collections import Counter
+from collections.abc import Iterable
 from datetime import UTC
 from email.utils import parsedate_to_datetime
 from http.cookiejar import CookieJar, DefaultCookiePolicy
@@ -27,6 +29,10 @@ from panoptic.utils import validate_header
 # the rest of the stream is discarded. Detection only needs a prefix of a file,
 # and the cap protects the scanner from huge or decompression-bomb responses.
 MAX_RESPONSE_BYTES = 10 * 1024 * 1024
+
+# Only encodings that can be decompressed with an output bound are requested;
+# a body in any other encoding is kept as raw (undecoded) bytes.
+ACCEPT_ENCODING = "gzip, deflate"
 
 # Maximum number of redirects followed when --follow-redirects is enabled.
 MAX_REDIRECTS = 10
@@ -104,6 +110,40 @@ def _retry_after_delay(response: httpx.Response) -> float | None:
             parsed = parsed.replace(tzinfo=UTC)
         seconds = (parsed - datetime.now(UTC)).total_seconds()
     return max(0.0, min(seconds, RETRY_AFTER_MAX))
+
+
+class _BoundedDecoder:
+    """Content-Encoding decoder that never produces more than a given number of bytes.
+
+    Supports gzip and deflate (zlib-wrapped or raw); identity and any other
+    encoding are passed through undecoded.
+    """
+
+    def __init__(self, content_encoding: str) -> None:
+        encoding = content_encoding.strip().lower()
+        self._deflate = encoding == "deflate"
+        self._decompressor: zlib._Decompress | None = None
+        if encoding in ("gzip", "x-gzip"):
+            self._decompressor = zlib.decompressobj(zlib.MAX_WBITS | 16)
+        elif self._deflate:
+            self._decompressor = zlib.decompressobj()
+        self._started = False
+
+    def decode(self, data: bytes, limit: int) -> bytes:
+        if limit <= 0:
+            return b""
+        if self._decompressor is None:
+            return data[:limit]
+        try:
+            output = self._decompressor.decompress(data, limit)
+        except zlib.error:
+            if not (self._deflate and not self._started):
+                raise httpx.DecodingError("invalid compressed response body") from None
+            # Some servers send raw deflate without the zlib wrapper.
+            self._decompressor = zlib.decompressobj(-zlib.MAX_WBITS)
+            output = self._decompressor.decompress(data, limit)
+        self._started = True
+        return output
 
 
 # RFC 3986 pchar plus "/" and "%" so existing percent-escapes are sent as given.
@@ -220,7 +260,7 @@ class NetworkClient:
                     _set_raw_path(request, urlsplit(url).path)
                 try:
                     async with asyncio.timeout(deadline):
-                        response = await self._send(request)
+                        response = await self._send(request, request_headers.keys())
                 except TimeoutError as exc:
                     raise _RequestDeadlineExceeded(f"request exceeded {deadline:.1f}s deadline") from exc
             except _RETRYABLE as exc:
@@ -243,13 +283,18 @@ class NetworkClient:
 
         return None
 
-    async def _send(self, request: httpx.Request) -> httpx.Response:
-        """Send a request, following redirects manually when enabled."""
+    async def _send(self, request: httpx.Request, request_header_names: Iterable[str] = ()) -> httpx.Response:
+        """Send a request, following redirects manually when enabled.
+
+        User headers (from config and ``request_header_names``, the per-request
+        headers) are stripped on cross-origin hops and restored on return.
+        """
         assert self._client is not None
         original_origin = _origin(request.url)
-        # Values of user-supplied headers on the original request, restored
-        # when a redirect chain returns to the original origin.
-        user_headers = {name: request.headers[name] for name in self._user_header_names if name in request.headers}
+        names = set(self._user_header_names) | {name.lower() for name in request_header_names}
+        # The inferred body Content-Type is not a secret and must follow a 307/308.
+        names.discard("content-type")
+        user_headers = {name: request.headers[name] for name in names if name in request.headers}
         history: list[httpx.Response] = []
 
         while True:
@@ -276,16 +321,17 @@ class NetworkClient:
         assert self._client is not None
         response = await self._client.send(request, stream=True)
         try:
+            # Decode from the raw stream with an output bound: httpx's own
+            # decoders inflate each chunk without a limit before yielding it.
+            decoder = _BoundedDecoder(response.headers.get("content-encoding", ""))
             chunks: list[bytes] = []
             size = 0
-            async for chunk in response.aiter_bytes():
-                remaining = MAX_RESPONSE_BYTES - size
-                if len(chunk) >= remaining:
-                    chunks.append(chunk[:remaining])
-                    size = MAX_RESPONSE_BYTES
-                    break
+            async for raw in response.aiter_raw():
+                chunk = decoder.decode(raw, MAX_RESPONSE_BYTES - size)
                 chunks.append(chunk)
                 size += len(chunk)
+                if size >= MAX_RESPONSE_BYTES:
+                    break
         finally:
             await response.aclose()
         # Expose the (possibly truncated) body as the response content.
@@ -309,6 +355,8 @@ class NetworkClient:
             from panoptic import __version__
 
             headers["User-Agent"] = f"Panoptic {__version__}"
+
+        headers["Accept-Encoding"] = ACCEPT_ENCODING
 
         # Cookie
         if self.config.cookie:

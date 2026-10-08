@@ -1,6 +1,11 @@
 """Tests for panoptic.network — async HTTP client."""
 
 import asyncio
+import gzip
+import zlib
+from collections.abc import Callable
+from types import SimpleNamespace
+from typing import Any
 from unittest.mock import AsyncMock, patch
 
 import httpx
@@ -293,6 +298,30 @@ class TestRedirects:
         assert "cookie" not in redirected.headers
         assert "user-agent" in redirected.headers
 
+    async def test_per_request_headers_stripped_on_cross_origin_redirect(self, httpx_mock: HTTPXMock) -> None:
+        config = ScanConfig(url="http://example.com", follow_redirects=True)
+        httpx_mock.add_response(
+            url="http://example.com/start", status_code=302, headers={"Location": "http://example.org/x"}
+        )
+        httpx_mock.add_response(url="http://example.org/x")
+        async with NetworkClient(config) as client:
+            await client.fetch("http://example.com/start", headers={"X-Api-Key": "secret"})
+        first, redirected = httpx_mock.get_requests()
+        assert first.headers["x-api-key"] == "secret"
+        assert "x-api-key" not in redirected.headers
+
+    async def test_inferred_content_type_follows_307(self, httpx_mock: HTTPXMock) -> None:
+        config = ScanConfig(url="http://example.com", follow_redirects=True)
+        httpx_mock.add_response(
+            url="http://example.com/start", status_code=307, headers={"Location": "http://example.org/x"}
+        )
+        httpx_mock.add_response(url="http://example.org/x")
+        async with NetworkClient(config) as client:
+            await client.fetch("http://example.com/start", data="file=x")
+        redirected = httpx_mock.get_requests()[1]
+        assert redirected.method == "POST"
+        assert redirected.headers["content-type"] == "application/x-www-form-urlencoded"
+
     async def test_scheme_change_is_cross_origin(self, httpx_mock: HTTPXMock) -> None:
         config = ScanConfig(url="http://example.com", follow_redirects=True, headers=["X-Api-Key: k3y"])
         httpx_mock.add_response(
@@ -341,6 +370,12 @@ class TestRedirects:
         assert len(httpx_mock.get_requests()) == 3
 
 
+def _raw_deflate(data: bytes) -> bytes:
+    """Deflate without the zlib wrapper, as some servers send it."""
+    compressor = zlib.compressobj(wbits=-zlib.MAX_WBITS)
+    return compressor.compress(data) + compressor.flush()
+
+
 class TestLimits:
     async def test_response_body_is_truncated(self, httpx_mock: HTTPXMock, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(network, "MAX_RESPONSE_BYTES", 10)
@@ -349,6 +384,71 @@ class TestLimits:
             resp = await client.fetch("http://example.com/big")
         assert resp is not None
         assert resp.content == b"0123456789"
+
+    async def test_gzip_bomb_is_bounded_while_decoding(
+        self, httpx_mock: HTTPXMock, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        monkeypatch.setattr(network, "MAX_RESPONSE_BYTES", 1024)
+        bomb = gzip.compress(b"\0" * (64 * 1024 * 1024))
+        httpx_mock.add_response(url="http://example.com/bomb", content=bomb, headers={"Content-Encoding": "gzip"})
+        # Any unbounded inflate of the 64 MiB body would exceed this decompress budget.
+        real_decompressobj = zlib.decompressobj
+        outputs: list[int] = []
+
+        def tracking_decompressobj(*args: Any) -> object:
+            inner = real_decompressobj(*args)
+
+            class Tracker:
+                def decompress(self, data: bytes, max_length: int = 0) -> bytes:
+                    out = inner.decompress(data, max_length)
+                    outputs.append(len(out))
+                    return out
+
+            return Tracker()
+
+        # Patch only panoptic.network's view of zlib; httpx keeps the real module.
+        fake_zlib = SimpleNamespace(decompressobj=tracking_decompressobj, MAX_WBITS=zlib.MAX_WBITS, error=zlib.error)
+        monkeypatch.setattr(network, "zlib", fake_zlib)
+        async with NetworkClient(ScanConfig(url="http://example.com")) as client:
+            resp = await client.fetch("http://example.com/bomb")
+        assert resp is not None
+        assert resp.content == b"\0" * 1024
+        assert sum(outputs) == 1024
+
+    @pytest.mark.parametrize(
+        ("encoding", "compress"),
+        [
+            ("gzip", gzip.compress),
+            ("deflate", zlib.compress),
+            ("deflate", _raw_deflate),
+        ],
+    )
+    async def test_compressed_body_is_decoded(
+        self, httpx_mock: HTTPXMock, encoding: str, compress: Callable[[bytes], bytes]
+    ) -> None:
+        body = b"root:x:0:0:root:/root:/bin/bash\n" * 50
+        httpx_mock.add_response(
+            url="http://example.com/c", content=compress(body), headers={"Content-Encoding": encoding}
+        )
+        async with NetworkClient(ScanConfig(url="http://example.com")) as client:
+            resp = await client.fetch("http://example.com/c")
+        assert resp is not None
+        assert resp.content == body
+
+    async def test_unsupported_encoding_is_kept_raw(self, httpx_mock: HTTPXMock) -> None:
+        httpx_mock.add_response(url="http://example.com/br", content=b"\x8b\x02raw", headers={"Content-Encoding": "br"})
+        async with NetworkClient(ScanConfig(url="http://example.com")) as client:
+            resp = await client.fetch("http://example.com/br")
+        assert resp is not None
+        assert resp.content == b"\x8b\x02raw"
+
+    async def test_requests_only_boundable_encodings(self, httpx_mock: HTTPXMock) -> None:
+        httpx_mock.add_response(url="http://example.com/")
+        async with NetworkClient(ScanConfig(url="http://example.com")) as client:
+            await client.fetch("http://example.com/")
+        request = httpx_mock.get_request()
+        assert request is not None
+        assert request.headers["accept-encoding"] == "gzip, deflate"
 
     async def test_small_body_is_kept_intact(self, httpx_mock: HTTPXMock) -> None:
         httpx_mock.add_response(url="http://example.com/small", content=b"root:x:0:0")
@@ -360,7 +460,7 @@ class TestLimits:
     async def test_overall_deadline_returns_none(self, monkeypatch: pytest.MonkeyPatch) -> None:
         monkeypatch.setattr(network, "REQUEST_DEADLINE_FACTOR", 0.01)
 
-        async def stall(self: NetworkClient, request: httpx.Request) -> httpx.Response:
+        async def stall(self: NetworkClient, request: httpx.Request, *args: object) -> httpx.Response:
             await asyncio.sleep(10)
             raise AssertionError("unreachable")
 

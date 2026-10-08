@@ -11,6 +11,8 @@ import re
 import subprocess
 from urllib.parse import urlsplit
 
+from panoptic.utils import redact_urls_in_text
+
 GIT_REPOSITORY_URL = "https://github.com/lightos/Panoptic.git"
 GIT_UPSTREAM_BRANCH = "main"
 GIT_UPSTREAM_REF = f"refs/heads/{GIT_UPSTREAM_BRANCH}"
@@ -147,7 +149,8 @@ def do_update() -> int:
     stderr = result.stderr.decode("utf-8", errors="replace").strip()
     print(f"[!] Update failed (git exit code {result.returncode}):")
     if stderr:
-        for line in stderr.splitlines():
+        # Credential helpers can echo repository URLs with embedded credentials.
+        for line in redact_urls_in_text(stderr).splitlines():
             print(f"    {line}")
     print(
         "[i] Make sure the working tree has no uncommitted changes (see 'git status') "

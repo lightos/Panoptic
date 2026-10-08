@@ -107,6 +107,23 @@ class TestDoUpdate:
         assert "uncommitted changes" in out
         assert "make sure 'git' is installed" not in out
 
+    @patch("panoptic.update.subprocess.run")
+    @patch("panoptic.update.os.path.exists", return_value=True)
+    def test_pull_failure_redacts_credentials_in_stderr(
+        self, mock_exists: Any, mock_run: Any, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        stderr = b"fatal: unable to access 'https://user:s3cret@github.com/lightos/Panoptic.git/': denied\n"
+        mock_run.side_effect = [
+            _ok(TRUSTED_REMOTE),
+            _ok(b"main\n"),
+            _ok(HEAD_A),
+            MagicMock(returncode=1, stdout=b"", stderr=stderr),
+        ]
+        assert do_update() == 2
+        out = capsys.readouterr().out
+        assert "s3cret" not in out
+        assert "unable to access" in out
+
     @pytest.mark.parametrize(
         "remote",
         [

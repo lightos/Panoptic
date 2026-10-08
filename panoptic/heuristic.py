@@ -37,12 +37,13 @@ def _decode_reflections(text: str) -> str:
 def _fuzzy_path_pattern(filepath: str) -> re.Pattern[str]:
     """Compile a linear-time pattern matching ``filepath`` with any separator characters.
 
-    Every non-alphanumeric character becomes a single-character wildcard and every
-    alphanumeric character is literal. The pattern has no alternation or
+    Every non-alphanumeric character becomes a single non-alphanumeric wildcard
+    (so file content like ``xetcXpasswd`` is not mistaken for ``/etc/passwd``)
+    and every alphanumeric character is literal. The pattern has no alternation or
     quantifiers, so matching cannot backtrack catastrophically.
     """
     if len(filepath) <= _MAX_FUZZY_PATH_LENGTH and any(char.isalnum() for char in filepath):
-        regex = "".join(re.escape(char) if char.isalnum() else "." for char in filepath)
+        regex = "".join(re.escape(char) if char.isalnum() else "[^0-9a-z]" for char in filepath)
     else:
         # Very long paths, or paths without any literal anchor (a pure wildcard
         # pattern would erase arbitrary text), are removed literally.

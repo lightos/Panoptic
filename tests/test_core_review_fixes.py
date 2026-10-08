@@ -20,7 +20,6 @@ from panoptic.core import (
     _format_error_counts,
     _interruptible_input,
     _load_checkpoint_data,
-    _redact_text,
     build_payload,
     checkpoint_fingerprint,
     process_path,
@@ -30,6 +29,7 @@ from panoptic.heuristic import MAX_COMPARE_LENGTH, clean_response, is_match
 from panoptic.models import Case, OutputFormat, ScanConfig, ScanResult
 from panoptic.network import NetworkClient
 from panoptic.output import TextFormatter
+from panoptic.utils import redact_urls_in_text
 
 PASSWD = "root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n"
 
@@ -198,13 +198,34 @@ class TestFingerprintVolatileFields:
         varied = base.replace(
             user_agent="Random/1.0",
             random_agent=True,
-            cookie="sid=1",
             proxy="http://127.0.0.1:8080",
             ignore_proxy=True,
             invalid_ssl=True,
-            headers=["Authorization: Bearer abc"],
         )
         assert checkpoint_fingerprint(base, cases) == checkpoint_fingerprint(varied, cases)
+
+    @pytest.mark.parametrize(
+        "change",
+        [
+            {"cookie": "sid=guest"},
+            {"headers": ["Authorization: Bearer guest"]},
+            {"write_files": True},
+        ],
+    )
+    def test_identity_and_write_files_change_fingerprint(self, change: dict[str, object]) -> None:
+        """A resume must not reuse findings made as another identity or without file content."""
+        cases = [Case(location="/etc/passwd")]
+        base = ScanConfig(
+            url="http://example.com/?f=x", param="f", cookie="sid=admin", headers=["Authorization: Bearer admin"]
+        )
+        assert checkpoint_fingerprint(base, cases) != checkpoint_fingerprint(base.replace(**change), cases)
+
+    def test_fingerprint_does_not_store_credentials(self) -> None:
+        fingerprint = checkpoint_fingerprint(
+            ScanConfig(url="http://example.com/?f=x", cookie="sid=secret", headers=["Authorization: Bearer secret"]),
+            [Case(location="/etc/passwd")],
+        )
+        assert "secret" not in fingerprint
 
     def test_fuzz_header_changes_fingerprint(self) -> None:
         cases = [Case(location="/etc/passwd")]
@@ -457,7 +478,7 @@ class TestMiscCleanups:
         assert "hunter2" not in message and "s3cr3t" not in message
 
     def test_redact_text_handles_multiple_urls(self) -> None:
-        text = _redact_text("a http://u:p@h.example/?k=v b https://h2.example/p")
+        text = redact_urls_in_text("a http://u:p@h.example/?k=v b https://h2.example/p")
         assert "u:p" not in text and "k=v" not in text and "https://h2.example/p" in text
 
     def test_format_error_counts(self) -> None:

@@ -13,7 +13,6 @@ import hashlib
 import json
 import os
 import random
-import re
 import sys
 import tempfile
 import threading
@@ -52,6 +51,7 @@ from panoptic.utils import (
     open_secure_write,
     os_matches_restriction,
     redact_url,
+    redact_urls_in_text,
     replace_parameter_value,
     sanitize_filename,
     validate_header,
@@ -71,7 +71,6 @@ _CHECKPOINT_CONFIG_EXCLUSIONS = frozenset(
         "retries",
         "delay",
         "random_delay",
-        "write_files",
         "output_format",
         "output_file",
         "log_file",
@@ -79,20 +78,16 @@ _CHECKPOINT_CONFIG_EXCLUSIONS = frozenset(
         "quiet",
         "resume_file",
         "output_dir",
-        # Volatile connection/identity settings: a randomized User-Agent, a
-        # refreshed session cookie, or a different proxy must not prevent a
-        # resume. Headers are excluded too; only FUZZ-bearing header templates
-        # (which define payload placement) are fingerprinted separately.
+        # Connection settings that don't change who the scan runs as: a
+        # randomized User-Agent or a different proxy must not prevent a resume.
+        # Cookie and headers stay in (hashed) because they can carry identity.
         "user_agent",
         "random_agent",
-        "cookie",
         "proxy",
         "ignore_proxy",
         "invalid_ssl",
-        "headers",
     }
 )
-_URL_IN_TEXT = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://[^\s'\"<>]+")
 
 
 def process_path(config: ScanConfig, location: str) -> str:
@@ -217,9 +212,11 @@ def build_payload(config: ScanConfig, location: str, request_params: str) -> str
 def checkpoint_fingerprint(config: ScanConfig, cases: list[Case]) -> str:
     """Hash all scan-defining inputs without storing credentials in the checkpoint.
 
-    Volatile settings (User-Agent, random agent, cookie, proxy, SSL verification
-    and plain headers) are excluded so a resume is not rejected merely because
-    a random User-Agent was re-drawn or a session cookie was refreshed.
+    Only a SHA-256 digest is stored, so cookie and header values (which can
+    change the identity the scan runs as) are bound without being persisted.
+    User-Agent, proxy and SSL settings are excluded so a re-drawn random
+    User-Agent doesn't reject a resume. ``write_files`` is included because
+    restored findings carry no file content to write.
     """
     # Include new ScanConfig fields by default. A future option cannot silently
     # become resume-unsafe merely because this function was not updated.
@@ -233,8 +230,6 @@ def checkpoint_fingerprint(config: ScanConfig, cases: list[Case]) -> str:
         if scan_definition[code_field] is not None:
             scan_definition[code_field] = sorted(set(scan_definition[code_field]))
     scan_definition["os_filter"] = normalize_os_name(scan_definition["os_filter"])
-    # Headers carrying the FUZZ marker decide where payloads are injected.
-    scan_definition["fuzz_headers"] = sorted(hdr for hdr in config.headers or [] if FUZZ_MARKER in hdr)
     scan_definition["case_ids"] = sorted(case.case_id for case in cases)
     serialized = json.dumps(scan_definition, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(serialized.encode()).hexdigest()
@@ -395,18 +390,6 @@ def load_checkpoint(filepath: str, expected_fingerprint: str | None = None) -> s
     return _load_checkpoint_data(filepath, expected_fingerprint).completed_ids
 
 
-def _redact_text(message: str) -> str:
-    """Redact credentials and query values from any URLs embedded in a message."""
-
-    def _redact(match: re.Match[str]) -> str:
-        try:
-            return redact_url(match.group(0))
-        except ValueError:
-            return "<redacted-url>"
-
-    return _URL_IN_TEXT.sub(_redact, message)
-
-
 def _truncate_utf8(value: str, max_bytes: int) -> str:
     """Truncate a string so its UTF-8 encoding fits in max_bytes, without splitting a character."""
     encoded = value.encode("utf-8")
@@ -541,7 +524,7 @@ class Scanner:
                 text_out = TextFormatter(stderr_stream, quiet=self.config.quiet)
                 # Exception messages (notably httpx errors) can embed the request
                 # or proxy URL, including userinfo credentials and query tokens.
-                text_out.write_warning(f"Scan failed: {_redact_text(str(exc))}")
+                text_out.write_warning(f"Scan failed: {redact_urls_in_text(str(exc))}")
                 self._write_output([], text_out)
                 return 2
         finally:
@@ -701,7 +684,7 @@ class Scanner:
                                 self.total_failed += 1
                         except Exception as exc:
                             self.total_failed += 1
-                            message = f"Case '{case.location}' failed: {_redact_text(str(exc))}"
+                            message = f"Case '{case.location}' failed: {redact_urls_in_text(str(exc))}"
                             self.operational_errors.append(message)
                             scan_out.write_warning(message)
                         finally:
@@ -731,7 +714,7 @@ class Scanner:
                     worker_results = await asyncio.gather(*worker_tasks, return_exceptions=True)
                     for result in worker_results:
                         if isinstance(result, BaseException) and not isinstance(result, asyncio.CancelledError):
-                            detail = _redact_text(str(result))
+                            detail = redact_urls_in_text(str(result))
                             self.operational_errors.append(f"Worker terminated unexpectedly: {detail}")
                     # Hold the checkpoint lock so no concurrent flush can interleave.
                     async with self._checkpoint_lock:
