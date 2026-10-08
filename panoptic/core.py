@@ -58,7 +58,8 @@ from panoptic.utils import (
 
 PASSWD_FILES = frozenset({"/etc/passwd", "/etc/security/passwd"})
 FUZZ_MARKER = "FUZZ"
-CHECKPOINT_VERSION = 2
+# Bump whenever the stored data changes meaning (3: content_length in bytes).
+CHECKPOINT_VERSION = 3
 # Maximum UTF-8 byte length of a file name written by --write-files.
 MAX_OUTPUT_FILENAME_BYTES = 200
 _CHECKPOINT_CONFIG_EXCLUSIONS = frozenset(

@@ -416,7 +416,11 @@ class TestAtomicCheckpoint:
 
     @pytest.mark.parametrize(
         "content",
-        [["id1", "id2"], {"version": 1, "fingerprint": "fp", "completed_ids": ["id1"]}],
+        [
+            ["id1", "id2"],
+            {"version": 1, "fingerprint": "fp", "completed_ids": ["id1"]},
+            {"version": 2, "fingerprint": "fp", "completed_ids": ["id1"], "results": []},
+        ],
     )
     def test_incompatible_checkpoint_is_rejected(self, tmp_path: Path, content: object) -> None:
         filepath = tmp_path / "checkpoint.json"
