@@ -135,7 +135,7 @@ class TestCsvValidation:
         """CSV parser returns expected number of cases."""
         config = ScanConfig(url="http://example.com")
         cases = parse_cases(config)
-        assert len(cases) == 958
+        assert len(cases) == 951
 
     def test_composite_os_rows_emit_one_case_per_location(self) -> None:
         cases = parse_cases(ScanConfig(url="http://example.com"))

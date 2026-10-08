@@ -10,7 +10,7 @@ import secrets
 import stat
 import sys
 from importlib.resources import files
-from typing import Any, TextIO
+from typing import TextIO
 from urllib.parse import unquote_plus, urlsplit
 
 _HEADER_NAME_RE = re.compile(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$")
@@ -20,6 +20,23 @@ _OS_ALIASES = {
     "dragonflybsd": "DragonFly BSD",
     "dragonfly bsd": "DragonFly BSD",
 }
+
+
+# C0 controls, DEL, and C1 controls (ESC/CSI/OSC/etc. can drive terminals).
+CONTROL_CHARS_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+
+
+def escape_control_chars(text: str, keep: str = "") -> str:
+    """Replace control characters with visible escapes (e.g. ESC -> ``\\x1b``).
+
+    Characters listed in ``keep`` (such as ``"\\n"``) are left untouched.
+    """
+
+    def _escape(match: re.Match[str]) -> str:
+        char = match.group(0)
+        return char if char in keep else f"\\x{ord(char):02x}"
+
+    return CONTROL_CHARS_RE.sub(_escape, text)
 
 
 def normalize_os_name(value: str | None) -> str | None:
@@ -148,20 +165,41 @@ def replace_parameter_value(parameters: str, expected_name: str, value: str) -> 
     return "&".join(replaced)
 
 
-def sanitize_filename(path: str) -> str:
+_UNSAFE_FILENAME_CHARS_RE = re.compile(r"[^A-Za-z0-9._-]")
+_WINDOWS_RESERVED_NAMES = frozenset(
+    {"CON", "PRN", "AUX", "NUL", "CONIN$", "CONOUT$"} | {f"COM{i}" for i in range(10)} | {f"LPT{i}" for i in range(10)}
+)
+MAX_FILENAME_BYTES = 200
+
+
+def _truncate_utf8(value: str, max_bytes: int) -> str:
+    """Truncate ``value`` so its UTF-8 encoding fits ``max_bytes`` without splitting a character."""
+    encoded = value.encode("utf-8")
+    if len(encoded) <= max_bytes:
+        return value
+    return encoded[:max_bytes].decode("utf-8", errors="ignore")
+
+
+def sanitize_filename(path: str, max_bytes: int = MAX_FILENAME_BYTES) -> str:
     """Sanitize a file path for use as a local output filename.
 
-    Replaces directory separators and dangerous characters to prevent
-    path traversal in output file writes.
+    Every character outside ``[A-Za-z0-9._-]`` (directory separators, colons,
+    control characters, non-ASCII) is replaced with ``_``, traversal sequences
+    are removed, Windows reserved device names are neutralized, and the result
+    is capped at ``max_bytes`` UTF-8 bytes.
     """
-    # Replace path separators and colons first (prevents traversal bypasses)
-    sanitized = path.replace("/", "_").replace("\\", "_").replace(":", "_")
+    sanitized = _UNSAFE_FILENAME_CHARS_RE.sub("_", path)
     # Remove traversal sequences (loop until stable to prevent bypass via "....//")
     while ".." in sanitized:
         sanitized = sanitized.replace("..", "")
-    # Remove leading dots and underscores
-    sanitized = sanitized.lstrip("._")
-    return sanitized or "unnamed"
+    # Remove leading dots/underscores and trailing dots (invalid on Windows)
+    sanitized = _truncate_utf8(sanitized.lstrip("._"), max_bytes).rstrip(".")
+    if not sanitized:
+        return "unnamed"
+    # Windows reserves device names regardless of extension (e.g. "CON.txt").
+    if sanitized.split(".", 1)[0].upper() in _WINDOWS_RESERVED_NAMES:
+        sanitized = _truncate_utf8(f"_{sanitized}", max_bytes).rstrip(".")
+    return sanitized
 
 
 def open_secure_write(path: str, *, newline: str | None = None) -> TextIO:
@@ -252,11 +290,33 @@ def redact_parameter_values(value: str) -> str:
     return "&".join(redacted)
 
 
+def _redact_path_parameters(path: str) -> str:
+    """Redact matrix/path parameters (``/a;jsessionid=SECRET/b``) in a URL path."""
+    if ";" not in path:
+        return path
+    segments: list[str] = []
+    for segment in path.split("/"):
+        name, separator, params = segment.partition(";")
+        if not separator:
+            segments.append(segment)
+            continue
+        redacted: list[str] = []
+        for param in params.split(";"):
+            if "=" in param:
+                key, _, _value = param.partition("=")
+                redacted.append(f"{key}=***")
+            else:
+                redacted.append("***" if param else "")
+        segments.append(";".join([name, *redacted]))
+    return "/".join(segments)
+
+
 def redact_url(url: str) -> str:
     """Redact sensitive parts of a URL for safe display.
 
-    Strips userinfo (user:pass@) and replaces query/fragment values
-    to prevent credential leakage in banners and log files.
+    Strips userinfo (user:pass@) and fragments, and replaces query and path
+    (``;key=value``) parameter values to prevent credential leakage in
+    banners and log files.
     """
     parsed = urlsplit(url)
     # Rebuild netloc without userinfo
@@ -269,27 +329,69 @@ def redact_url(url: str) -> str:
         port = None
     if port:
         host = f"{host}:{port}"
+    path = _redact_path_parameters(parsed.path)
     # Redact query parameter values but keep keys for context
     if parsed.query:
         redacted_query = redact_parameter_values(parsed.query)
-        return f"{parsed.scheme}://{host}{parsed.path}?{redacted_query}"
-    return f"{parsed.scheme}://{host}{parsed.path}"
+        return f"{parsed.scheme}://{host}{path}?{redacted_query}"
+    return f"{parsed.scheme}://{host}{path}"
+
+
+# A leading "scheme:" that is not "host:port" (a digit right after the colon).
+_URL_SCHEME_RE = re.compile(r"^[A-Za-z][A-Za-z0-9+.\-]*:(?!\d)")
 
 
 def normalize_url(url: str) -> str:
-    """Normalize a URL, adding http:// scheme if missing."""
-    if not url.lower().startswith(("http://", "https://")):
-        url = f"http://{url}"
-    return url
+    """Normalize a URL, adding an http:// scheme only when none is present.
+
+    Inputs that already carry a scheme (e.g. ``ftp://host/x``) are returned
+    unchanged so :func:`validate_url_scheme` rejects non-HTTP(S) schemes,
+    instead of being mangled into ``http://ftp://host/x`` (host ``ftp``).
+    """
+    if url.startswith("//"):
+        return f"http:{url}"
+    if _URL_SCHEME_RE.match(url):
+        return url
+    return f"http://{url}"
 
 
-def parse_status_codes(raw: str | list[Any]) -> list[int]:
+def parse_status_codes(raw: object) -> list[int]:
     """Parse and validate a comma-separated string or list of HTTP status codes.
 
-    Raises ValueError on invalid codes or codes outside 100-599.
+    Lists must contain integers only (floats, booleans and strings are
+    rejected rather than coerced) and string entries must be plain decimal
+    digits. Raises ValueError on invalid input or codes outside 100-599.
     """
-    codes = [int(c.strip()) for c in raw.split(",")] if isinstance(raw, str) else [int(c) for c in raw]
+    codes: list[int] = []
+    if isinstance(raw, str):
+        for part in raw.split(","):
+            stripped = part.strip()
+            if not (stripped.isascii() and stripped.isdigit()):
+                raise ValueError(f"invalid HTTP status code: {stripped!r}")
+            codes.append(int(stripped))
+    elif isinstance(raw, list):
+        for item in raw:
+            if not isinstance(item, int) or isinstance(item, bool):
+                raise ValueError(f"HTTP status codes must be integers, got {item!r}")
+            codes.append(item)
+    else:
+        raise ValueError(f"expected a comma-separated string or a list of integers, got {type(raw).__name__} {raw!r}")
     for code in codes:
         if not 100 <= code <= 599:
             raise ValueError(f"HTTP status code out of range: {code}")
     return codes
+
+
+_URL_IN_TEXT = re.compile(r"[A-Za-z][A-Za-z0-9+.-]*://[^\s'\"<>]+")
+
+
+def redact_urls_in_text(message: str) -> str:
+    """Redact credentials and query values from any URLs embedded in a message."""
+
+    def _redact(match: re.Match[str]) -> str:
+        try:
+            return redact_url(match.group(0))
+        except ValueError:
+            return "<redacted-url>"
+
+    return _URL_IN_TEXT.sub(_redact, message)

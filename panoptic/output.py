@@ -14,11 +14,31 @@ from rich.console import Console
 from rich.markup import escape as rich_escape
 
 from panoptic.models import ScanConfig, ScanResult
-from panoptic.utils import redact_parameter_values, redact_url, validate_header
+from panoptic.utils import escape_control_chars, redact_parameter_values, redact_url, validate_header
+
+
+def _safe_text(value: object) -> str:
+    """Neutralize terminal control sequences and Rich markup in untrusted text.
+
+    Server- or user-controlled strings (target URLs, discovered paths, error
+    messages) may embed ESC/CSI/OSC or other C0/C1 control characters that
+    would drive the terminal or forge log lines. Control characters are shown
+    as visible escapes (``\\x1b``); trailing newlines added by callers for
+    spacing are preserved.
+    """
+    text = str(value)
+    body = text.rstrip("\n")
+    trailing = text[len(body) :]
+    return rich_escape(escape_control_chars(body)) + trailing
 
 
 class TeeWriter:
-    """Write to two streams simultaneously (e.g., stderr + log file)."""
+    """Write to two streams simultaneously (e.g., stderr + log file).
+
+    Control characters other than newline and tab are escaped before reaching
+    the secondary (log file) stream so a log viewed with ``cat``/``less -R``
+    cannot replay terminal escape sequences.
+    """
 
     def __init__(self, primary: TextIO, secondary: TextIO) -> None:
         self.primary = primary
@@ -26,7 +46,8 @@ class TeeWriter:
 
     def write(self, data: str) -> int:
         self.primary.write(data)
-        return self.secondary.write(data)
+        self.secondary.write(escape_control_chars(data, keep="\n\t"))
+        return len(data)
 
     def flush(self) -> None:
         self.primary.flush()
@@ -165,30 +186,30 @@ class TextFormatter:
         # The URL is attacker-influenced (target, redacted userinfo, IPv6 brackets)
         # and must be escaped so it cannot inject or break Rich markup.
         self._console.print(
-            f"[bold cyan] .-',--.`-.[/]   [bold]Panoptic[/] {rich_escape(version)}\n"
-            f"[bold cyan]<_ | {pupil} | _>[/]   [dim]{rich_escape(url)}[/dim]\n"
+            f"[bold cyan] .-',--.`-.[/]   [bold]Panoptic[/] {_safe_text(version)}\n"
+            f"[bold cyan]<_ | {pupil} | _>[/]   [dim]{_safe_text(url)}[/dim]\n"
             f"[bold cyan]  `-`=='-'[/]  {mode_str}\n"
         )
 
     def write_info(self, message: str) -> None:
         if self._quiet:
             return
-        self._console.print(f"[blue][i][/blue] {rich_escape(message)}")
+        self._console.print(f"[blue][i][/blue] {_safe_text(message)}")
 
     def write_warning(self, message: str) -> None:
-        self._console.print(f"[red][!][/red] {rich_escape(message)}")
+        self._console.print(f"[red][!][/red] {_safe_text(message)}")
 
     def write_found(self, result: ScanResult) -> None:
         case = result.case
         file_type_str = case.file_type.value if case.file_type else None
         parts = [p for p in (case.os, case.category, case.software, file_type_str) if p]
         context = f" ({'/'.join(parts)})" if parts else ""
-        self._console.print(f"[bold green][+][/bold green] Found '{rich_escape(case.location)}'{rich_escape(context)}")
+        self._console.print(f"[bold green][+][/bold green] Found '{_safe_text(case.location)}'{_safe_text(context)}")
 
     def write_verbose(self, message: str) -> None:
         if self._quiet:
             return
-        self._console.print(f"[dim][*] {rich_escape(message)}[/dim]")
+        self._console.print(f"[dim][*] {_safe_text(message)}[/dim]")
 
     def write_summary(self, found: list[ScanResult], total_cases: int) -> None:
         if self._quiet:
@@ -207,7 +228,7 @@ class TextFormatter:
                 status = result.status_code if result.status_code is not None else "-"
                 length = result.content_length if result.content_length is not None else "-"
                 self._console.print(
-                    f"  {rich_escape(result.case.location)}  [dim](status={status}, length={length})[/dim]",
+                    f"  {_safe_text(result.case.location)}  [dim](status={status}, length={length})[/dim]",
                     soft_wrap=True,
                 )
         else:
@@ -246,14 +267,22 @@ class CsvFormatter:
     def __init__(self, stream: TextIO | None = None) -> None:
         self._stream = stream or sys.stdout
 
-    @staticmethod
-    def _sanitize_csv_value(value: object) -> object:
+    _FORMULA_CHARS = frozenset("=+-@")
+    _DANGEROUS_LEADING_CHARS = frozenset("=+-@\t\r\n|%")
+
+    @classmethod
+    def _sanitize_csv_value(cls, value: object) -> object:
         """Neutralize spreadsheet formula injection in CSV cells.
 
-        Values starting with =, +, -, or @ are prefixed with a single quote
-        to prevent Excel/Sheets from interpreting them as formulas.
+        Values starting with ``= + - @``, a tab/CR/LF, ``|`` (DDE) or ``%``,
+        or with leading whitespace followed by a formula character, are
+        prefixed with a single quote so Excel/Sheets/LibreOffice treat them
+        as text instead of formulas.
         """
-        if isinstance(value, str) and value and value[0] in ("=", "+", "-", "@"):
+        if not isinstance(value, str) or not value:
+            return value
+        stripped = value.lstrip()
+        if value[0] in cls._DANGEROUS_LEADING_CHARS or (stripped and stripped[0] in cls._FORMULA_CHARS):
             return f"'{value}"
         return value
 

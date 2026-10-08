@@ -88,3 +88,13 @@ class TestFilterContent:
     def test_empty_original(self) -> None:
         found = "some content"
         assert filter_content(found, "") == found
+
+
+class TestFuzzyPathWildcards:
+    def test_separators_still_match_encoded_reflections(self) -> None:
+        assert clean_response("missing: _etc_passwd!", "/etc/passwd") == "missing: !"
+
+    def test_alphanumeric_content_is_not_treated_as_separator(self) -> None:
+        """File content like 'xetcXpasswd' must survive cleaning for '/etc/passwd'."""
+        assert clean_response("xetcXpasswd", "/etc/passwd") == "xetcXpasswd"
+        assert is_match("xetcXpasswd", "")

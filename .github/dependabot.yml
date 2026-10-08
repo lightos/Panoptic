@@ -4,6 +4,9 @@ updates:
     directory: /
     schedule:
       interval: weekly
+    # Panoptic tracks the latest releases: raise the lower bounds in
+    # pyproject.toml (and mirror them in .github/constraints-min.txt).
+    versioning-strategy: increase
     commit-message:
       prefix: deps
     groups:

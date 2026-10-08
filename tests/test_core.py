@@ -12,6 +12,7 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from panoptic.core import (
+    CHECKPOINT_VERSION,
     Scanner,
     build_payload,
     checkpoint_fingerprint,
@@ -367,7 +368,7 @@ class TestAtomicCheckpoint:
         save_checkpoint(filepath, {"id1", "id2"}, "fingerprint")
         with open(filepath) as f:
             data = json.load(f)
-        assert data["version"] == 1
+        assert data["version"] == CHECKPOINT_VERSION
         assert data["fingerprint"] == "fingerprint"
         assert set(data["completed_ids"]) == {"id1", "id2"}
 
@@ -413,10 +414,15 @@ class TestAtomicCheckpoint:
         )
         assert first == second
 
-    def test_legacy_checkpoint_is_loaded(self, tmp_path: Path) -> None:
+    @pytest.mark.parametrize(
+        "content",
+        [["id1", "id2"], {"version": 1, "fingerprint": "fp", "completed_ids": ["id1"]}],
+    )
+    def test_incompatible_checkpoint_is_rejected(self, tmp_path: Path, content: object) -> None:
         filepath = tmp_path / "checkpoint.json"
-        filepath.write_text(json.dumps(["id1", "id2"]), encoding="utf-8")
-        assert load_checkpoint(str(filepath), "fingerprint-not-present-in-legacy") == {"id1", "id2"}
+        filepath.write_text(json.dumps(content), encoding="utf-8")
+        with pytest.raises(ValueError, match="incompatible version"):
+            load_checkpoint(str(filepath), "fp")
 
 
 class TestMatchString:
@@ -583,10 +589,10 @@ class TestCheckpointThrottling:
         write_count = 0
         original_save = save_checkpoint
 
-        def counting_save(filepath: str, completed_ids: set[str], fingerprint: str = "") -> None:
+        def counting_save(filepath: str, completed_ids: set[str], fingerprint: str = "", **kwargs: object) -> None:
             nonlocal write_count
             write_count += 1
-            original_save(filepath, completed_ids, fingerprint)
+            original_save(filepath, completed_ids, fingerprint, **kwargs)  # type: ignore[arg-type]
 
         with patch("panoptic.core.save_checkpoint", side_effect=counting_save):
             for i in range(20):
@@ -614,11 +620,11 @@ class TestCheckpointThrottling:
         save_started = threading.Event()
         allow_save = threading.Event()
 
-        def blocking_save(filepath: str, completed_ids: set[str], fingerprint: str = "") -> None:
+        def blocking_save(filepath: str, completed_ids: set[str], fingerprint: str = "", **kwargs: object) -> None:
             save_started.set()
             if not allow_save.wait(timeout=2):
                 raise TimeoutError("test did not release checkpoint save")
-            original_save(filepath, completed_ids, fingerprint)
+            original_save(filepath, completed_ids, fingerprint, **kwargs)  # type: ignore[arg-type]
 
         with patch("panoptic.core.save_checkpoint", side_effect=blocking_save):
             flush_task = asyncio.create_task(scanner._flush_checkpoint())

@@ -1,58 +1,53 @@
 path,os,software,category,type
-/etc/security/failedlogin,AIX,AIX,*NIX,log
-/etc/security/lastlog,AIX,AIX,*NIX,log
-/etc/utmp,AIX,AIX,*NIX,log
-/usr/spool/mqueue/syslog,AIX,AIX,*NIX,log
-/var/adm/cron/log,AIX,AIX,*NIX,log
-/var/adm/qacct,AIX,AIX,*NIX,log
-/var/adm/ras/bootlog,AIX,AIX,*NIX,log
-/var/adm/ras/errlog,AIX,AIX,*NIX,log
-/etc/bash.bashrc,*NIX,Bash,*NIX,other
-/etc/bash_completion.d/debconf,*NIX,Bash,*NIX,other
-/root/.bash_config,*NIX,Bash,*NIX,other
-/root/.bash_history,*NIX,Bash,*NIX,other
-/root/.bash_logout,*NIX,Bash,*NIX,other
-/root/.bashrc,*NIX,Bash,*NIX,other
-/usr/lib/cron/log,*NIX,Bash,*NIX,other
-/usr/spool/lp/log,*NIX,Bash,*NIX,other
-/var/adm/SYSLOG,*NIX,Bash,*NIX,other
-/var/adm/X0msgs,*NIX,Bash,*NIX,other
-/var/adm/acct/sum/loginlog,*NIX,Bash,*NIX,other
-/var/adm/crash/unix,*NIX,Bash,*NIX,other
-/var/adm/crash/vmcore,*NIX,Bash,*NIX,other
-/var/adm/dtmp,*NIX,Bash,*NIX,other
-/var/adm/lastlog/username,*NIX,Bash,*NIX,other
-/var/adm/loginlog,*NIX,Bash,*NIX,other
-/var/adm/lp/lpd-errs,*NIX,Bash,*NIX,other
-/var/adm/pacct,*NIX,Bash,*NIX,other
-/var/adm/sulog,*NIX,Bash,*NIX,other
-/var/adm/utmp,*NIX,Bash,*NIX,other
-/var/adm/utmpx,*NIX,Bash,*NIX,other
-/var/adm/wtmp,*NIX,Bash,*NIX,other
-/var/adm/wtmpx,*NIX,Bash,*NIX,other
-/etc/bluetooth/input.conf,*NIX,Bluetooth,*NIX,conf
-/etc/bluetooth/main.conf,*NIX,Bluetooth,*NIX,conf
-/etc/bluetooth/network.conf,*NIX,Bluetooth,*NIX,conf
-/etc/bluetooth/rfcomm.conf,*NIX,Bluetooth,*NIX,conf
-/etc/newsyslog.conf,FreeBSD,FreeBSD,*NIX,conf
-/var/adm/aculog,SunOS,SunOS,*NIX,log
-/var/adm/aculogs,SunOS,SunOS,*NIX,log
-/var/adm/log/asppp.log,SunOS,SunOS,*NIX,log
-/var/adm/messages,SunOS,SunOS,*NIX,log
-/var/adm/vold.log,SunOS,SunOS,*NIX,log
-/var/cron/log,SunOS,SunOS,*NIX,log
-/var/log/POPlog,SunOS,SunOS,*NIX,log
-/var/log/authlog,SunOS,SunOS,*NIX,log
-/var/lp/logs/lpNet,SunOS,SunOS,*NIX,log
-/var/lp/logs/lpsched,SunOS,SunOS,*NIX,log
-/var/lp/logs/requests,SunOS,SunOS,*NIX,log
-/var/saf/_log,SunOS,SunOS,*NIX,log
-/var/saf/port/log,SunOS,SunOS,*NIX,log
-/etc/X11/xorg.conf,*NIX,X11,*NIX,conf
-/etc/X11/xorg.conf-vesa,*NIX,X11,*NIX,conf
-/etc/X11/xorg.conf-vmware,*NIX,X11,*NIX,conf
-/etc/X11/xorg.conf.BeforeVMwareToolsInstall,*NIX,X11,*NIX,conf
-/etc/X11/xorg.conf.orig,*NIX,X11,*NIX,conf
+/etc/security/failedlogin,AIX,AIX,System Files,log
+/etc/security/lastlog,AIX,AIX,System Files,log
+/etc/utmp,AIX,AIX,System Files,log
+/usr/spool/mqueue/syslog,AIX,AIX,System Files,log
+/var/adm/cron/log,AIX,AIX,System Files,log
+/var/adm/qacct,AIX,AIX,System Files,log
+/var/adm/ras/bootlog,AIX,AIX,System Files,log
+/var/adm/ras/errlog,AIX,AIX,System Files,log
+/etc/bash.bashrc,*NIX,Bash,System Files,other
+/etc/bash_completion.d/debconf,*NIX,Bash,System Files,other
+/root/.bash_config,*NIX,Bash,System Files,other
+/root/.bash_history,*NIX,Bash,System Files,other
+/root/.bash_logout,*NIX,Bash,System Files,other
+/root/.bashrc,*NIX,Bash,System Files,other
+/usr/lib/cron/log,*NIX,Bash,System Files,other
+/usr/spool/lp/log,*NIX,Bash,System Files,other
+/var/adm/SYSLOG,*NIX,Bash,System Files,other
+/var/adm/X0msgs,*NIX,Bash,System Files,other
+/var/adm/acct/sum/loginlog,*NIX,Bash,System Files,other
+/var/adm/crash/unix,*NIX,Bash,System Files,other
+/var/adm/crash/vmcore,*NIX,Bash,System Files,other
+/var/adm/dtmp,*NIX,Bash,System Files,other
+/var/adm/lastlog/username,*NIX,Bash,System Files,other
+/var/adm/loginlog,*NIX,Bash,System Files,other
+/var/adm/lp/lpd-errs,*NIX,Bash,System Files,other
+/var/adm/pacct,*NIX,Bash,System Files,other
+/var/adm/sulog,*NIX,Bash,System Files,other
+/var/adm/utmp,*NIX,Bash,System Files,other
+/var/adm/utmpx,*NIX,Bash,System Files,other
+/var/adm/wtmp,*NIX,Bash,System Files,other
+/var/adm/wtmpx,*NIX,Bash,System Files,other
+/etc/bluetooth/input.conf,*NIX,Bluetooth,System Files,conf
+/etc/bluetooth/main.conf,*NIX,Bluetooth,System Files,conf
+/etc/bluetooth/network.conf,*NIX,Bluetooth,System Files,conf
+/etc/bluetooth/rfcomm.conf,*NIX,Bluetooth,System Files,conf
+/etc/newsyslog.conf,FreeBSD,FreeBSD,System Files,conf
+/var/adm/aculog,SunOS,SunOS,System Files,log
+/var/adm/aculogs,SunOS,SunOS,System Files,log
+/var/adm/log/asppp.log,SunOS,SunOS,System Files,log
+/var/adm/messages,SunOS,SunOS,System Files,log
+/var/adm/vold.log,SunOS,SunOS,System Files,log
+/var/cron/log,SunOS,SunOS,System Files,log
+/var/log/POPlog,SunOS,SunOS,System Files,log
+/var/log/authlog,SunOS,SunOS,System Files,log
+/var/lp/logs/lpNet,SunOS,SunOS,System Files,log
+/var/lp/logs/lpsched,SunOS,SunOS,System Files,log
+/var/lp/logs/requests,SunOS,SunOS,System Files,log
+/var/saf/_log,SunOS,SunOS,System Files,log
+/var/saf/port/log,SunOS,SunOS,System Files,log
 /etc/kong/kong.conf,*NIX,Kong,API Gateway,conf
 /etc/clamav/clamd.conf,*NIX,ClamAV,Antivirus,log
 /etc/clamav/freshclam.conf,*NIX,ClamAV,Antivirus,log
@@ -198,7 +193,6 @@ path,os,software,category,type
 /var/lib/squirrelmail/prefs/squirrelmail.log,*NIX,SquirrelMail,Email,log
 /var/log/apache2/squirrelmail.err.log,*NIX,SquirrelMail,Email,log
 /var/log/apache2/squirrelmail.log,*NIX,SquirrelMail,Email,log
-/var/log/mail.log,*NIX,SquirrelMail,Email,log
 /var/log/squirrelmail.log,*NIX,SquirrelMail,Email,log
 /usr/local/squirrelmail/www/README,*NIX,SquirrelMail,Email,other
 /WINDOWS/system32/logfiles/SMTPSVC,Windows,Windows SMTP,Email,log
@@ -988,7 +982,6 @@ path,os,software,category,type
 /var/lighttpd.log,*NIX,lighttpd,Web Servers,log
 /var/log/lighttpd.access.log,*NIX,lighttpd,Web Servers,log
 /var/log/lighttpd.error.log,*NIX,lighttpd,Web Servers,log
-/var/log/lighttpd/,*NIX,lighttpd,Web Servers,log
 /var/log/lighttpd/access.log,*NIX,lighttpd,Web Servers,log
 /var/log/lighttpd/access.www.log,*NIX,lighttpd,Web Servers,log
 /var/log/lighttpd/error.log,*NIX,lighttpd,Web Servers,log

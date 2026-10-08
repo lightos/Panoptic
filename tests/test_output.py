@@ -7,7 +7,7 @@ import json
 import pytest
 
 from panoptic.models import Case, FileType, ScanConfig, ScanResult
-from panoptic.output import CsvFormatter, JsonFormatter, TextFormatter, _scan_mode_label
+from panoptic.output import CsvFormatter, JsonFormatter, TeeWriter, TextFormatter, _scan_mode_label
 
 
 @pytest.fixture
@@ -19,7 +19,7 @@ def sample_results() -> list[ScanResult]:
             url="http://example.com/?file=/etc/passwd",
             status_code=200,
             content_length=1234,
-            timestamp="2026-03-14T10:00:00",
+            timestamp="2026-03-14T10:00:00+00:00",
         ),
         ScanResult(
             case=Case(location="/var/log/syslog", os="*NIX", category="OS", software="Linux", file_type=FileType.LOG),
@@ -27,7 +27,7 @@ def sample_results() -> list[ScanResult]:
             url="http://example.com/?file=/var/log/syslog",
             status_code=200,
             content_length=5678,
-            timestamp="2026-03-14T10:00:01",
+            timestamp="2026-03-14T10:00:01+00:00",
         ),
     ]
 
@@ -331,3 +331,55 @@ class TestMarkupEscaping:
         # be interpreted — an unescaped invalid tag would also raise at print time.
         TextFormatter(buf).write_banner("1.0", "http://host/[red]x[/red]")
         assert "[red]x[/red]" in buf.getvalue()
+
+
+class TestControlCharSanitization:
+    EVIL = "/etc/\x1b]0;pwned\x07\x1b[2J\x9b31mpasswd\r[+] Found 'forged'"
+
+    def test_found_escapes_control_chars(self) -> None:
+        buf = io.StringIO()
+        TextFormatter(buf).write_found(ScanResult(case=Case(location=self.EVIL), found=True, url="http://h/"))
+        out = buf.getvalue()
+        assert "\x1b" not in out and "\x07" not in out and "\x9b" not in out and "\r" not in out
+        assert "\\x1b" in out
+
+    @pytest.mark.parametrize("method", ["write_info", "write_warning", "write_verbose"])
+    def test_messages_escape_control_chars(self, method: str) -> None:
+        buf = io.StringIO()
+        getattr(TextFormatter(buf), method)(f"error: {self.EVIL}\nnext")
+        out = buf.getvalue()
+        assert "\x1b" not in out and "\r" not in out
+        # Embedded newlines from untrusted data cannot forge a new log line.
+        assert "\\x0anext" in out.replace("\n", "")
+        assert not any(line.startswith("next") for line in out.splitlines())
+
+    def test_trailing_newline_spacing_preserved(self) -> None:
+        buf = io.StringIO()
+        TextFormatter(buf).write_info("Scanning...\n")
+        assert buf.getvalue().endswith("\n\n")
+
+    def test_banner_and_results_escape_control_chars(self) -> None:
+        buf = io.StringIO()
+        formatter = TextFormatter(buf)
+        formatter.write_banner("1.0\x1b[5m", "http://h/\x1b[2J")
+        formatter.write_results([ScanResult(case=Case(location=self.EVIL), found=True, url="http://h/")], 1)
+        assert "\x1b" not in buf.getvalue()
+
+    def test_tee_writer_sanitizes_log_stream(self) -> None:
+        primary, log = io.StringIO(), io.StringIO()
+        tee = TeeWriter(primary, log)
+        assert tee.write("ok\x1b[31m\tline\n") == len("ok\x1b[31m\tline\n")
+        assert log.getvalue() == "ok\\x1b[31m\tline\n"
+
+
+class TestCsvFormulaHardening:
+    @pytest.mark.parametrize(
+        "value",
+        ["\t=1+1", "\r=1", "\n=1", "|calc", "%0A=1", " =HYPERLINK(1)", "  @SUM(A1)", " +1"],
+    )
+    def test_extended_dangerous_prefixes_quoted(self, value: str) -> None:
+        assert CsvFormatter._sanitize_csv_value(value) == f"'{value}"
+
+    @pytest.mark.parametrize("value", ["/etc/passwd", " plain", "", "a=b"])
+    def test_safe_values_unchanged(self, value: str) -> None:
+        assert CsvFormatter._sanitize_csv_value(value) == value

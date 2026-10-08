@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import hashlib
+import math
 from dataclasses import dataclass, field
 from dataclasses import replace as _dc_replace
-from datetime import datetime
+from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
@@ -57,7 +58,8 @@ class ScanResult:
     status_code: int | None = None
     content: str | None = None
     content_length: int | None = None
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
+    # Timezone-aware UTC ISO-8601 timestamp (e.g. 2026-03-14T10:00:00.123456+00:00).
+    timestamp: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
 
 @dataclass(frozen=True)
@@ -73,11 +75,15 @@ class ScanConfig:
             raise ValueError(f"multiplier must be >= 1, got {self.multiplier}")
         if not (0.0 < self.heuristic_ratio < 1.0):
             raise ValueError(f"heuristic_ratio must be between 0 and 1 (exclusive), got {self.heuristic_ratio}")
-        if self.timeout <= 0:
-            raise ValueError(f"timeout must be > 0, got {self.timeout}")
-        if self.delay < 0:
-            raise ValueError(f"delay must be >= 0, got {self.delay}")
+        if not math.isfinite(self.timeout) or self.timeout <= 0:
+            raise ValueError(f"timeout must be > 0 and finite, got {self.timeout}")
+        if not math.isfinite(self.delay) or self.delay < 0:
+            raise ValueError(f"delay must be >= 0 and finite, got {self.delay}")
+        if not self.output_dir or "\x00" in self.output_dir:
+            raise ValueError("output_dir must be a non-empty path without NUL characters")
         if self.random_delay is not None:
+            if len(self.random_delay) != 2 or not all(math.isfinite(value) for value in self.random_delay):
+                raise ValueError("random_delay must be two finite numbers")
             if self.random_delay[0] < 0 or self.random_delay[1] < 0:
                 raise ValueError("random_delay values must be non-negative")
             if self.random_delay[0] >= self.random_delay[1]:
@@ -112,6 +118,8 @@ class ScanConfig:
     heuristic_ratio: float = 0.9
     # Behavior
     write_files: bool = False
+    # Base directory for --write-files output (relative paths resolve against the CWD)
+    output_dir: str = "output"
     skip_parsing: bool = False
     automatic: bool = False
     invalid_ssl: bool = False

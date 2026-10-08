@@ -6,21 +6,14 @@ Merge priority: CLI args > config file > built-in defaults.
 
 from __future__ import annotations
 
+import math
 import sys
+import tomllib
 from pathlib import Path
 from typing import Any
 
 from panoptic.models import OutputFormat, ScanConfig
 from panoptic.utils import normalize_url, parse_status_codes
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    try:
-        import tomli as tomllib
-    except ImportError:
-        tomllib = None  # type: ignore[assignment,unused-ignore]
-
 
 DEFAULT_CONFIG_PATH = Path.home() / ".config" / "panoptic" / "config.toml"
 
@@ -35,6 +28,7 @@ _STRING_FIELDS = {
     "match_string",
     "replace_slash",
     "output_file",
+    "output_dir",
     "log_file",
     "proxy",
     "user_agent",
@@ -82,6 +76,36 @@ def _validate_merged_types(merged: dict[str, Any]) -> None:
         value = merged.get(field)
         if value is not None and (not isinstance(value, int | float) or isinstance(value, bool)):
             raise ValueError(f"{field} must be a number")
+        if value is not None and not math.isfinite(value):
+            raise ValueError(f"{field} must be a finite number")
+
+
+def _parse_random_delay(value: object) -> tuple[float, float]:
+    """Validate a random_delay value ('MIN-MAX' string, 2-item list, or tuple)."""
+    if isinstance(value, str):
+        parts = value.split("-")
+        if len(parts) != 2:
+            raise ValueError("random_delay must use MIN-MAX format (e.g. '0.5-2.0')")
+        try:
+            items: list[object] = [float(parts[0]), float(parts[1])]
+        except ValueError as exc:
+            raise ValueError("random_delay must contain numeric MIN-MAX values") from exc
+    elif isinstance(value, list | tuple):
+        if len(value) != 2:
+            raise ValueError("random_delay must contain exactly two values")
+        items = list(value)
+    else:
+        raise ValueError(
+            f"random_delay must be a 'MIN-MAX' string or a list of two numbers, got {type(value).__name__}"
+        )
+    numbers: list[float] = []
+    for item in items:
+        if not isinstance(item, int | float) or isinstance(item, bool):
+            raise ValueError("random_delay values must be numbers")
+        if not math.isfinite(item):
+            raise ValueError("random_delay values must be finite numbers")
+        numbers.append(float(item))
+    return numbers[0], numbers[1]
 
 
 def load_config(path: str | None = None) -> dict[str, Any]:
@@ -94,9 +118,6 @@ def load_config(path: str | None = None) -> dict[str, Any]:
     if not config_path.exists():
         if path is not None:
             print(f"[!] Warning: config file '{config_path}' does not exist", file=sys.stderr)
-        return {}
-
-    if tomllib is None:
         return {}
 
     try:
@@ -188,25 +209,18 @@ def merge_config(cli_args: dict[str, Any], file_config: dict[str, Any]) -> ScanC
     # Normalize match_codes / filter_codes from TOML (may be string or list)
     for code_key in ("match_codes", "filter_codes"):
         val = merged.get(code_key)
-        if isinstance(val, str | list) and val:
-            try:
-                merged[code_key] = parse_status_codes(val)
-            except (ValueError, TypeError) as e:
-                raise ValueError(f"invalid {code_key}: {e}") from e
-
-    random_delay = merged.get("random_delay")
-    if isinstance(random_delay, str):
-        parts = random_delay.split("-")
-        if len(parts) != 2:
-            raise ValueError("random_delay must use MIN-MAX format")
+        if val is None:
+            continue
+        if val in ("", []):
+            merged[code_key] = None
+            continue
         try:
-            merged["random_delay"] = (float(parts[0]), float(parts[1]))
-        except ValueError as exc:
-            raise ValueError("random_delay must contain numeric MIN-MAX values") from exc
-    elif isinstance(random_delay, list):
-        if len(random_delay) != 2:
-            raise ValueError("random_delay must contain exactly two values")
-        merged["random_delay"] = (float(random_delay[0]), float(random_delay[1]))
+            merged[code_key] = parse_status_codes(val)
+        except ValueError as e:
+            raise ValueError(f"invalid {code_key}: {e}") from e
+
+    if "random_delay" in merged and merged["random_delay"] is not None:
+        merged["random_delay"] = _parse_random_delay(merged["random_delay"])
 
     headers = merged.get("headers")
     if headers is not None and (

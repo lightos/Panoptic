@@ -10,7 +10,7 @@ import functools
 import re
 
 from panoptic.models import Case, FileType
-from panoptic.utils import load_data_file
+from panoptic.utils import CONTROL_CHARS_RE, load_data_file
 
 
 def extract_home_file_cases(
@@ -27,23 +27,12 @@ def extract_home_file_cases(
 
     home_files = _load_home_files()
     cases: list[Case] = []
+    seen_homes: set[str] = set()
 
-    pattern = re.compile(
-        r"(?P<username>[^:\n]+):"
-        r"(?P<password>[^:]*):"
-        r"(?P<uid>\d+):"
-        r"(?P<gid>\d*):"
-        r"(?P<info>[^:]*):"
-        r"(?P<home>[^:]+):"
-        r"(?P<shell>[^:\n]*)"
-    )
-
-    for match in pattern.finditer(passwd_content):
-        home = match.group("home")
-
-        # Skip users with root (/) as home — would scan entire filesystem
-        if home == "/":
+    for home in _iter_passwd_homes(passwd_content):
+        if home in seen_homes:
             continue
+        seen_homes.add(home)
 
         for dotfile in home_files:
             cases.append(
@@ -57,6 +46,41 @@ def extract_home_file_cases(
             )
 
     return cases
+
+
+_PASSWD_LINE_RE = re.compile(
+    r"^(?P<username>[^:\r\n]+):"
+    r"(?P<password>[^:\r\n]*):"
+    r"(?P<uid>\d+):"
+    r"(?P<gid>\d*):"
+    r"(?P<info>[^:\r\n]*):"
+    r"(?P<home>[^:\r\n]+):"
+    r"(?P<shell>[^:\r\n]*)$"
+)
+
+
+def _iter_passwd_homes(passwd_content: str) -> list[str]:
+    """Return validated absolute home directories, one passwd entry per line.
+
+    Entries never span lines; homes must be absolute, free of control
+    characters and ``..`` segments, and not the filesystem root.
+    """
+    homes: list[str] = []
+    for line in passwd_content.splitlines():
+        match = _PASSWD_LINE_RE.match(line)
+        if not match:
+            continue
+        home = match.group("home")
+        if not home.startswith("/") or CONTROL_CHARS_RE.search(home):
+            continue
+        if ".." in home.split("/"):
+            continue
+        home = home.rstrip("/")
+        # Skip users with root (/) as home — would scan entire filesystem
+        if not home:
+            continue
+        homes.append(home)
+    return homes
 
 
 def extract_binlog_cases(
