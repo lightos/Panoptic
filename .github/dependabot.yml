@@ -9,6 +9,11 @@ updates:
     versioning-strategy: increase
     commit-message:
       prefix: deps
+    ignore:
+      # aiohttp (latest 3.14.4) requires multidict<7; bumping the floor to 7
+      # makes Panoptic uninstallable. Remove once aiohttp allows multidict 7.
+      - dependency-name: multidict
+        versions: [">=7"]
     groups:
       python-dependencies:
         patterns:
