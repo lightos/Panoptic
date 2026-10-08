@@ -50,7 +50,8 @@ path traversal vulnerabilities.
 
 * Python 3.11+
 * Git
-* Dependencies: `httpx[socks]`, `rich`, and `rich-argparse`
+* Dependencies: `aiohttp`, `aiohttp-socks`, `multidict`, `yarl`, `rich`, and
+  `rich-argparse`
 
 ## Installation
 
@@ -283,10 +284,9 @@ panoptic --url "https://target/x.php?file=test.txt" \
 
 * Accepted schemes: `http://`, `https://`, `socks5://`, `socks5h://`
   (`socks5h` resolves DNS through the proxy — useful for Tor and to
-  avoid local DNS leaks). SOCKS4 is not supported by the underlying
-  HTTP client. The scheme and host are validated before the scan starts.
-* SOCKS support comes from the `httpx[socks]` extra, which is installed
-  by default.
+  avoid local DNS leaks). SOCKS4 is not accepted. The scheme and host are
+  validated before the scan starts.
+* SOCKS support comes from `aiohttp-socks`, which is installed by default.
 * By default Panoptic honours the standard `HTTP_PROXY` / `HTTPS_PROXY` /
   `NO_PROXY` environment variables. Pass `--ignore-proxy` to bypass them
   and connect directly (this also disables any env-configured proxy).

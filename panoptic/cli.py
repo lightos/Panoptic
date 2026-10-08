@@ -395,8 +395,7 @@ def validate_args(args: dict[str, Any], config_file: str | None = None) -> None:
 
     # Proxy scheme validation
     if args.get("proxy"):
-        # SOCKS4 is intentionally excluded: httpx (via socksio) only supports
-        # SOCKS5, so accepting socks4:// here would fail later at connection time.
+        # Only SOCKS5 is accepted for SOCKS proxies; socks4:// is rejected up front.
         allowed_proxy_schemes = ("http://", "https://", "socks5://", "socks5h://")
         if not args["proxy"].lower().startswith(allowed_proxy_schemes):
             print(

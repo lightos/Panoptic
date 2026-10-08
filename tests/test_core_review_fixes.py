@@ -10,9 +10,7 @@ from collections import Counter
 from pathlib import Path
 from unittest.mock import AsyncMock, MagicMock, patch
 
-import httpx
 import pytest
-from pytest_httpx import HTTPXMock
 
 from panoptic.core import (
     MAX_OUTPUT_FILENAME_BYTES,
@@ -30,6 +28,7 @@ from panoptic.models import Case, OutputFormat, ScanConfig, ScanResult
 from panoptic.network import NetworkClient
 from panoptic.output import TextFormatter
 from panoptic.utils import redact_urls_in_text
+from tests.conftest import RecordingServer
 
 PASSWD = "root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000::/home/alice:/bin/bash\n"
 
@@ -47,49 +46,55 @@ def _patched_client(client_cls: MagicMock) -> None:
 
 
 class TestPathBasedWire:
-    async def test_traversal_survives_client_normalization(self, httpx_mock: HTTPXMock) -> None:
-        """The bytes reaching the transport must keep every traversal segment."""
+    async def test_traversal_survives_client_normalization(self, server: RecordingServer) -> None:
+        """The bytes reaching the server must keep every traversal segment."""
         config = ScanConfig(
-            url="http://example.com/a/b/view",
+            url=server.url("/a/b/view"),
             path_based=True,
             prefix="../",
             multiplier=5,
             retries=0,
         )
-        httpx_mock.add_response(text="ok")
         scanner = Scanner(config)
         payload = build_payload(config, "/etc/passwd", "")
         async with NetworkClient(config) as client:
             assert await scanner._fetch(client, payload) is not None
 
-        request = httpx_mock.get_requests()[0]
-        assert request.url.raw_path == b"/a/b/" + b"../" * 5 + b"etc/passwd"
+        request = server.last
+        assert request.raw_path == "/a/b/" + "../" * 5 + "etc/passwd"
         assert request.method == "GET"
 
-    async def test_path_based_with_data_uses_get(self, httpx_mock: HTTPXMock) -> None:
-        config = ScanConfig(url="http://example.com/a/view", path_based=True, data="x=1", retries=0)
-        httpx_mock.add_response(text="ok")
+    async def test_path_based_with_data_uses_get(self, server: RecordingServer) -> None:
+        config = ScanConfig(url=server.url("/a/view"), path_based=True, data="x=1", retries=0)
         scanner = Scanner(config)
         payload = build_payload(config, "/etc/passwd", config.data or "")
         async with NetworkClient(config) as client:
             await scanner._fetch(client, payload)
-        request = httpx_mock.get_requests()[0]
+        request = server.last
         assert request.method == "GET"
-        assert request.url.raw_path == b"/a/etc/passwd"
-        assert request.content == b""
+        assert request.raw_path == "/a/etc/passwd"
+        assert request.body == b""
+
+    async def test_param_payload_encoding_on_the_wire(self, server: RecordingServer) -> None:
+        """Query payloads reach the server exactly as build_payload encoded them."""
+        config = ScanConfig(url=server.url("/inc.php?file=x&lang=en"), param="file", prefix="%2e%2e/", retries=0)
+        scanner = Scanner(config)
+        payload = build_payload(config, "/var/log/my app+old.log", "file=x&lang=en")
+        async with NetworkClient(config) as client:
+            await scanner._fetch(client, payload)
+        assert server.last.raw_path == "/inc.php?file=%2e%2e/var/log/my%20app%2Bold.log&lang=en"
 
 
 class TestPostTarget:
-    async def test_post_keeps_query_and_drops_fragment(self, httpx_mock: HTTPXMock) -> None:
-        config = ScanConfig(url="http://example.com/inc.php?token=abc#frag", param="file", data="file=x", retries=0)
-        httpx_mock.add_response(text="ok")
+    async def test_post_keeps_query_and_drops_fragment(self, server: RecordingServer) -> None:
+        config = ScanConfig(url=server.url("/inc.php?token=abc#frag"), param="file", data="file=x", retries=0)
         scanner = Scanner(config)
         async with NetworkClient(config) as client:
             await scanner._fetch(client, "file=%2Fetc%2Fpasswd")
-        request = httpx_mock.get_requests()[0]
+        request = server.last
         assert request.method == "POST"
-        assert request.url.raw_path == b"/inc.php?token=abc"
-        assert request.content == b"file=%2Fetc%2Fpasswd"
+        assert request.raw_path == "/inc.php?token=abc"
+        assert request.body == b"file=%2Fetc%2Fpasswd"
 
 
 class TestExtParam:
@@ -467,7 +472,7 @@ class TestMiscCleanups:
     async def test_scan_failure_message_is_redacted(self) -> None:
         scanner = Scanner(ScanConfig(url="http://example.com/?f=x", param="f"))
         stream = io.StringIO()
-        error = httpx.ConnectError("failed for http://bob:hunter2@example.com/x?token=s3cr3t")
+        error = OSError("failed for http://bob:hunter2@example.com/x?token=s3cr3t")
         with (
             patch.object(scanner, "_run_scan", new=AsyncMock(side_effect=error)),
             patch("panoptic.core.sys.stderr", stream),

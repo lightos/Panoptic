@@ -2,9 +2,12 @@
 # tracks the latest releases, so these floors are raised together with the
 # pyproject lower bounds. Used by the "minimum-versions" CI job to prove
 # Panoptic works against the oldest releases it claims to support.
-httpx==0.28.1
+aiohttp==3.14.4
+aiohttp-socks==0.12.0
+multidict==6.9.1
+yarl==1.25.1
 rich==15.0.0
 rich-argparse==1.8.0
 pytest==9.1.1
 pytest-asyncio==1.4.0
-pytest-httpx==0.36.2
+pytest-aiohttp==1.1.1

@@ -25,7 +25,6 @@ from typing import TextIO
 from urllib.parse import quote as url_quote
 from urllib.parse import urlsplit, urlunsplit
 
-import httpx
 from rich.progress import (
     BarColumn,
     MofNCompleteColumn,
@@ -39,7 +38,7 @@ from rich.progress import (
 from panoptic.cases import load_custom_list, parse_cases
 from panoptic.heuristic import clean_response, filter_content, is_match
 from panoptic.models import Case, FileType, OutputFormat, ScanConfig, ScanResult
-from panoptic.network import NetworkClient
+from panoptic.network import NetworkClient, Response
 from panoptic.output import CsvFormatter, JsonFormatter, TeeWriter, TextFormatter
 from panoptic.parsers import extract_binlog_cases, extract_home_file_cases
 from panoptic.update import get_revision
@@ -520,9 +519,9 @@ class Scanner:
         try:
             try:
                 return await self._run_scan(stderr_stream, __version__)
-            except (OSError, ValueError, httpx.HTTPError) as exc:
+            except (OSError, ValueError) as exc:
                 text_out = TextFormatter(stderr_stream, quiet=self.config.quiet)
-                # Exception messages (notably httpx errors) can embed the request
+                # Exception messages (notably network errors) can embed the request
                 # or proxy URL, including userinfo credentials and query tokens.
                 text_out.write_warning(f"Scan failed: {redact_urls_in_text(str(exc))}")
                 self._write_output([], text_out)
@@ -944,7 +943,7 @@ class Scanner:
         client: NetworkClient,
         payload: str,
         headers: dict[str, str] | None = None,
-    ) -> httpx.Response | None:
+    ) -> Response | None:
         """POST ``payload`` as the body to the configured URL when --data is set
         (outside path-based mode); otherwise GET ``payload`` as the URL."""
         if self._use_post:
