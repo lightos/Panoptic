@@ -31,6 +31,7 @@ Examples:
   panoptic --url "http://localhost/include.php?file=test.txt&id=1" --param file
   panoptic --url "http://localhost/include.php" --data "file=test.txt&id=1" --param file
   panoptic --url "http://localhost/files/view/test.txt" --path-based --prefix "../" --multiplier 6
+  panoptic --url "http://localhost/files/view/test.txt" --path-based --prefix "..%252f" --multiplier 6
   panoptic --url "http://localhost/api/load" --data '{"file":"FUZZ"}'
   panoptic --url "http://localhost/include.php?file=test.txt" --auto --all-versions
   panoptic --list software
