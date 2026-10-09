@@ -8,6 +8,7 @@ from __future__ import annotations
 import difflib
 import functools
 import html as html_lib
+import os
 import re
 from collections import Counter
 from urllib.parse import unquote
@@ -46,8 +47,12 @@ _SEGMENT_RE = re.compile(r"[^\n>]*(?:[\n>]|$)")
 
 # Differing regions are compared character by character while the summed
 # products of their lengths stay within this budget, bounding the quadratic
-# worst case; regions beyond the budget count as entirely different.
+# worst case; larger regions are compared word by word within the same budget,
+# and only regions beyond that count as entirely different.
 _MAX_CHAR_COMPARE_CELLS = 4_000_000
+# Words (with their trailing whitespace) for comparing regions too large to
+# compare character by character.
+_WORD_RE = re.compile(r"\S+\s*|\s+")
 
 # Differing segment regions are aligned in order only below this size
 # (segments x segments); larger ones fall back to an order-insensitive count.
@@ -192,14 +197,39 @@ def similarity(first: str, second: str) -> float:
         if tag == "equal":
             matched += sum(map(len, first_segments[a_start:a_end]))
         elif tag == "replace":
-            a_text = "".join(first_segments[a_start:a_end])
-            b_text = "".join(second_segments[b_start:b_end])
-            cells = len(a_text) * len(b_text)
-            if cells <= budget:
-                budget -= cells
-                blocks = difflib.SequenceMatcher(None, a_text, b_text, autojunk=False).get_matching_blocks()
-                matched += sum(block.size for block in blocks)
+            region_matched, budget = _match_region(
+                "".join(first_segments[a_start:a_end]), "".join(second_segments[b_start:b_end]), budget
+            )
+            matched += region_matched
     return 2 * matched / total
+
+
+def _match_region(a_text: str, b_text: str, budget: int) -> tuple[int, int]:
+    """Return the characters two differing regions share, and the budget left.
+
+    The common leading and trailing characters are counted directly, so a long
+    region with a small edit (e.g. a single-line page) is not scored as wholly
+    different. The rest is matched by character within the budget, else by word.
+    """
+    prefix = len(os.path.commonprefix([a_text, b_text]))
+    a_text, b_text = a_text[prefix:], b_text[prefix:]
+    suffix = len(os.path.commonprefix([a_text[::-1], b_text[::-1]]))
+    if suffix:
+        a_text, b_text = a_text[:-suffix], b_text[:-suffix]
+    matched = prefix + suffix
+    cells = len(a_text) * len(b_text)
+    if cells <= budget:
+        blocks = difflib.SequenceMatcher(None, a_text, b_text, autojunk=False).get_matching_blocks()
+        return matched + sum(block.size for block in blocks), budget - cells
+    a_words = _WORD_RE.findall(a_text)
+    b_words = _WORD_RE.findall(b_text)
+    cells = len(a_words) * len(b_words)
+    if cells <= budget:
+        matcher = difflib.SequenceMatcher(None, a_words, b_words, autojunk=False)
+        for block in matcher.get_matching_blocks():
+            matched += sum(map(len, a_words[block.a : block.a + block.size]))
+        return matched, budget - cells
+    return matched, budget
 
 
 def filter_content(html: str, original_response: str) -> str:

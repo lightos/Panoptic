@@ -140,6 +140,18 @@ class TestDynamicPages:
     def test_small_difference_in_single_segment_response(self) -> None:
         assert similarity("File not found:\n", "File not found: \n") > 0.9
 
+    def test_small_edit_in_long_single_segment_response(self) -> None:
+        """A one-character edit in a region too long to compare by character is not a found file."""
+        page = "Error: " + "the requested resource could not be located on this server " * 50
+        edited = page[:1500] + "X" + page[1501:]
+        assert similarity(page, edited) > 0.99
+        assert is_match(edited, page) is False
+
+    def test_file_inside_long_single_segment_response_is_found(self) -> None:
+        page = "Error: " + "the requested resource could not be located on this server " * 50
+        found = page[:1500] + "root:x:0:0:root:/root:/bin/bash daemon:x:1:1:daemon " * 40 + page[1500:]
+        assert is_match(found, page) is True
+
 
 class TestSimilarityPerformance:
     def _large_page(self) -> str:
@@ -150,6 +162,13 @@ class TestSimilarityPerformance:
         found = base[:30000] + "<pre>" + "root:x:0:0:root:/root:/bin/bash\n" * 300 + "</pre>" + base[30000:]
         started = time.perf_counter()
         assert is_match(found, base) is True
+        assert time.perf_counter() - started < 1.0
+
+    def test_long_differing_single_segment_responses_are_bounded(self) -> None:
+        first = " ".join(f"alpha{i % 97}beta" for i in range(8000))[:MAX_COMPARE_LENGTH]
+        second = " ".join(f"gamma{i % 89}delta" for i in range(8000))[:MAX_COMPARE_LENGTH]
+        started = time.perf_counter()
+        assert similarity(first, second) < 0.9
         assert time.perf_counter() - started < 1.0
 
     def test_reordered_large_page_is_bounded(self) -> None:
