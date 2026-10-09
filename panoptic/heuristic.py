@@ -5,12 +5,13 @@ All functions are pure (no side effects, no globals) for testability.
 
 from __future__ import annotations
 
+import bisect
 import difflib
 import functools
 import html as html_lib
 import os
 import re
-from collections.abc import Hashable, Sequence
+from collections.abc import Sequence
 from urllib.parse import unquote
 
 # Default similarity ratio above which responses are considered "the same"
@@ -39,19 +40,26 @@ def _normalize_token(match: re.Match[str]) -> str:
     return token
 
 
-# Responses are compared by the longest common subsequence of their tokens
-# (ASCII words, whitespace runs, and any other single character), weighted by
-# token length. Whole tokens keep scattered single-letter matches between
-# unrelated words from inflating the score, as SequenceMatcher's contiguous
-# blocks did; non-ASCII word characters are separate tokens so a CJK sentence
-# is not one indivisible token.
-_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+|\s+|.", re.S)
+# Responses are split into segments (lines, and runs ending in ">" so minified
+# HTML still splits). Segments are matched first, then the characters of each
+# region that differs, both with SequenceMatcher's matching blocks (as with
+# ``autojunk=False``): the segment pass localizes the differences so the
+# character pass stays small on template pages.
+_SEGMENT_RE = re.compile(r"[^\n>]*(?:[\n>]|$)")
 
-# The subsequence is computed bit-parallel: one pass of big-integer operations
-# per symbol of the shorter text, so the cost depends only on the input sizes
-# (well under a second for two 64 KiB bodies), never on how repetitive the
-# content is. Bit masks of the most frequent symbols are kept; the others are
-# rebuilt when used, which bounds memory without approximating.
+# Both passes are reimplemented so their work can be capped: every row of a
+# longest-match search is charged, before it runs, one unit plus the number of
+# positions inside the searched range (found by bisection), against one
+# allowance per comparison. A server
+# controls the bodies, and repetitive ones would otherwise stall the scan.
+_MAX_MATCH_WORK = 2_000_000
+
+# Once the allowance is spent, the ranges still unresolved are scored by their
+# longest common subsequence of characters, computed bit-parallel: one pass of
+# big-integer operations per character of the shorter range, so the cost
+# depends only on the range sizes. Bit masks of the most frequent characters
+# are kept; the others are rebuilt when used, which bounds memory without
+# approximating.
 _MAX_CACHED_MASKS = 2048
 
 
@@ -156,48 +164,147 @@ def _normalize(text: str) -> str:
 def similarity(first: str, second: str) -> float:
     """Return a 0..1 similarity of two responses, ignoring volatile tokens.
 
-    The ratio is 2 * common / total, where ``common`` counts the characters
-    of the longest common subsequence of tokens of the normalized texts (close
-    to ``SequenceMatcher.ratio()``, but with a bounded cost). Only the first
-    MAX_COMPARE_LENGTH characters of each text are compared.
+    The ratio is 2 * matched / total characters of the normalized texts, where
+    matched counts the characters of segments matched as SequenceMatcher would
+    match the two segment lists, plus, in each region where segments differ,
+    the characters SequenceMatcher would match between the two regions. When
+    the work allowance runs out, regions left unresolved are scored by their
+    longest common subsequence instead. Only the first MAX_COMPARE_LENGTH
+    characters of each text are compared.
     """
     first, second = _normalize(first), _normalize(second)
     total = len(first) + len(second)
-    if total == 0:
+    if total == 0 or first == second:
         return 1.0
-    # Pages usually share a template and differ in one region: count the common
-    # leading and trailing characters directly and compare only the middle.
-    prefix = len(os.path.commonprefix([first, second]))
-    first, second = first[prefix:], second[prefix:]
-    suffix = len(os.path.commonprefix([first[::-1], second[::-1]]))
-    if suffix:
-        first, second = first[:-suffix], second[:-suffix]
-    return 2 * (prefix + suffix + _token_lcs_weight(first, second)) / total
+    return 2 * _matched_characters(first, second) / total
 
 
-def _token_lcs_weight(first: str, second: str) -> int:
-    """Return how many characters the longest common token subsequence covers.
+class _Work:
+    """The work allowance shared by every search of one comparison."""
 
-    Each token stands for as many symbols as it has characters, so the plain
-    subsequence length of the expanded sequences is the character weight.
+    def __init__(self) -> None:
+        self.left = _MAX_MATCH_WORK
+        self.exhausted = False
+
+
+def _matched_characters(first: str, second: str) -> int:
+    work = _Work()
+    a = [segment for segment in _SEGMENT_RE.findall(first) if segment]
+    b = [segment for segment in _SEGMENT_RE.findall(second) if segment]
+    a_offsets = _offsets(a)
+    b_offsets = _offsets(b)
+    matched = 0
+    # Regions between matched segments, in order: replaced segments are compared
+    # by character; inserted or deleted ones match nothing.
+    a_pos = b_pos = 0
+    for i, j, size in [*_matching_blocks(a, b, work), (len(a), len(b), 0)]:
+        if a_pos < i and b_pos < j:
+            matched += _matched_in_region(
+                first[a_offsets[a_pos] : a_offsets[i]], second[b_offsets[b_pos] : b_offsets[j]], work
+            )
+        matched += a_offsets[i + size] - a_offsets[i]
+        a_pos, b_pos = i + size, j + size
+    return matched
+
+
+def _offsets(segments: list[str]) -> list[int]:
+    offsets = [0]
+    for segment in segments:
+        offsets.append(offsets[-1] + len(segment))
+    return offsets
+
+
+def _matched_in_region(a: str, b: str, work: _Work) -> int:
+    """Return the characters matched between two differing regions."""
+    if work.exhausted:
+        return _range_lcs(a, b)
+    matched = 0
+    a_pos = b_pos = 0
+    for i, j, size in [*_matching_blocks(a, b, work), (len(a), len(b), 0)]:
+        # A gap left by a completed search shares no characters; only an
+        # interrupted search leaves gaps that still need scoring.
+        if work.exhausted and a_pos < i and b_pos < j:
+            matched += _range_lcs(a[a_pos:i], b[b_pos:j])
+        matched += size
+        a_pos, b_pos = i + size, j + size
+    return matched
+
+
+def _matching_blocks(a: Sequence[str], b: Sequence[str], work: _Work) -> list[tuple[int, int, int]]:
+    """Return SequenceMatcher's matching blocks (i, j, size), sorted, without the sentinel.
+
+    Mirrors ``get_matching_blocks()``: find the longest common block, then
+    repeat on the ranges to its left and right. If the allowance runs out, the
+    search stops with the blocks completed so far; the interrupted range and
+    those still queued are the gaps between them.
     """
-    ids: dict[str, int] = {}
+    b2j: dict[str, list[int]] = {}
+    for j, item in enumerate(b):
+        b2j.setdefault(item, []).append(j)
+    blocks: list[tuple[int, int, int]] = []
+    queue = [(0, len(a), 0, len(b))]
+    while queue:
+        alo, ahi, blo, bhi = queue.pop()
+        found = _longest_match(a, b2j, alo, ahi, blo, bhi, work)
+        if found is None:
+            break
+        i, j, size = found
+        if size:
+            blocks.append(found)
+            if alo < i and blo < j:
+                queue.append((alo, i, blo, j))
+            if i + size < ahi and j + size < bhi:
+                queue.append((i + size, ahi, j + size, bhi))
+    blocks.sort()
+    return blocks
 
-    def expand(text: str) -> list[int]:
-        symbols: list[int] = []
-        for token in _TOKEN_RE.findall(text):
-            symbols.extend([ids.setdefault(token, len(ids))] * len(token))
-        return symbols
 
-    return _lcs_length(expand(first), expand(second))
+def _longest_match(
+    a: Sequence[str], b2j: dict[str, list[int]], alo: int, ahi: int, blo: int, bhi: int, work: _Work
+) -> tuple[int, int, int] | None:
+    """``SequenceMatcher.find_longest_match`` without junk, charged against ``work``.
+
+    Returns (i, j, size), or None when a row would exceed the allowance: the
+    comparison is then marked exhausted and the partial result is discarded.
+    Ties go to the earliest block in ``a``, then in ``b``, as in difflib.
+    """
+    besti, bestj, bestsize = alo, blo, 0
+    j2len: dict[int, int] = {}
+    nothing: list[int] = []
+    for i in range(alo, ahi):
+        positions = b2j.get(a[i], nothing)
+        start = bisect.bisect_left(positions, blo)
+        stop = bisect.bisect_left(positions, bhi, start)
+        cost = 1 + stop - start
+        if cost > work.left:
+            work.exhausted = True
+            return None
+        work.left -= cost
+        new_j2len: dict[int, int] = {}
+        for j in positions[start:stop]:
+            k = new_j2len[j] = j2len.get(j - 1, 0) + 1
+            if k > bestsize:
+                besti, bestj, bestsize = i - k + 1, j - k + 1, k
+        j2len = new_j2len
+    return besti, bestj, bestsize
 
 
-def _lcs_length(first: Sequence[Hashable], second: Sequence[Hashable]) -> int:
-    """Return the length of the longest common subsequence of two sequences.
+def _range_lcs(a: str, b: str) -> int:
+    """Return the longest common subsequence length, counting common ends directly."""
+    prefix = len(os.path.commonprefix([a, b]))
+    a, b = a[prefix:], b[prefix:]
+    suffix = len(os.path.commonprefix([a[::-1], b[::-1]]))
+    if suffix:
+        a, b = a[:-suffix], b[:-suffix]
+    return prefix + suffix + _lcs_length(a, b)
+
+
+def _lcs_length(first: str, second: str) -> int:
+    """Return the length of the longest common subsequence of two strings.
 
     Bit-parallel dynamic programming (Allison-Dix / Hyyro): each bit of ``row``
-    is one column of the DP table over the longer sequence, and every symbol
-    of the shorter one updates the whole row with a few integer operations.
+    is one column of the DP table over the longer string, and every character
+    of the shorter string updates the whole row with a few integer operations.
     """
     if len(first) < len(second):
         first, second = second, first
@@ -206,10 +313,10 @@ def _lcs_length(first: Sequence[Hashable], second: Sequence[Hashable]) -> int:
     shared = set(first) & set(second)
     if not shared:
         return 0
-    positions: dict[Hashable, list[int]] = {}
-    for index, symbol in enumerate(first):
-        if symbol in shared:
-            positions.setdefault(symbol, []).append(index)
+    positions: dict[str, list[int]] = {}
+    for index, char in enumerate(first):
+        if char in shared:
+            positions.setdefault(char, []).append(index)
     size = (len(first) + 7) // 8
 
     def mask(indexes: list[int]) -> int:
@@ -218,16 +325,16 @@ def _lcs_length(first: Sequence[Hashable], second: Sequence[Hashable]) -> int:
             bits[index >> 3] |= 1 << (index & 7)
         return int.from_bytes(bits, "little")
 
-    frequent = sorted(positions, key=lambda symbol: len(positions[symbol]), reverse=True)
-    cached = {symbol: mask(positions[symbol]) for symbol in frequent[:_MAX_CACHED_MASKS]}
+    frequent = sorted(positions, key=lambda char: len(positions[char]), reverse=True)
+    cached = {char: mask(positions[char]) for char in frequent[:_MAX_CACHED_MASKS]}
     full = (1 << len(first)) - 1
     row = full
-    for symbol in second:
-        if symbol in shared:
-            symbol_mask = cached.get(symbol)
-            if symbol_mask is None:
-                symbol_mask = mask(positions[symbol])
-            matches = row & symbol_mask
+    for char in second:
+        if char in shared:
+            char_mask = cached.get(char)
+            if char_mask is None:
+                char_mask = mask(positions[char])
+            matches = row & char_mask
             row = ((row + matches) | (row - matches)) & full
     return len(first) - row.bit_count()
 
