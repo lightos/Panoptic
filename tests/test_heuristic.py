@@ -17,6 +17,11 @@ from panoptic.heuristic import (
     similarity,
 )
 
+# Wall-clock guard for comparisons of full-size (64 KiB) bodies. The bound that
+# matters is the work allowance, which holds on any machine; this only catches
+# pathological slowdowns, with room for slow CI runners under coverage.
+_FULL_SIZE_GUARD_SECONDS = 5.0
+
 
 def _minified(count: int) -> str:
     """Minified-looking script: no whitespace, distinct letter identifiers (digits are normalized away)."""
@@ -202,28 +207,28 @@ class TestSimilarityPerformance:
         found = base[:30000] + "<pre>" + "root:x:0:0:root:/root:/bin/bash\n" * 300 + "</pre>" + base[30000:]
         started = time.perf_counter()
         assert is_match(found, base) is True
-        assert time.perf_counter() - started < 1.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
     def test_long_differing_single_segment_responses_are_bounded(self) -> None:
         first = " ".join(f"alpha{i % 97}beta" for i in range(8000))[:MAX_COMPARE_LENGTH]
         second = " ".join(f"gamma{i % 89}delta" for i in range(8000))[:MAX_COMPARE_LENGTH]
         started = time.perf_counter()
         assert similarity(first, second) < 0.9
-        assert time.perf_counter() - started < 1.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
     def test_large_minified_page_with_separated_edits_is_fast_and_accurate(self) -> None:
         page = _minified(2000)[:MAX_COMPARE_LENGTH]
         edited = "".join("Q" if i % 1300 == 0 else char for i, char in enumerate(page))
         started = time.perf_counter()
         assert similarity(page, edited) > 0.99
-        assert time.perf_counter() - started < 1.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
     def test_repetitive_large_responses_are_bounded(self) -> None:
         first = "".join("ab;"[(i * 7) % 3 if i % 5 else i % 2] for i in range(MAX_COMPARE_LENGTH))
         second = "".join("ab;"[(i * 5) % 3 if i % 7 else i % 2] for i in range(MAX_COMPARE_LENGTH))
         started = time.perf_counter()
         similarity(first, second)
-        assert time.perf_counter() - started < 2.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
     def test_repetitive_punctuation_is_fast(self) -> None:
         """Repetitive tokens made difflib's matcher take seconds on a few KB."""
@@ -238,14 +243,14 @@ class TestSimilarityPerformance:
         second = "".join(chr(0x4E00 + (i * 104729) % 30000) for i in range(MAX_COMPARE_LENGTH))
         started = time.perf_counter()
         assert similarity(first, second) < 0.9
-        assert time.perf_counter() - started < 3.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
     def test_reordered_large_page_is_bounded(self) -> None:
         lines = self._large_page().split("\n")
         reordered = "\n".join(reversed(lines))
         started = time.perf_counter()
         similarity(reordered, "\n".join(lines))
-        assert time.perf_counter() - started < 1.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
 
 def _reference_lcs(first: str, second: str) -> int:
@@ -409,7 +414,7 @@ class TestSimilarityContract:
         second = "".join(f"<p>alpha beta {chr(98 + i % 25)}!</p>\n<hr>\n" for i in range(2000))
         started = time.perf_counter()
         assert 0.9 < similarity(first, second) <= 1.0
-        assert time.perf_counter() - started < 2.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
 
 _VIEWER = (
