@@ -5,6 +5,20 @@ import time
 from panoptic.heuristic import MAX_COMPARE_LENGTH, clean_response, filter_content, is_match, similarity
 
 
+def _minified(count: int) -> str:
+    """Minified-looking script: no whitespace, distinct letter identifiers (digits are normalized away)."""
+
+    def name(index: int) -> str:
+        letters = ""
+        index += 26 * 27
+        while index:
+            index, rest = divmod(index, 26)
+            letters = chr(97 + rest) + letters
+        return letters
+
+    return "".join(f"{name(i)}=function(a,b){{return!a.{name(i)}Get(b)&&b;}};{name(i)}V=[a,b];" for i in range(count))
+
+
 class TestCleanResponse:
     def test_removes_filepath(self) -> None:
         response = "Error: /etc/passwd not found in /etc/passwd"
@@ -147,6 +161,19 @@ class TestDynamicPages:
         assert similarity(page, edited) > 0.99
         assert is_match(edited, page) is False
 
+    def test_separated_edits_in_minified_response(self) -> None:
+        """Edits near both ends of a response without whitespace leave a long middle to anchor."""
+        page = _minified(80)
+        start, end = len(page) // 20, len(page) * 19 // 20
+        edited = page[:start] + "ZZ" + page[start + 2 : end] + "YY" + page[end + 2 :]
+        assert similarity(page, edited) > 0.99
+        assert is_match(edited, page) is False
+
+    def test_file_inside_long_minified_response_is_found(self) -> None:
+        page = _minified(80)
+        found = page[:2000] + "root:x:0:0:root:/root:/bin/bash\n" * 40 + page[2000:]
+        assert is_match(found, page) is True
+
     def test_file_inside_long_single_segment_response_is_found(self) -> None:
         page = "Error: " + "the requested resource could not be located on this server " * 50
         found = page[:1500] + "root:x:0:0:root:/root:/bin/bash daemon:x:1:1:daemon " * 40 + page[1500:]
@@ -169,6 +196,20 @@ class TestSimilarityPerformance:
         second = " ".join(f"gamma{i % 89}delta" for i in range(8000))[:MAX_COMPARE_LENGTH]
         started = time.perf_counter()
         assert similarity(first, second) < 0.9
+        assert time.perf_counter() - started < 1.0
+
+    def test_large_minified_page_with_separated_edits_is_fast_and_accurate(self) -> None:
+        page = _minified(2000)[:MAX_COMPARE_LENGTH]
+        edited = "".join("Q" if i % 1300 == 0 else char for i, char in enumerate(page))
+        started = time.perf_counter()
+        assert similarity(page, edited) > 0.99
+        assert time.perf_counter() - started < 1.0
+
+    def test_unanchored_large_responses_are_bounded(self) -> None:
+        first = "".join("ab;"[(i * 7) % 3 if i % 5 else i % 2] for i in range(MAX_COMPARE_LENGTH))
+        second = "".join("ab;"[(i * 5) % 3 if i % 7 else i % 2] for i in range(MAX_COMPARE_LENGTH))
+        started = time.perf_counter()
+        similarity(first, second)
         assert time.perf_counter() - started < 1.0
 
     def test_reordered_large_page_is_bounded(self) -> None:

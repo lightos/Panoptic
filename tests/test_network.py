@@ -343,10 +343,14 @@ class TestClientOptions:
             assert client._socks_sessions == {proxy: session}
         assert session.closed
 
-    async def test_invalid_environment_socks_proxy_is_a_handled_error(self, monkeypatch: pytest.MonkeyPatch) -> None:
+    @pytest.mark.parametrize("scheme", ["socks5", "http"])
+    @pytest.mark.parametrize("authority", ["127.0.0.1:" + "notaport", "127.0.0.1:" + "65536", "[" + "::1"])
+    async def test_invalid_environment_proxy_is_a_handled_error(
+        self, monkeypatch: pytest.MonkeyPatch, scheme: str, authority: str
+    ) -> None:
         for name in ("HTTP_PROXY", "http_proxy", "NO_PROXY", "no_proxy"):
             monkeypatch.delenv(name, raising=False)
-        monkeypatch.setenv("ALL_PROXY", "socks5://127.0.0.1:" + "notaport")
+        monkeypatch.setenv("ALL_PROXY", f"{scheme}://{authority}")
         async with NetworkClient(ScanConfig(url="http://example.com", retries=0)) as client:
             assert await client.fetch("http://example.com/") is None
             assert client.error_counts == {"InvalidURL": 1}

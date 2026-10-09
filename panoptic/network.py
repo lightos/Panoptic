@@ -488,6 +488,12 @@ class NetworkClient:
         proxy = proxies.get(url.scheme) or proxies.get("all")
         if proxy is None or proxy_bypass(url.host_port_subcomponent or ""):
             return None
+        try:
+            # Parse up front so a malformed value (bad port, unclosed IPv6
+            # bracket) is reported like any other bad URL.
+            urlsplit(proxy).port  # noqa: B018
+        except ValueError:
+            raise aiohttp.InvalidURL(proxy) from None
         return proxy
 
     def _session_for(self, proxy: str | None) -> tuple[aiohttp.ClientSession, str | None]:
@@ -501,12 +507,7 @@ class NetworkClient:
             return self._session, proxy
         session = self._socks_sessions.get(proxy)
         if session is None:
-            try:
-                connector = self._socks_connector(proxy)
-            except ValueError:
-                # e.g. a non-numeric port; reported like any other bad URL.
-                raise aiohttp.InvalidURL(proxy) from None
-            session = self._socks_sessions[proxy] = self._new_session(connector)
+            session = self._socks_sessions[proxy] = self._new_session(self._socks_connector(proxy))
         return session, None
 
     async def _send_once(self, request: _Request) -> Response:

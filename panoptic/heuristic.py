@@ -5,6 +5,7 @@ All functions are pure (no side effects, no globals) for testability.
 
 from __future__ import annotations
 
+import bisect
 import difflib
 import functools
 import html as html_lib
@@ -47,12 +48,14 @@ _SEGMENT_RE = re.compile(r"[^\n>]*(?:[\n>]|$)")
 
 # Differing regions are compared character by character while the summed
 # products of their lengths stay within this budget, bounding the quadratic
-# worst case; larger regions are compared word by word within the same budget,
-# and only regions beyond that count as entirely different.
+# worst case. Larger regions are split into tokens and aligned on tokens that
+# occur once on each side (as patience diff does); only what cannot be
+# anchored that way and is still over budget counts as entirely different.
 _MAX_CHAR_COMPARE_CELLS = 4_000_000
-# Words (with their trailing whitespace) for comparing regions too large to
-# compare character by character.
-_WORD_RE = re.compile(r"\S+\s*|\s+")
+# Tokens for regions too large to compare character by character: words,
+# whitespace runs and single punctuation characters, so minified code and JSON
+# without whitespace still split into small, mostly distinctive pieces.
+_TOKEN_RE = re.compile(r"\w+|\s+|[^\w\s]")
 
 # Differing segment regions are aligned in order only below this size
 # (segments x segments); larger ones fall back to an order-insensitive count.
@@ -209,7 +212,8 @@ def _match_region(a_text: str, b_text: str, budget: int) -> tuple[int, int]:
 
     The common leading and trailing characters are counted directly, so a long
     region with a small edit (e.g. a single-line page) is not scored as wholly
-    different. The rest is matched by character within the budget, else by word.
+    different. The rest is matched by character within the budget, else by
+    anchored tokens.
     """
     prefix = len(os.path.commonprefix([a_text, b_text]))
     a_text, b_text = a_text[prefix:], b_text[prefix:]
@@ -221,15 +225,83 @@ def _match_region(a_text: str, b_text: str, budget: int) -> tuple[int, int]:
     if cells <= budget:
         blocks = difflib.SequenceMatcher(None, a_text, b_text, autojunk=False).get_matching_blocks()
         return matched + sum(block.size for block in blocks), budget - cells
-    a_words = _WORD_RE.findall(a_text)
-    b_words = _WORD_RE.findall(b_text)
-    cells = len(a_words) * len(b_words)
-    if cells <= budget:
-        matcher = difflib.SequenceMatcher(None, a_words, b_words, autojunk=False)
-        for block in matcher.get_matching_blocks():
-            matched += sum(map(len, a_words[block.a : block.a + block.size]))
-        return matched, budget - cells
+    token_matched, budget = _match_tokens(_TOKEN_RE.findall(a_text), _TOKEN_RE.findall(b_text), budget)
+    return matched + token_matched, budget
+
+
+def _match_tokens(a: list[str], b: list[str], budget: int) -> tuple[int, int]:
+    """Return the characters shared by two token sequences, and the budget left.
+
+    Sequences within the budget are aligned exactly. Larger ones are anchored
+    on tokens that occur once in each, in an order both agree on (the longest
+    increasing run of their positions), and the gaps between anchors are
+    matched the same way. Gaps without anchors that are over budget count as
+    different. Each pass is O(n log n), so the work stays bounded.
+    """
+    matched = 0
+    pending = [(0, len(a), 0, len(b))]
+    while pending:
+        a_lo, a_hi, b_lo, b_hi = pending.pop()
+        while a_lo < a_hi and b_lo < b_hi and a[a_lo] == b[b_lo]:
+            matched += len(a[a_lo])
+            a_lo += 1
+            b_lo += 1
+        while a_lo < a_hi and b_lo < b_hi and a[a_hi - 1] == b[b_hi - 1]:
+            matched += len(a[a_hi - 1])
+            a_hi -= 1
+            b_hi -= 1
+        cells = (a_hi - a_lo) * (b_hi - b_lo)
+        if cells == 0:
+            continue
+        if cells <= budget:
+            budget -= cells
+            a_part, b_part = a[a_lo:a_hi], b[b_lo:b_hi]
+            matcher = difflib.SequenceMatcher(None, a_part, b_part, autojunk=False)
+            for block in matcher.get_matching_blocks():
+                matched += sum(map(len, a_part[block.a : block.a + block.size]))
+            continue
+        anchors = _unique_anchors(a, a_lo, a_hi, b, b_lo, b_hi)
+        if not anchors:
+            continue
+        prev_a, prev_b = a_lo, b_lo
+        for a_pos, b_pos in anchors:
+            matched += len(a[a_pos])
+            pending.append((prev_a, a_pos, prev_b, b_pos))
+            prev_a, prev_b = a_pos + 1, b_pos + 1
+        pending.append((prev_a, a_hi, prev_b, b_hi))
     return matched, budget
+
+
+def _unique_anchors(a: list[str], a_lo: int, a_hi: int, b: list[str], b_lo: int, b_hi: int) -> list[tuple[int, int]]:
+    """Return positions of tokens occurring once in each range, in an order both share."""
+    a_counts = Counter(a[a_lo:a_hi])
+    b_positions: dict[str, int] = {}
+    b_counts: Counter[str] = Counter()
+    for pos in range(b_lo, b_hi):
+        token = b[pos]
+        b_counts[token] += 1
+        b_positions[token] = pos
+    pairs = [(pos, b_positions[a[pos]]) for pos in range(a_lo, a_hi) if a_counts[a[pos]] == 1 and b_counts[a[pos]] == 1]
+    # Longest increasing subsequence of the b positions (pairs are in a order).
+    tails: list[int] = []
+    tail_index: list[int] = []
+    previous = [-1] * len(pairs)
+    for index, (_, b_pos) in enumerate(pairs):
+        slot = bisect.bisect_left(tails, b_pos)
+        if slot == len(tails):
+            tails.append(b_pos)
+            tail_index.append(index)
+        else:
+            tails[slot] = b_pos
+            tail_index[slot] = index
+        previous[index] = tail_index[slot - 1] if slot else -1
+    chain: list[tuple[int, int]] = []
+    index = tail_index[-1] if tail_index else -1
+    while index >= 0:
+        chain.append(pairs[index])
+        index = previous[index]
+    chain.reverse()
+    return chain
 
 
 def filter_content(html: str, original_response: str) -> str:
