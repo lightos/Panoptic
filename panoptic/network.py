@@ -501,7 +501,12 @@ class NetworkClient:
             return self._session, proxy
         session = self._socks_sessions.get(proxy)
         if session is None:
-            session = self._socks_sessions[proxy] = self._new_session(self._socks_connector(proxy))
+            try:
+                connector = self._socks_connector(proxy)
+            except ValueError:
+                # e.g. a non-numeric port; reported like any other bad URL.
+                raise aiohttp.InvalidURL(proxy) from None
+            session = self._socks_sessions[proxy] = self._new_session(connector)
         return session, None
 
     async def _send_once(self, request: _Request) -> Response:
