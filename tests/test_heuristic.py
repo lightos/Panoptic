@@ -1,8 +1,16 @@
 """Tests for panoptic.heuristic — the core detection logic."""
 
+import random
 import time
 
-from panoptic.heuristic import MAX_COMPARE_LENGTH, clean_response, filter_content, is_match, similarity
+from panoptic.heuristic import (
+    MAX_COMPARE_LENGTH,
+    _lcs_length,
+    clean_response,
+    filter_content,
+    is_match,
+    similarity,
+)
 
 
 def _minified(count: int) -> str:
@@ -162,7 +170,7 @@ class TestDynamicPages:
         assert is_match(edited, page) is False
 
     def test_separated_edits_in_minified_response(self) -> None:
-        """Edits near both ends of a response without whitespace leave a long middle to anchor."""
+        """Edits near both ends of a response without whitespace leave a long differing middle."""
         page = _minified(80)
         start, end = len(page) // 20, len(page) * 19 // 20
         edited = page[:start] + "ZZ" + page[start + 2 : end] + "YY" + page[end + 2 :]
@@ -205,12 +213,27 @@ class TestSimilarityPerformance:
         assert similarity(page, edited) > 0.99
         assert time.perf_counter() - started < 1.0
 
-    def test_unanchored_large_responses_are_bounded(self) -> None:
+    def test_repetitive_large_responses_are_bounded(self) -> None:
         first = "".join("ab;"[(i * 7) % 3 if i % 5 else i % 2] for i in range(MAX_COMPARE_LENGTH))
         second = "".join("ab;"[(i * 5) % 3 if i % 7 else i % 2] for i in range(MAX_COMPARE_LENGTH))
         started = time.perf_counter()
         similarity(first, second)
+        assert time.perf_counter() - started < 2.0
+
+    def test_repetitive_punctuation_is_fast(self) -> None:
+        """Repetitive tokens made difflib's matcher take seconds on a few KB."""
+        first = "X;" + "alpha();" * 400 + "left"
+        second = "Y;" + "alpha();!" * 400 + "right"
+        started = time.perf_counter()
+        assert similarity(first, second) > 0.9
         assert time.perf_counter() - started < 1.0
+
+    def test_many_distinct_characters_are_bounded(self) -> None:
+        first = "".join(chr(0x4E00 + (i * 7919) % 30000) for i in range(MAX_COMPARE_LENGTH))
+        second = "".join(chr(0x4E00 + (i * 104729) % 30000) for i in range(MAX_COMPARE_LENGTH))
+        started = time.perf_counter()
+        assert similarity(first, second) < 0.9
+        assert time.perf_counter() - started < 2.0
 
     def test_reordered_large_page_is_bounded(self) -> None:
         lines = self._large_page().split("\n")
@@ -218,3 +241,28 @@ class TestSimilarityPerformance:
         started = time.perf_counter()
         similarity(reordered, "\n".join(lines))
         assert time.perf_counter() - started < 1.0
+
+
+def _reference_lcs(first: str, second: str) -> int:
+    previous = [0] * (len(second) + 1)
+    for char in first:
+        current = [0]
+        for index, other in enumerate(second):
+            current.append(previous[index] + 1 if char == other else max(previous[index + 1], current[index]))
+        previous = current
+    return previous[-1]
+
+
+class TestLcsLength:
+    def test_matches_reference_dynamic_programming(self) -> None:
+        rng = random.Random(7)
+        for _ in range(300):
+            first = "".join(rng.choice("ab;<") for _ in range(rng.randint(0, 40)))
+            second = "".join(rng.choice("ab;<") for _ in range(rng.randint(0, 40)))
+            assert _lcs_length(first, second) == _reference_lcs(first, second)
+
+    def test_bucketed_alphabet_never_undercounts(self) -> None:
+        """Past the alphabet cap rare characters share a mask, which can only add matches."""
+        first = "".join(chr(0x4E00 + i) for i in range(3000)) + "abc"
+        second = "".join(chr(0x4E00 + 2999 - i) for i in range(3000)) + "abc"
+        assert _lcs_length(first, second) >= _reference_lcs(first[-200:], second[-200:])
