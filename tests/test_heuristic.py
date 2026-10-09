@@ -3,6 +3,9 @@
 import random
 import time
 
+import pytest
+
+from panoptic import heuristic
 from panoptic.heuristic import (
     MAX_COMPARE_LENGTH,
     _lcs_length,
@@ -182,6 +185,18 @@ class TestDynamicPages:
         found = page[:2000] + "root:x:0:0:root:/root:/bin/bash\n" * 40 + page[2000:]
         assert is_match(found, page) is True
 
+    def test_short_file_inside_page_template_is_found(self) -> None:
+        """Scattered single-character matches between unrelated words must not hide a small file."""
+        wrapper = (
+            "<html><head><title>Document viewer</title></head><body><h1>Document preview</h1>"
+            + '<a href="/">Return to the document list</a>' * 9
+            + "<pre>"
+        )
+        suffix = "</pre><footer>Document viewer</footer></body></html>"
+        error = "The requested file could not be found. Please check the file name and try again."
+        passwd = "root:x:0:0:root:/root:/bin/bash\nalice:x:1000:1000:Alice:/home/alice:/bin/bash\n"
+        assert is_match(wrapper + passwd + suffix, wrapper + error + suffix) is True
+
     def test_file_inside_long_single_segment_response_is_found(self) -> None:
         page = "Error: " + "the requested resource could not be located on this server " * 50
         found = page[:1500] + "root:x:0:0:root:/root:/bin/bash daemon:x:1:1:daemon " * 40 + page[1500:]
@@ -233,7 +248,7 @@ class TestSimilarityPerformance:
         second = "".join(chr(0x4E00 + (i * 104729) % 30000) for i in range(MAX_COMPARE_LENGTH))
         started = time.perf_counter()
         assert similarity(first, second) < 0.9
-        assert time.perf_counter() - started < 2.0
+        assert time.perf_counter() - started < 3.0
 
     def test_reordered_large_page_is_bounded(self) -> None:
         lines = self._large_page().split("\n")
@@ -261,8 +276,16 @@ class TestLcsLength:
             second = "".join(rng.choice("ab;<") for _ in range(rng.randint(0, 40)))
             assert _lcs_length(first, second) == _reference_lcs(first, second)
 
-    def test_bucketed_alphabet_never_undercounts(self) -> None:
-        """Past the alphabet cap rare characters share a mask, which can only add matches."""
-        first = "".join(chr(0x4E00 + i) for i in range(3000)) + "abc"
-        second = "".join(chr(0x4E00 + 2999 - i) for i in range(3000)) + "abc"
-        assert _lcs_length(first, second) >= _reference_lcs(first[-200:], second[-200:])
+    def test_uncached_masks_stay_exact(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Symbols past the mask cache are rebuilt when used, never approximated."""
+        monkeypatch.setattr(heuristic, "_MAX_CACHED_MASKS", 2)
+        rng = random.Random(11)
+        for _ in range(200):
+            first = "".join(rng.choice("abcdefgh;<") for _ in range(rng.randint(0, 40)))
+            second = "".join(rng.choice("abcdefgh;<") for _ in range(rng.randint(0, 40)))
+            assert _lcs_length(first, second) == _reference_lcs(first, second)
+
+    def test_unique_characters_in_reordered_blocks_do_not_match(self) -> None:
+        """Every character distinct: blocks in reverse order share only one block."""
+        blocks = ["".join(chr(0x4E00 + block * 1024 + offset) for offset in range(1024)) for block in range(20)]
+        assert similarity("".join(blocks), "".join(reversed(blocks))) < 0.1

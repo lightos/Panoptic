@@ -10,7 +10,7 @@ import functools
 import html as html_lib
 import os
 import re
-from collections import Counter
+from collections.abc import Hashable, Sequence
 from urllib.parse import unquote
 
 # Default similarity ratio above which responses are considered "the same"
@@ -39,13 +39,20 @@ def _normalize_token(match: re.Match[str]) -> str:
     return token
 
 
-# Responses are compared by the length of their longest common subsequence of
-# characters, computed bit-parallel: one pass of big-integer operations per
-# character of the shorter text, so the cost depends only on the input sizes
-# (about 0.3s for two 64 KiB bodies), never on how repetitive the content is.
-# Each distinct character needs a bit mask as long as the longer text, so the
-# number of masks is capped; past it, rarer characters share masks.
-_MAX_LCS_ALPHABET = 2048
+# Responses are compared by the longest common subsequence of their tokens
+# (ASCII words, whitespace runs, and any other single character), weighted by
+# token length. Whole tokens keep scattered single-letter matches between
+# unrelated words from inflating the score, as SequenceMatcher's contiguous
+# blocks did; non-ASCII word characters are separate tokens so a CJK sentence
+# is not one indivisible token.
+_TOKEN_RE = re.compile(r"[A-Za-z0-9_]+|\s+|.", re.S)
+
+# The subsequence is computed bit-parallel: one pass of big-integer operations
+# per symbol of the shorter text, so the cost depends only on the input sizes
+# (well under a second for two 64 KiB bodies), never on how repetitive the
+# content is. Bit masks of the most frequent symbols are kept; the others are
+# rebuilt when used, which bounds memory without approximating.
+_MAX_CACHED_MASKS = 2048
 
 
 # Paths longer than this are only removed literally (case-insensitively) rather
@@ -149,10 +156,10 @@ def _normalize(text: str) -> str:
 def similarity(first: str, second: str) -> float:
     """Return a 0..1 similarity of two responses, ignoring volatile tokens.
 
-    The ratio is 2 * common / total, where ``common`` is the length of the
-    longest common subsequence of the normalized texts (like
-    ``SequenceMatcher.ratio()``, but exact and with a bounded cost). Only the
-    first MAX_COMPARE_LENGTH characters of each text are compared.
+    The ratio is 2 * common / total, where ``common`` counts the characters
+    of the longest common subsequence of tokens of the normalized texts (close
+    to ``SequenceMatcher.ratio()``, but with a bounded cost). Only the first
+    MAX_COMPARE_LENGTH characters of each text are compared.
     """
     first, second = _normalize(first), _normalize(second)
     total = len(first) + len(second)
@@ -165,15 +172,32 @@ def similarity(first: str, second: str) -> float:
     suffix = len(os.path.commonprefix([first[::-1], second[::-1]]))
     if suffix:
         first, second = first[:-suffix], second[:-suffix]
-    return 2 * (prefix + suffix + _lcs_length(first, second)) / total
+    return 2 * (prefix + suffix + _token_lcs_weight(first, second)) / total
 
 
-def _lcs_length(first: str, second: str) -> int:
-    """Return the length of the longest common subsequence of two strings.
+def _token_lcs_weight(first: str, second: str) -> int:
+    """Return how many characters the longest common token subsequence covers.
+
+    Each token stands for as many symbols as it has characters, so the plain
+    subsequence length of the expanded sequences is the character weight.
+    """
+    ids: dict[str, int] = {}
+
+    def expand(text: str) -> list[int]:
+        symbols: list[int] = []
+        for token in _TOKEN_RE.findall(text):
+            symbols.extend([ids.setdefault(token, len(ids))] * len(token))
+        return symbols
+
+    return _lcs_length(expand(first), expand(second))
+
+
+def _lcs_length(first: Sequence[Hashable], second: Sequence[Hashable]) -> int:
+    """Return the length of the longest common subsequence of two sequences.
 
     Bit-parallel dynamic programming (Allison-Dix / Hyyro): each bit of ``row``
-    is one column of the DP table over the longer string, and every character
-    of the shorter string updates the whole row with a few integer operations.
+    is one column of the DP table over the longer sequence, and every symbol
+    of the shorter one updates the whole row with a few integer operations.
     """
     if len(first) < len(second):
         first, second = second, first
@@ -182,31 +206,28 @@ def _lcs_length(first: str, second: str) -> int:
     shared = set(first) & set(second)
     if not shared:
         return 0
-    if len(shared) <= _MAX_LCS_ALPHABET:
-        ids = {char: index for index, char in enumerate(shared)}
-    else:
-        # Keep the most frequent characters exact and spread the rest over
-        # buckets by code point; a shared bucket can only add matches.
-        exact = _MAX_LCS_ALPHABET // 2
-        frequent = Counter(char for char in first if char in shared).most_common(exact)
-        ids = {char: exact + ord(char) % exact for char in shared}
-        ids.update((char, index) for index, (char, _) in enumerate(frequent))
-    positions: dict[int, list[int]] = {}
-    for index, char in enumerate(first):
-        if char in ids:
-            positions.setdefault(ids[char], []).append(index)
-    masks: dict[int, int] = {}
-    for char_id, indexes in positions.items():
-        bits = bytearray((len(first) + 7) // 8)
+    positions: dict[Hashable, list[int]] = {}
+    for index, symbol in enumerate(first):
+        if symbol in shared:
+            positions.setdefault(symbol, []).append(index)
+    size = (len(first) + 7) // 8
+
+    def mask(indexes: list[int]) -> int:
+        bits = bytearray(size)
         for index in indexes:
             bits[index >> 3] |= 1 << (index & 7)
-        masks[char_id] = int.from_bytes(bits, "little")
+        return int.from_bytes(bits, "little")
+
+    frequent = sorted(positions, key=lambda symbol: len(positions[symbol]), reverse=True)
+    cached = {symbol: mask(positions[symbol]) for symbol in frequent[:_MAX_CACHED_MASKS]}
     full = (1 << len(first)) - 1
     row = full
-    for char in second:
-        mask_id = ids.get(char)
-        if mask_id is not None:
-            matches = row & masks[mask_id]
+    for symbol in second:
+        if symbol in shared:
+            symbol_mask = cached.get(symbol)
+            if symbol_mask is None:
+                symbol_mask = mask(positions[symbol])
+            matches = row & symbol_mask
             row = ((row + matches) | (row - matches)) & full
     return len(first) - row.bit_count()
 
