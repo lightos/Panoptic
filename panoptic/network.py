@@ -68,6 +68,11 @@ SOCKS_PROXY_TYPES = {
     "socks5h": aiohttp_socks.ProxyType.SOCKS5,
 }
 
+
+def _is_socks(proxy: str) -> bool:
+    return urlsplit(proxy).scheme.lower() in SOCKS_PROXY_TYPES
+
+
 # Indirection so tests can replace the backoff sleep without patching asyncio.
 _sleep = asyncio.sleep
 
@@ -125,12 +130,19 @@ class Response:
 
 
 def _text_encoding(charset: str | None) -> str:
-    """Return the response charset when Python knows it, otherwise utf-8."""
+    """Return the response charset when Python can decode text with it, otherwise utf-8.
+
+    Non-text codecs that ``codecs.lookup`` also knows (base64, zlib, rot13, ...)
+    cannot be used with ``bytes.decode`` and fall back to utf-8.
+    """
     if charset:
         try:
-            return codecs.lookup(charset).name
+            info = codecs.lookup(charset)
         except LookupError:
             pass
+        else:
+            if info._is_text_encoding:
+                return info.name
     return "utf-8"
 
 
@@ -250,7 +262,10 @@ class _BoundedDecoder:
                 raise DecodingError("invalid compressed response body") from None
             # Some servers send raw deflate without the zlib wrapper.
             self._decompressor = zlib.decompressobj(-zlib.MAX_WBITS)
-            output = self._decompressor.decompress(data, limit)
+            try:
+                output = self._decompressor.decompress(data, limit)
+            except zlib.error:
+                raise DecodingError("invalid compressed response body") from None
         self._started = True
         return output
 
@@ -279,6 +294,8 @@ class NetworkClient:
     def __init__(self, config: ScanConfig) -> None:
         self.config = config
         self._session: aiohttp.ClientSession | None = None
+        # Sessions for SOCKS proxies taken from the environment, keyed by proxy URL.
+        self._socks_sessions: dict[str, aiohttp.ClientSession] = {}
         self._proxy: str | None = None
         self._headers: CIMultiDict[str] = CIMultiDict()
         self._user_header_names: frozenset[str] = frozenset()
@@ -287,16 +304,20 @@ class NetworkClient:
 
     async def __aenter__(self) -> NetworkClient:
         self._headers = self._build_headers()
+        connector, self._proxy = self._build_connector()
+        self._session = self._new_session(connector)
+        return self
+
+    def _new_session(self, connector: aiohttp.BaseConnector) -> aiohttp.ClientSession:
         timeout = aiohttp.ClientTimeout(
             connect=self.config.timeout,
             sock_connect=self.config.timeout,
             sock_read=self.config.timeout,
         )
-        connector, self._proxy = self._build_connector()
         # Redirects are followed manually in _send() so user-supplied headers
         # can be stripped when the redirect leaves the original origin. Bodies
         # are decoded in _send_once() with an output bound.
-        self._session = aiohttp.ClientSession(
+        return aiohttp.ClientSession(
             connector=connector,
             timeout=timeout,
             cookie_jar=aiohttp.DummyCookieJar(),
@@ -307,7 +328,6 @@ class NetworkClient:
             max_line_size=MAX_HEADER_LINE,
             max_field_size=MAX_HEADER_LINE,
         )
-        return self
 
     async def __aexit__(
         self,
@@ -317,6 +337,9 @@ class NetworkClient:
     ) -> None:
         if self._session:
             await self._session.close()
+        for session in self._socks_sessions.values():
+            await session.close()
+        self._socks_sessions.clear()
 
     def _build_connector(self) -> tuple[aiohttp.TCPConnector, str | None]:
         """Return the connection pool and the per-request (HTTP) proxy URL.
@@ -324,23 +347,24 @@ class NetworkClient:
         The pool is sized to the worker count. SOCKS proxies are implemented
         by the connector; HTTP(S) proxies are passed with every request.
         """
-        ssl = not self.config.invalid_ssl
         proxy = self.config.proxy
-        scheme = urlsplit(proxy).scheme.lower() if proxy else ""
-        if proxy and scheme in SOCKS_PROXY_TYPES:
-            parsed = urlsplit(proxy)
-            connector = aiohttp_socks.ProxyConnector(
-                proxy_type=SOCKS_PROXY_TYPES[scheme],
-                host=parsed.hostname or "",
-                port=parsed.port or 1080,
-                username=unquote(parsed.username) if parsed.username else None,
-                password=unquote(parsed.password) if parsed.password else None,
-                rdns=True if scheme == "socks5h" else None,
-                limit=self.config.concurrency,
-                ssl=ssl,
-            )
-            return connector, None
-        return aiohttp.TCPConnector(limit=self.config.concurrency, ssl=ssl), proxy
+        if proxy and _is_socks(proxy):
+            return self._socks_connector(proxy), None
+        return aiohttp.TCPConnector(limit=self.config.concurrency, ssl=not self.config.invalid_ssl), proxy
+
+    def _socks_connector(self, proxy: str) -> aiohttp_socks.ProxyConnector:
+        parsed = urlsplit(proxy)
+        scheme = parsed.scheme.lower()
+        return aiohttp_socks.ProxyConnector(
+            proxy_type=SOCKS_PROXY_TYPES[scheme],
+            host=parsed.hostname or "",
+            port=parsed.port or 1080,
+            username=unquote(parsed.username) if parsed.username else None,
+            password=unquote(parsed.password) if parsed.password else None,
+            rdns=True if scheme == "socks5h" else None,
+            limit=self.config.concurrency,
+            ssl=not self.config.invalid_ssl,
+        )
 
     async def fetch(
         self,
@@ -452,27 +476,49 @@ class NetworkClient:
             request = _Request(method, next_url, headers, body, request.header_names)
 
     def _proxy_for(self, url: URL) -> str | None:
-        """Return the HTTP proxy for ``url``: --proxy, else HTTP(S)_PROXY unless NO_PROXY matches.
+        """Return the proxy for ``url``: --proxy, else HTTP(S)_PROXY or ALL_PROXY unless NO_PROXY matches.
 
         An explicit proxy (HTTP or SOCKS) replaces environment proxies, and
-        --ignore-proxy disables them.
+        --ignore-proxy disables them. An explicit SOCKS proxy is implemented by
+        the session's connector, so None is returned for it.
         """
         if self.config.proxy or self.config.ignore_proxy:
             return self._proxy
-        proxy = getproxies().get(url.scheme)
+        proxies = getproxies()
+        proxy = proxies.get(url.scheme) or proxies.get("all")
         if proxy is None or proxy_bypass(url.host_port_subcomponent or ""):
             return None
+        try:
+            # Parse up front so a malformed value (bad port, unclosed IPv6
+            # bracket) is reported like any other bad URL.
+            urlsplit(proxy).port  # noqa: B018
+        except ValueError:
+            raise aiohttp.InvalidURL(proxy) from None
         return proxy
+
+    def _session_for(self, proxy: str | None) -> tuple[aiohttp.ClientSession, str | None]:
+        """Return the session to send through and the per-request (HTTP) proxy.
+
+        A SOCKS proxy from the environment gets its own session, created on
+        first use, since aiohttp only accepts HTTP proxies per request.
+        """
+        assert self._session is not None
+        if proxy is None or not _is_socks(proxy):
+            return self._session, proxy
+        session = self._socks_sessions.get(proxy)
+        if session is None:
+            session = self._socks_sessions[proxy] = self._new_session(self._socks_connector(proxy))
+        return session, None
 
     async def _send_once(self, request: _Request) -> Response:
         """Send one request and read at most MAX_RESPONSE_BYTES of its decoded body."""
-        assert self._session is not None
-        async with self._session.request(
+        session, proxy = self._session_for(self._proxy_for(request.url))
+        async with session.request(
             request.method,
             request.url,
             headers=request.headers,
             data=request.body,
-            proxy=self._proxy_for(request.url),
+            proxy=proxy,
             allow_redirects=False,
         ) as resp:
             # Decode from the raw stream with an output bound, so a small

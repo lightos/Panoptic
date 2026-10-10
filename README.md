@@ -368,8 +368,13 @@ as found when the similarity falls below 0.9. Before comparing, it:
 * compares only the first 64 KiB of each response. Bodies are capped at
   10 MiB when downloaded, compressed bodies included.
 
-The similarity is computed per line and tag, then character by
-character within the regions that differ, so large pages stay fast.
+The similarity follows Python's `difflib.SequenceMatcher`: lines and tags
+are matched first, then the characters of each region that differs. Both
+passes share a fixed work allowance per comparison, so a server cannot stall
+the scan with repetitive bodies. When the allowance runs out, which can also
+happen on ordinary large, repetitive pages, the regions not yet compared are
+scored by their longest common subsequence of characters instead. That score
+can be higher than the line-and-character comparison would give.
 
 Found files are printed with their HTTP status and size, e.g.
 `[+] Found '/etc/passwd' [200, 1.2 KB]`.

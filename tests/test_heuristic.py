@@ -1,8 +1,40 @@
 """Tests for panoptic.heuristic — the core detection logic."""
 
+import difflib
+import itertools
+import random
 import time
 
-from panoptic.heuristic import MAX_COMPARE_LENGTH, clean_response, filter_content, is_match, similarity
+import pytest
+
+from panoptic import heuristic
+from panoptic.heuristic import (
+    MAX_COMPARE_LENGTH,
+    _lcs_length,
+    clean_response,
+    filter_content,
+    is_match,
+    similarity,
+)
+
+# Wall-clock guard for comparisons of full-size (64 KiB) bodies. The bound that
+# matters is the work allowance, which holds on any machine; this only catches
+# pathological slowdowns, with room for slow CI runners under coverage.
+_FULL_SIZE_GUARD_SECONDS = 5.0
+
+
+def _minified(count: int) -> str:
+    """Minified-looking script: no whitespace, distinct letter identifiers (digits are normalized away)."""
+
+    def name(index: int) -> str:
+        letters = ""
+        index += 26 * 27
+        while index:
+            index, rest = divmod(index, 26)
+            letters = chr(97 + rest) + letters
+        return letters
+
+    return "".join(f"{name(i)}=function(a,b){{return!a.{name(i)}Get(b)&&b;}};{name(i)}V=[a,b];" for i in range(count))
 
 
 class TestCleanResponse:
@@ -140,6 +172,31 @@ class TestDynamicPages:
     def test_small_difference_in_single_segment_response(self) -> None:
         assert similarity("File not found:\n", "File not found: \n") > 0.9
 
+    def test_small_edit_in_long_single_segment_response(self) -> None:
+        """A one-character edit in a region too long to compare by character is not a found file."""
+        page = "Error: " + "the requested resource could not be located on this server " * 50
+        edited = page[:1500] + "X" + page[1501:]
+        assert similarity(page, edited) > 0.99
+        assert is_match(edited, page) is False
+
+    def test_separated_edits_in_minified_response(self) -> None:
+        """Edits near both ends of a response without whitespace leave a long differing middle."""
+        page = _minified(80)
+        start, end = len(page) // 20, len(page) * 19 // 20
+        edited = page[:start] + "ZZ" + page[start + 2 : end] + "YY" + page[end + 2 :]
+        assert similarity(page, edited) > 0.99
+        assert is_match(edited, page) is False
+
+    def test_file_inside_long_minified_response_is_found(self) -> None:
+        page = _minified(80)
+        found = page[:2000] + "root:x:0:0:root:/root:/bin/bash\n" * 40 + page[2000:]
+        assert is_match(found, page) is True
+
+    def test_file_inside_long_single_segment_response_is_found(self) -> None:
+        page = "Error: " + "the requested resource could not be located on this server " * 50
+        found = page[:1500] + "root:x:0:0:root:/root:/bin/bash daemon:x:1:1:daemon " * 40 + page[1500:]
+        assert is_match(found, page) is True
+
 
 class TestSimilarityPerformance:
     def _large_page(self) -> str:
@@ -150,11 +207,293 @@ class TestSimilarityPerformance:
         found = base[:30000] + "<pre>" + "root:x:0:0:root:/root:/bin/bash\n" * 300 + "</pre>" + base[30000:]
         started = time.perf_counter()
         assert is_match(found, base) is True
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
+
+    def test_long_differing_single_segment_responses_are_bounded(self) -> None:
+        first = " ".join(f"alpha{i % 97}beta" for i in range(8000))[:MAX_COMPARE_LENGTH]
+        second = " ".join(f"gamma{i % 89}delta" for i in range(8000))[:MAX_COMPARE_LENGTH]
+        started = time.perf_counter()
+        assert similarity(first, second) < 0.9
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
+
+    def test_large_minified_page_with_separated_edits_is_fast_and_accurate(self) -> None:
+        page = _minified(2000)[:MAX_COMPARE_LENGTH]
+        edited = "".join("Q" if i % 1300 == 0 else char for i, char in enumerate(page))
+        started = time.perf_counter()
+        assert similarity(page, edited) > 0.99
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
+
+    def test_repetitive_large_responses_are_bounded(self) -> None:
+        first = "".join("ab;"[(i * 7) % 3 if i % 5 else i % 2] for i in range(MAX_COMPARE_LENGTH))
+        second = "".join("ab;"[(i * 5) % 3 if i % 7 else i % 2] for i in range(MAX_COMPARE_LENGTH))
+        started = time.perf_counter()
+        similarity(first, second)
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
+
+    def test_repetitive_punctuation_is_fast(self) -> None:
+        """Repetitive tokens made difflib's matcher take seconds on a few KB."""
+        first = "X;" + "alpha();" * 400 + "left"
+        second = "Y;" + "alpha();!" * 400 + "right"
+        started = time.perf_counter()
+        assert similarity(first, second) > 0.9
         assert time.perf_counter() - started < 1.0
+
+    def test_many_distinct_characters_are_bounded(self) -> None:
+        first = "".join(chr(0x4E00 + (i * 7919) % 30000) for i in range(MAX_COMPARE_LENGTH))
+        second = "".join(chr(0x4E00 + (i * 104729) % 30000) for i in range(MAX_COMPARE_LENGTH))
+        started = time.perf_counter()
+        assert similarity(first, second) < 0.9
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
 
     def test_reordered_large_page_is_bounded(self) -> None:
         lines = self._large_page().split("\n")
         reordered = "\n".join(reversed(lines))
         started = time.perf_counter()
         similarity(reordered, "\n".join(lines))
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
+
+
+def _reference_lcs(first: str, second: str) -> int:
+    previous = [0] * (len(second) + 1)
+    for char in first:
+        current = [0]
+        for index, other in enumerate(second):
+            current.append(previous[index] + 1 if char == other else max(previous[index + 1], current[index]))
+        previous = current
+    return previous[-1]
+
+
+class TestLcsLength:
+    def test_matches_reference_dynamic_programming(self) -> None:
+        rng = random.Random(7)
+        for _ in range(300):
+            first = "".join(rng.choice("ab;<") for _ in range(rng.randint(0, 40)))
+            second = "".join(rng.choice("ab;<") for _ in range(rng.randint(0, 40)))
+            assert _lcs_length(first, second) == _reference_lcs(first, second)
+
+    def test_uncached_masks_stay_exact(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Symbols past the mask cache are rebuilt when used, never approximated."""
+        monkeypatch.setattr(heuristic, "_MAX_CACHED_MASKS", 2)
+        rng = random.Random(11)
+        for _ in range(200):
+            first = "".join(rng.choice("abcdefgh;<") for _ in range(rng.randint(0, 40)))
+            second = "".join(rng.choice("abcdefgh;<") for _ in range(rng.randint(0, 40)))
+            assert _lcs_length(first, second) == _reference_lcs(first, second)
+
+
+def _two_pass_reference(first: str, second: str) -> float:
+    """Unbudgeted reference: difflib segment opcodes, then difflib characters in replaced regions."""
+    first, second = heuristic._normalize(first), heuristic._normalize(second)
+    total = len(first) + len(second)
+    if total == 0 or first == second:
+        return 1.0
+    a = [segment for segment in heuristic._SEGMENT_RE.findall(first) if segment]
+    b = [segment for segment in heuristic._SEGMENT_RE.findall(second) if segment]
+    matched = 0
+    for tag, a_lo, a_hi, b_lo, b_hi in difflib.SequenceMatcher(None, a, b, autojunk=False).get_opcodes():
+        if tag == "equal":
+            matched += sum(map(len, a[a_lo:a_hi]))
+        elif tag == "replace":
+            region = difflib.SequenceMatcher(None, "".join(a[a_lo:a_hi]), "".join(b[b_lo:b_hi]), autojunk=False)
+            matched += sum(block.size for block in region.get_matching_blocks())
+    return 2 * matched / total
+
+
+def _random_page(rng: random.Random, rows: int) -> str:
+    words = ["the", "file", "not", "found", "error", "a", "", " ", "<p>", "</p>", "<br>", "\n", "\r\n", "x"]
+    return "".join(rng.choice(words) for _ in range(rows))
+
+
+def _exhausted(first: str, second: str) -> bool:
+    """Whether the comparison runs out of work at the current allowance.
+
+    An interrupted search always leaves a range with content on both sides,
+    which is then scored by ``_range_lcs``; completed searches never call it.
+    """
+    calls: list[int] = []
+    original = heuristic._range_lcs
+
+    def spy(x: str, y: str) -> int:
+        calls.append(1)
+        return original(x, y)
+
+    with pytest.MonkeyPatch.context() as patch:
+        patch.setattr(heuristic, "_range_lcs", spy)
+        similarity(first, second)
+    return bool(calls)
+
+
+class TestSimilarityContract:
+    """The agreed contract: exact two-pass SequenceMatcher scores within the allowance, bounded fallback past it."""
+
+    def test_segments_concatenate_back_to_the_text(self) -> None:
+        for text in ["", ">", "\n", "a", "a>b\nc", "no delimiters", "<a><b>\r\n</b>\n\ntail", ">>\n\n>"]:
+            segments = [segment for segment in heuristic._SEGMENT_RE.findall(text) if segment]
+            assert "".join(segments) == text
+
+    def test_exhaustive_short_texts_match_reference(self) -> None:
+        texts = ["".join(chars) for n in range(5) for chars in itertools.product("a>\n", repeat=n)]
+        for first in texts:
+            for second in texts:
+                assert similarity(first, second) == pytest.approx(_two_pass_reference(first, second), abs=1e-12)
+
+    def test_random_texts_match_reference_in_both_orders(self) -> None:
+        rng = random.Random(42)
+        for _ in range(1500):
+            first = _random_page(rng, rng.randint(0, 60))
+            second = _random_page(rng, rng.randint(0, 60))
+            for x, y in ((first, second), (second, first)):
+                assert similarity(x, y) == pytest.approx(_two_pass_reference(x, y), abs=1e-12)
+
+    def test_edge_trimming_is_not_applied_on_the_exact_path(self) -> None:
+        """SequenceMatcher matches 2 characters here; trimming common edges would credit 3."""
+        assert similarity("aaa", "abaa") == pytest.approx(4 / 7)
+
+    def test_replaced_segments_without_common_segments_are_compared_by_character(self) -> None:
+        assert similarity("<p>Not found</p>", "<p>Not found.</p>") > 0.9
+
+    def test_fallback_never_scores_below_reference(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        rng = random.Random(9)
+        for budget in (0, 1, 2, 5, 20, 100, 1000):
+            monkeypatch.setattr(heuristic, "_MAX_MATCH_WORK", budget)
+            for _ in range(150):
+                first = _random_page(rng, rng.randint(0, 50))
+                second = _random_page(rng, rng.randint(0, 50))
+                score = similarity(first, second)
+                assert 0.0 <= score <= 1.0
+                assert score >= _two_pass_reference(first, second) - 1e-12
+
+    def test_score_is_exact_from_the_minimum_sufficient_allowance(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        rng = random.Random(5)
+        for _ in range(40):
+            first = _random_page(rng, 40)
+            second = _random_page(rng, 40)
+            reference = _two_pass_reference(first, second)
+            low, high = 0, 100_000
+            monkeypatch.setattr(heuristic, "_MAX_MATCH_WORK", high)
+            assert not _exhausted(first, second)
+            while low < high:  # smallest allowance that never falls back
+                middle = (low + high) // 2
+                monkeypatch.setattr(heuristic, "_MAX_MATCH_WORK", middle)
+                if _exhausted(first, second):
+                    low = middle + 1
+                else:
+                    high = middle
+            monkeypatch.setattr(heuristic, "_MAX_MATCH_WORK", low)
+            assert similarity(first, second) == pytest.approx(reference, abs=1e-12)
+            if low:
+                monkeypatch.setattr(heuristic, "_MAX_MATCH_WORK", low - 1)
+                assert _exhausted(first, second)
+                assert similarity(first, second) >= reference - 1e-12
+
+    def test_allowance_is_shared_across_character_regions(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Many individually cheap replaced regions must not each get a fresh allowance."""
+        first = "".join(
+            f"<li id={_minified(1)[:3]}{chr(97 + i // 26)}{chr(97 + i % 26)}>item a</li>" for i in range(200)
+        )
+        second = "".join(
+            f"<li id={_minified(1)[:3]}{chr(97 + i // 26)}{chr(97 + i % 26)}>item b!</li>" for i in range(200)
+        )
+        segments_a = [segment for segment in heuristic._SEGMENT_RE.findall(heuristic._normalize(first)) if segment]
+        segments_b = [segment for segment in heuristic._SEGMENT_RE.findall(heuristic._normalize(second)) if segment]
+        work = heuristic._Work()
+        heuristic._matching_blocks(segments_a, segments_b, work)
+        segment_work = heuristic._MAX_MATCH_WORK - work.left
+        assert not work.exhausted
+        # Enough for the segment pass and a few of the 200 character regions.
+        monkeypatch.setattr(heuristic, "_MAX_MATCH_WORK", segment_work + 100)
+        assert _exhausted(first, second)
+        assert similarity(first, second) >= _two_pass_reference(first, second) - 1e-12
+        monkeypatch.undo()
+        assert not _exhausted(first, second)
+        assert similarity(first, second) == pytest.approx(_two_pass_reference(first, second), abs=1e-12)
+
+    def test_repetitive_template_is_bounded(self) -> None:
+        """Repeated segments make the segment pass itself expensive; the allowance still bounds it."""
+        first = "".join(f"<p>alpha beta {chr(97 + i % 26)}</p>\n<hr>\n" for i in range(2000))
+        second = "".join(f"<p>alpha beta {chr(98 + i % 25)}!</p>\n<hr>\n" for i in range(2000))
+        started = time.perf_counter()
+        assert 0.9 < similarity(first, second) <= 1.0
+        assert time.perf_counter() - started < _FULL_SIZE_GUARD_SECONDS
+
+
+_VIEWER = (
+    "<html><head><title>Document viewer</title></head><body><h1>Document preview</h1>",
+    '<a href="/">Return to the document list</a>',
+    "</pre><footer>Document viewer</footer></body></html>",
+)
+_PLAIN_ERROR = "The requested file could not be found. Please check the file name and try again."
+_PHP_ERROR = (
+    "Warning: include(): Failed opening '' for inclusion "
+    "(include_path='.:/usr/share/php') in /var/www/html/index.php on line 12"
+)
+_PASSWD_ROOT = "root:x:0:0:root:/root:/bin/bash\n"
+_PASSWD_TWO = _PASSWD_ROOT + "alice:x:1000:1000:Alice:/home/alice:/bin/bash\n"
+_SSH_CONFIG = "Host *\n    ForwardAgent no\n    ForwardX11 no\n    PasswordAuthentication yes\n    SendEnv LANG LC_*\n"
+_NGINX_CONFIG = (
+    "server {\n    listen 80;\n    server_name localhost;\n    root /var/www/html;\n    index index.html;\n}\n"
+)
+_HOSTS = "127.0.0.1 localhost\n127.0.1.1 webserver\n::1 localhost ip6-localhost ip6-loopback\n"
+
+
+class TestReviewedClassifications:
+    """Labeled cases from the Codex reviews of the similarity rewrite."""
+
+    @pytest.mark.parametrize(
+        ("content", "error", "links"),
+        [
+            (_PASSWD_TWO, _PLAIN_ERROR, 9),
+            (_PASSWD_ROOT, _PHP_ERROR, 10),
+            (_PASSWD_TWO, _PHP_ERROR, 13),
+            (_SSH_CONFIG, _PLAIN_ERROR, 9),
+            (_SSH_CONFIG, _PHP_ERROR, 13),
+            (_NGINX_CONFIG, _PLAIN_ERROR, 9),
+            (_NGINX_CONFIG, _PHP_ERROR, 11),
+            (_HOSTS, _PHP_ERROR, 17),
+        ],
+    )
+    def test_short_file_in_document_viewer_is_found(self, content: str, error: str, links: int) -> None:
+        wrapper = _VIEWER[0] + _VIEWER[1] * links + "<pre>"
+        assert is_match(wrapper + content + _VIEWER[2], wrapper + error + _VIEWER[2]) is True
+
+    def test_unique_characters_in_reversed_blocks_are_found(self) -> None:
+        blocks = ["".join(chr(0x4E00 + block * 1024 + offset) for offset in range(1024)) for block in range(20)]
+        assert is_match("".join(blocks), "".join(reversed(blocks))) is True
+
+    @pytest.mark.parametrize(
+        ("baseline", "response"),
+        [
+            (
+                "<html>\n" + (" " * 8 + "<p>The requested document could not be found.</p>\n") * 12 + "</html>",
+                "<html>\n" + (" " * 9 + "<p>The requested document could not be found.</p>\n") * 12 + "</html>",
+            ),
+            (
+                "<html>\n<body>\n<p>Not found</p>\n" * 20 + "</body></html>\n",
+                ("<html>\n<body>\n<p>Not found</p>\n" * 20 + "</body></html>\n").replace("\n", "\r\n"),
+            ),
+            (
+                '<html><body><p class="documentPreviewUnavailable">The requested file is unavailable.</p>' * 2
+                + "</body></html>",
+                '<html><body><p class="documentPreviewNotAvailable">The requested file is unavailable.</p>' * 2
+                + "</body></html>",
+            ),
+            (
+                '<script>window.requestId="alpha";'
+                + 'window.renderError("File_not_found");' * 100
+                + 'window.traceId="first";</script>',
+                '<script>window.requestId="bravo";'
+                + 'window.renderError("File_not_found");' * 100
+                + 'window.traceId="other";</script>',
+            ),
+            (
+                '{"request":"bravo","detail":"' + "resource_unavailable;" * 200 + '","trace":"other"}',
+                '{"request":"alpha","detail":"' + "resource_unavailable;" * 200 + '","trace":"first"}',
+            ),
+            ("Y;" + "alpha();!" * 400 + "right", "X;" + "alpha();" * 400 + "left"),
+        ],
+        ids=["indentation", "crlf", "class-rename", "minified-script", "compact-json", "repetitive-statements"],
+    )
+    def test_formatting_and_small_edits_are_not_found(self, baseline: str, response: str) -> None:
+        started = time.perf_counter()
+        assert is_match(response, baseline) is False
         assert time.perf_counter() - started < 1.0

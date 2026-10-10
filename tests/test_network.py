@@ -109,13 +109,16 @@ class TestNetworkClient:
         server.add("/l1", "café".encode("latin-1"), headers={"Content-Type": "text/plain; charset=iso-8859-1"})
         server.add("/bad", b"caf\xe9", headers={"Content-Type": "text/plain; charset=no-such-codec"})
         server.add("/none", "café".encode(), headers={"Content-Type": "text/plain"})
+        server.add("/b64", "café".encode(), headers={"Content-Type": "text/plain; charset=base64"})
         async with NetworkClient(config) as client:
             latin = await client.fetch(server.url("/l1"))
             unknown = await client.fetch(server.url("/bad"))
             default = await client.fetch(server.url("/none"))
+            binary_codec = await client.fetch(server.url("/b64"))
         assert latin is not None and latin.text == "café"
         assert unknown is not None and unknown.text == "caf\ufffd"
         assert default is not None and default.text == "café"
+        assert binary_codec is not None and binary_codec.text == "café"
 
     async def test_connection_refused_is_retried_then_none(self, config: ScanConfig) -> None:
         async with NetworkClient(config) as client:
@@ -304,6 +307,53 @@ class TestClientOptions:
         async with NetworkClient(ScanConfig(url="http://target.example")) as client:
             assert await client.fetch("http://target.example/a/../x", raw_path=True) is not None
         assert server.last.raw_path == "http://target.example/a/../x"
+
+    async def test_environment_all_proxy_is_used(
+        self, server: RecordingServer, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        for name in ("HTTP_PROXY", "http_proxy", "NO_PROXY", "no_proxy"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("ALL_PROXY", server.origin)
+        async with NetworkClient(ScanConfig(url="http://target.example")) as client:
+            assert await client.fetch("http://target.example/x") is not None
+        assert server.last.raw_path == "http://target.example/x"
+
+    async def test_no_proxy_bypasses_environment_all_proxy(
+        self, server: RecordingServer, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        for name in ("HTTP_PROXY", "http_proxy"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("ALL_PROXY", "http://127.0.0.1:9")
+        monkeypatch.setenv("NO_PROXY", "127.0.0.1")
+        async with NetworkClient(ScanConfig(url=server.origin)) as client:
+            assert await client.fetch(server.url("/direct")) is not None
+        assert server.last.raw_path == "/direct"
+
+    async def test_environment_socks_proxy_uses_its_own_session(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        for name in ("HTTP_PROXY", "http_proxy", "NO_PROXY", "no_proxy"):
+            monkeypatch.delenv(name, raising=False)
+        proxy = f"socks5://127.0.0.1:{_free_port()}"
+        monkeypatch.setenv("ALL_PROXY", proxy)
+        async with NetworkClient(ScanConfig(url="http://example.com", retries=0)) as client:
+            assert await client.fetch("http://example.com/") is None
+            assert client.error_counts == {"ProxyConnectionError": 1}
+            session, per_request = client._session_for(client._proxy_for(URL("http://example.com/")))
+            assert per_request is None
+            assert isinstance(session.connector, aiohttp_socks.ProxyConnector)
+            assert client._socks_sessions == {proxy: session}
+        assert session.closed
+
+    @pytest.mark.parametrize("scheme", ["socks5", "http"])
+    @pytest.mark.parametrize("authority", ["127.0.0.1:" + "notaport", "127.0.0.1:" + "65536", "[" + "::1"])
+    async def test_invalid_environment_proxy_is_a_handled_error(
+        self, monkeypatch: pytest.MonkeyPatch, scheme: str, authority: str
+    ) -> None:
+        for name in ("HTTP_PROXY", "http_proxy", "NO_PROXY", "no_proxy"):
+            monkeypatch.delenv(name, raising=False)
+        monkeypatch.setenv("ALL_PROXY", f"{scheme}://{authority}")
+        async with NetworkClient(ScanConfig(url="http://example.com", retries=0)) as client:
+            assert await client.fetch("http://example.com/") is None
+            assert client.error_counts == {"InvalidURL": 1}
 
     async def test_no_proxy_bypasses_environment_proxy(
         self, server: RecordingServer, monkeypatch: pytest.MonkeyPatch
@@ -677,6 +727,13 @@ class TestLimits:
             resp = await client.fetch(server.url("/c"))
         assert resp is not None
         assert resp.content == body
+
+    async def test_invalid_deflate_body_is_a_decoding_error(self, server: RecordingServer) -> None:
+        """Neither zlib-wrapped nor raw deflate: reported as DecodingError, not an uncaught zlib.error."""
+        server.add("/c", b"\xff\xff not deflate", headers={"Content-Encoding": "deflate"})
+        async with NetworkClient(ScanConfig(url="http://example.com", retries=3)) as client:
+            assert await client.fetch(server.url("/c")) is None
+            assert client.error_counts == {"DecodingError": 1}
 
     async def test_invalid_compressed_body_is_not_retried(self, server: RecordingServer) -> None:
         server.add("/c", b"not gzip at all", headers={"Content-Encoding": "gzip"})
