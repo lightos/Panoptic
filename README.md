@@ -56,15 +56,34 @@ path traversal vulnerabilities.
 
 Install Panoptic with [pipx](https://pipx.pypa.io/). It puts the `panoptic`
 command on your PATH and keeps Panoptic's dependencies apart from the system
-Python:
+Python.
+
+On Kali, Debian or Ubuntu:
 
 ```bash
-sudo apt install pipx git   # Kali, Debian, Ubuntu; on macOS: brew install pipx git
+sudo apt install pipx git
 pipx ensurepath
 pipx install git+https://github.com/lightos/Panoptic.git
 ```
 
-Open a new terminal, then check that it works:
+On macOS, with [Homebrew](https://brew.sh/):
+
+```bash
+brew install pipx git
+pipx ensurepath
+pipx install git+https://github.com/lightos/Panoptic.git
+```
+
+On Windows, with [Python](https://www.python.org/downloads/) and
+[Git](https://git-scm.com/downloads) installed:
+
+```powershell
+py -m pip install --user pipx
+py -m pipx ensurepath
+py -m pipx install git+https://github.com/lightos/Panoptic.git
+```
+
+Then open a new terminal and check that it works:
 
 ```bash
 panoptic --version
@@ -72,9 +91,6 @@ panoptic --version
 
 Update with `pipx upgrade panoptic`. Do not run `pip install panoptic`: that
 PyPI name belongs to an unrelated project.
-
-On Windows, install pipx with `py -m pip install --user pipx` and
-`py -m pipx ensurepath`, then run the same `pipx install` command.
 
 ### With uv
 
@@ -84,10 +100,11 @@ itself:
 
 ```bash
 curl -LsSf https://astral.sh/uv/install.sh | sh
+source "$HOME/.local/bin/env"
 uv tool install git+https://github.com/lightos/Panoptic.git
 ```
 
-Open a new terminal and run `panoptic --version`. Update with
+Then open a new terminal and run `panoptic --version`. Update with
 `uv tool upgrade panoptic`.
 
 ### From a git checkout

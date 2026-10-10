@@ -110,6 +110,24 @@ def _dependencies_changed(before: str, after: str) -> bool:
     return result.returncode != 0
 
 
+def _reinstall_commands(python: str, checkout: str, *, windows: bool) -> list[str]:
+    """Return shell commands that reinstall the checkout's dependencies into ``python``.
+
+    POSIX shells get shlex quoting. Windows gets labelled PowerShell (call
+    operator, literal single quotes) and Command Prompt (double quotes) forms,
+    since neither accepts the other's quoting.
+    """
+    args = [python, "-m", "pip", "install", "-e", checkout]
+    if not windows:
+        return [shlex.join(args)]
+
+    def powershell_literal(value: str) -> str:
+        return "'" + value.replace("'", "''") + "'"
+
+    powershell = f"& {powershell_literal(python)} -m pip install -e {powershell_literal(checkout)}"
+    return [f"PowerShell:     {powershell}", f"Command Prompt: {subprocess.list2cmdline(args)}"]
+
+
 def do_update() -> int:
     """Perform self-update from git or print the update command for this installation."""
     git_dir = os.path.join(_PROJECT_ROOT, ".git")
@@ -174,9 +192,9 @@ def do_update() -> int:
         if before is None or after is None or _dependencies_changed(before, after):
             # git pull only updates the code; an editable install does not pick
             # up new or changed dependencies by itself.
-            reinstall = f"{shlex.quote(sys.executable)} -m pip install -e {shlex.quote(_PROJECT_ROOT)}"
             print("[i] Dependencies may have changed. Reinstall them with:")
-            print(f"    {reinstall}")
+            for line in _reinstall_commands(sys.executable, _PROJECT_ROOT, windows=os.name == "nt"):
+                print(f"    {line}")
         return 0
 
     stderr = result.stderr.decode("utf-8", errors="replace").strip()

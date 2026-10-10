@@ -10,17 +10,21 @@ _MISSING_DEPENDENCY_HELP = """\
 [!] Panoptic's dependencies are not installed for this Python:
     {python} (missing module '{module}')
 
-Install Panoptic with pipx, which manages them for you:
+Install Panoptic with pipx, which manages them for you (the README's
+Installation section shows how to install pipx itself):
 
     pipx install git+https://github.com/lightos/Panoptic.git
 
-then run 'panoptic' from any terminal. To run it from this checkout
-instead, install it into a virtual environment and activate that
-environment in each new terminal (or run .venv/bin/panoptic directly):
+Then open a new terminal and run 'panoptic'.
+
+To run it from this checkout instead, install it into a virtual environment
+there (on Debian and Ubuntu, run 'sudo apt install python3-venv' first):
 
     python3 -m venv .venv
-    source .venv/bin/activate        (Windows: .venv\\Scripts\\activate)
-    python -m pip install -e .
+    .venv/bin/python -m pip install -e .
+    .venv/bin/panoptic --version
+
+On Windows, use .venv\\Scripts\\python and .venv\\Scripts\\panoptic instead.
 """
 
 

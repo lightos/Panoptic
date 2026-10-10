@@ -31,7 +31,8 @@ class TestMissingDependencies:
         err = capsys.readouterr().err
         assert f"missing module '{missing.partition('.')[0]}'" in err
         assert "pipx install git+https://github.com/lightos/Panoptic.git" in err
-        assert "python -m pip install -e ." in err
+        assert ".venv/bin/python -m pip install -e ." in err
+        assert "source" not in err  # every indented line is a runnable command
 
     def test_other_missing_modules_are_not_hidden(self, monkeypatch: pytest.MonkeyPatch) -> None:
         _fail_import(monkeypatch, "panoptic.nonexistent")

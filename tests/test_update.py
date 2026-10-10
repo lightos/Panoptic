@@ -1,5 +1,6 @@
 """Tests for panoptic.update — git self-update."""
 
+import shlex
 import subprocess
 import sys
 from pathlib import Path
@@ -12,6 +13,7 @@ from panoptic import update
 from panoptic.update import (
     GIT_UPSTREAM_REF,
     _normalise_git_url,
+    _reinstall_commands,
     _uses_secure_git_transport,
     do_update,
     get_revision,
@@ -120,7 +122,25 @@ class TestDoUpdate:
         assert do_update() == 0
         out = capsys.readouterr().out
         assert "Reinstall them with:" in out
-        assert f"{sys.executable} -m pip install -e " in out
+        assert f"{shlex.quote(sys.executable)} -m pip install -e " in out
+
+    def test_reinstall_command_quoting_per_shell(self) -> None:
+        python = r"C:\Users\O'Neil\Panoptic\.venv\Scripts\python.exe"
+        checkout = r"C:\Users\O'Neil\Panoptic"
+        assert _reinstall_commands(python, checkout, windows=True) == [
+            "PowerShell:     & 'C:\\Users\\O''Neil\\Panoptic\\.venv\\Scripts\\python.exe' -m pip install -e "
+            "'C:\\Users\\O''Neil\\Panoptic'",
+            "Command Prompt: C:\\Users\\O'Neil\\Panoptic\\.venv\\Scripts\\python.exe -m pip install -e "
+            "C:\\Users\\O'Neil\\Panoptic",
+        ]
+        spaced = _reinstall_commands(r"C:\Program Files\Python\python.exe", r"C:\My Tools\Panoptic", windows=True)
+        assert (
+            spaced[1]
+            == 'Command Prompt: "C:\\Program Files\\Python\\python.exe" -m pip install -e "C:\\My Tools\\Panoptic"'
+        )
+        assert _reinstall_commands("/home/a b/.venv/bin/python", "/home/a b/Panoptic", windows=False) == [
+            "'/home/a b/.venv/bin/python' -m pip install -e '/home/a b/Panoptic'"
+        ]
 
     @patch("panoptic.update.subprocess.run")
     @patch("panoptic.update.os.path.exists", return_value=True)
