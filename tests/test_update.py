@@ -1,6 +1,6 @@
 """Tests for panoptic.update — git self-update."""
 
-import shlex
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -122,7 +122,8 @@ class TestDoUpdate:
         assert do_update() == 0
         out = capsys.readouterr().out
         assert "Reinstall them with:" in out
-        assert f"{shlex.quote(sys.executable)} -m pip install -e " in out
+        (command,) = _reinstall_commands(sys.executable, update._PROJECT_ROOT, windows=os.name == "nt")
+        assert command in out
 
     def test_reinstall_command_quoting_per_shell(self) -> None:
         python = r"C:\Tools\R&D\O'Neil\.venv\Scripts\python.exe"
