@@ -49,33 +49,66 @@ path traversal vulnerabilities.
 
 ## Requirements
 
-* Python 3.11+
+* Python 3.11+ (uv can download it for you, see below)
 * Git
-* Dependencies: `aiohttp`, `aiohttp-socks`, `multidict`, `yarl`, `rich`, and
-  `rich-argparse`
 
 ## Installation
+
+Install Panoptic with [pipx](https://pipx.pypa.io/). It puts the `panoptic`
+command on your PATH and keeps Panoptic's dependencies apart from the system
+Python:
+
+```bash
+sudo apt install pipx git   # Kali, Debian, Ubuntu; on macOS: brew install pipx git
+pipx ensurepath
+pipx install git+https://github.com/lightos/Panoptic.git
+```
+
+Open a new terminal, then check that it works:
+
+```bash
+panoptic --version
+```
+
+Update with `pipx upgrade panoptic`. Do not run `pip install panoptic`: that
+PyPI name belongs to an unrelated project.
+
+On Windows, install pipx with `py -m pip install --user pipx` and
+`py -m pipx ensurepath`, then run the same `pipx install` command.
+
+### With uv
+
+If your system Python is older than 3.11 (for example on Ubuntu 22.04), use
+[uv](https://docs.astral.sh/uv/) instead. It downloads a suitable Python by
+itself:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv tool install git+https://github.com/lightos/Panoptic.git
+```
+
+Open a new terminal and run `panoptic --version`. Update with
+`uv tool upgrade panoptic`.
+
+### From a git checkout
+
+To run Panoptic from a clone, for example to work on it, install it into a
+virtual environment inside the checkout. On Debian and Ubuntu, this needs
+`sudo apt install python3-venv` first.
 
 ```bash
 git clone https://github.com/lightos/Panoptic.git
 cd Panoptic
 python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install -e .
-panoptic --version
+.venv/bin/python -m pip install -e ".[dev]"
+.venv/bin/panoptic --version
 ```
 
-On Windows Command Prompt, activate with `.venv\Scripts\activate.bat`;
-in PowerShell, use `.venv\Scripts\Activate.ps1`. The editable install keeps
-Panoptic connected to this checkout for `--update`, so keep the directory
-in place. Do not run `pip install panoptic`: that PyPI name belongs to an
-unrelated project.
-
-For development:
-
-```bash
-python -m pip install -e ".[dev]"
-```
+Run it as `.venv/bin/panoptic`, or run `source .venv/bin/activate` in each
+new terminal to use `panoptic` and `python panoptic.py` directly. On Windows,
+use `.venv\Scripts\python` and `.venv\Scripts\panoptic` instead. The
+editable install keeps Panoptic connected to the checkout, so
+`panoptic --update` can update it in place.
 
 ## Usage
 
@@ -420,15 +453,20 @@ checkpointed, so they are retried on resume.
 
 ```bash
 panoptic --version   # print the installed version and exit
-panoptic --update    # fast-forward update from the official GitHub repo
+panoptic --update    # update Panoptic, or print how to update this installation
 ```
 
-`--update` only works from a git checkout whose `origin` remote uses
-HTTPS or SSH and matches the official upstream (verified before pulling,
-to resist insecure or tampered remote configuration). It fast-forwards
-the checked-out `main` branch from the explicit upstream `main` ref.
-Non-checkout installations can be refreshed safely from the official
-GitHub archive:
+For pipx and uv installations, `--update` prints the command that updates
+them: `pipx upgrade panoptic` or `uv tool upgrade panoptic`.
+
+From a git checkout, `--update` fast-forwards the checked-out `main` branch
+from the official upstream `main` ref. It only does so when the `origin`
+remote uses HTTPS or SSH and matches the official repository (verified
+before pulling, to resist insecure or tampered remote configuration). If the
+update changed Panoptic's dependencies, it prints the command that
+reinstalls them.
+
+Other pip installations can be refreshed from the official GitHub archive:
 
 ```bash
 python -m pip install --upgrade https://github.com/lightos/Panoptic/archive/refs/heads/main.zip

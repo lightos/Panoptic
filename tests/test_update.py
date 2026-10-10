@@ -1,11 +1,14 @@
 """Tests for panoptic.update — git self-update."""
 
 import subprocess
+import sys
+from pathlib import Path
 from typing import Any
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+from panoptic import update
 from panoptic.update import (
     GIT_UPSTREAM_REF,
     _normalise_git_url,
@@ -85,9 +88,39 @@ class TestDoUpdate:
             _ok(HEAD_A),
             _ok(b"Already something\n"),
             _ok(HEAD_B),
+            _ok(),  # git diff --quiet: pyproject.toml unchanged
         ]
         assert do_update() == 0
-        assert "Updated to revision 'def4567'" in capsys.readouterr().out
+        out = capsys.readouterr().out
+        assert "Updated to revision 'def4567'" in out
+        assert "Reinstall" not in out
+        assert mock_run.call_args_list[5][0][0] == [
+            "git",
+            "diff",
+            "--quiet",
+            HEAD_A.decode().strip(),
+            HEAD_B.decode().strip(),
+            "--",
+            "pyproject.toml",
+        ]
+
+    @patch("panoptic.update.subprocess.run")
+    @patch("panoptic.update.os.path.exists", return_value=True)
+    def test_update_with_changed_dependencies_prints_reinstall_command(
+        self, mock_exists: Any, mock_run: Any, capsys: pytest.CaptureFixture[str]
+    ) -> None:
+        mock_run.side_effect = [
+            _ok(TRUSTED_REMOTE),
+            _ok(b"main\n"),
+            _ok(HEAD_A),
+            _ok(),
+            _ok(HEAD_B),
+            MagicMock(returncode=1, stdout=b"", stderr=b""),  # pyproject.toml changed
+        ]
+        assert do_update() == 0
+        out = capsys.readouterr().out
+        assert "Reinstall them with:" in out
+        assert f"{sys.executable} -m pip install -e " in out
 
     @patch("panoptic.update.subprocess.run")
     @patch("panoptic.update.os.path.exists", return_value=True)
@@ -179,10 +212,35 @@ class TestDoUpdate:
         assert do_update() == 2
         assert mock_run.call_count == 2
 
+    @pytest.mark.parametrize(
+        ("marker", "installer", "command"),
+        [
+            ("pipx_metadata.json", "pipx", "pipx upgrade panoptic"),
+            ("uv-receipt.toml", "uv", "uv tool upgrade panoptic"),
+        ],
+    )
+    def test_tool_installs_print_their_upgrade_command(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+        marker: str,
+        installer: str,
+        command: str,
+    ) -> None:
+        (tmp_path / marker).write_text("")
+        monkeypatch.setattr(update, "_PROJECT_ROOT", str(tmp_path / "site-packages"))
+        monkeypatch.setattr(sys, "prefix", str(tmp_path))
+        assert do_update() == 0
+        out = capsys.readouterr().out
+        assert f"installed with {installer}" in out
+        assert f"To update, run: {command}" in out
+
     @patch("panoptic.update.os.path.exists", return_value=False)
     def test_pip_installed_prints_guidance(self, mock_exists: Any, capsys: pytest.CaptureFixture[str]) -> None:
         assert do_update() == 0
         captured = capsys.readouterr()
+        assert "installed with pip" in captured.out
         assert (
             "python -m pip install --upgrade https://github.com/lightos/Panoptic/archive/refs/heads/main.zip"
         ) in captured.out
