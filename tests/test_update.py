@@ -125,21 +125,14 @@ class TestDoUpdate:
         assert f"{shlex.quote(sys.executable)} -m pip install -e " in out
 
     def test_reinstall_command_quoting_per_shell(self) -> None:
-        python = r"C:\Users\O'Neil\Panoptic\.venv\Scripts\python.exe"
-        checkout = r"C:\Users\O'Neil\Panoptic"
+        python = r"C:\Tools\R&D\O'Neil\.venv\Scripts\python.exe"
+        checkout = r"C:\Tools\R&D\O'Neil"
         assert _reinstall_commands(python, checkout, windows=True) == [
-            "PowerShell:     & 'C:\\Users\\O''Neil\\Panoptic\\.venv\\Scripts\\python.exe' -m pip install -e "
-            "'C:\\Users\\O''Neil\\Panoptic'",
-            "Command Prompt: C:\\Users\\O'Neil\\Panoptic\\.venv\\Scripts\\python.exe -m pip install -e "
-            "C:\\Users\\O'Neil\\Panoptic",
+            "& 'C:\\Tools\\R&D\\O''Neil\\.venv\\Scripts\\python.exe' -m pip install -e "
+            "'C:\\Tools\\R&D\\O''Neil'   # PowerShell"
         ]
-        spaced = _reinstall_commands(r"C:\Program Files\Python\python.exe", r"C:\My Tools\Panoptic", windows=True)
-        assert (
-            spaced[1]
-            == 'Command Prompt: "C:\\Program Files\\Python\\python.exe" -m pip install -e "C:\\My Tools\\Panoptic"'
-        )
-        assert _reinstall_commands("/home/a b/.venv/bin/python", "/home/a b/Panoptic", windows=False) == [
-            "'/home/a b/.venv/bin/python' -m pip install -e '/home/a b/Panoptic'"
+        assert _reinstall_commands("/home/a b/R&D/.venv/bin/python", "/home/a b/R&D", windows=False) == [
+            "'/home/a b/R&D/.venv/bin/python' -m pip install -e '/home/a b/R&D'"
         ]
 
     @patch("panoptic.update.subprocess.run")

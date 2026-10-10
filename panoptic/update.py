@@ -113,9 +113,9 @@ def _dependencies_changed(before: str, after: str) -> bool:
 def _reinstall_commands(python: str, checkout: str, *, windows: bool) -> list[str]:
     """Return shell commands that reinstall the checkout's dependencies into ``python``.
 
-    POSIX shells get shlex quoting. Windows gets labelled PowerShell (call
-    operator, literal single quotes) and Command Prompt (double quotes) forms,
-    since neither accepts the other's quoting.
+    POSIX shells get shlex quoting. Windows gets a PowerShell command (call
+    operator and literal single quotes); Command Prompt is not offered, since
+    its metacharacters (&, ^, %) cannot all be quoted safely.
     """
     args = [python, "-m", "pip", "install", "-e", checkout]
     if not windows:
@@ -124,8 +124,7 @@ def _reinstall_commands(python: str, checkout: str, *, windows: bool) -> list[st
     def powershell_literal(value: str) -> str:
         return "'" + value.replace("'", "''") + "'"
 
-    powershell = f"& {powershell_literal(python)} -m pip install -e {powershell_literal(checkout)}"
-    return [f"PowerShell:     {powershell}", f"Command Prompt: {subprocess.list2cmdline(args)}"]
+    return [f"& {powershell_literal(python)} -m pip install -e {powershell_literal(checkout)}   # PowerShell"]
 
 
 def do_update() -> int:
