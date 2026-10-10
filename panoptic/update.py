@@ -1,14 +1,16 @@
 """Git-based self-update for Panoptic.
 
-Detects whether running from git checkout or pip install and
-acts appropriately.
+Detects whether running from a git checkout or from a pipx, uv or pip
+installation and acts appropriately.
 """
 
 from __future__ import annotations
 
 import os
 import re
+import shlex
 import subprocess
+import sys
 from urllib.parse import urlsplit
 
 from panoptic.utils import redact_urls_in_text
@@ -18,6 +20,8 @@ GIT_UPSTREAM_BRANCH = "main"
 GIT_UPSTREAM_REF = f"refs/heads/{GIT_UPSTREAM_BRANCH}"
 PIP_UPDATE_URL = f"https://github.com/lightos/Panoptic/archive/refs/heads/{GIT_UPSTREAM_BRANCH}.zip"
 PIP_UPDATE_COMMAND = f"python -m pip install --upgrade {PIP_UPDATE_URL}"
+PIPX_UPDATE_COMMAND = "pipx upgrade panoptic"
+UV_UPDATE_COMMAND = "uv tool upgrade panoptic"
 
 _PACKAGE_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROJECT_ROOT = os.path.dirname(_PACKAGE_DIR)
@@ -84,13 +88,53 @@ def _head_commit() -> str | None:
     return stdout if re.fullmatch(r"[0-9a-f]{40,64}", stdout) else None
 
 
+def _installer() -> tuple[str, str]:
+    """Return the tool that installed this (non-checkout) copy and its update command.
+
+    pipx and uv tool environments are recognized by the metadata files those
+    tools write into the environment they manage.
+    """
+    if os.path.exists(os.path.join(sys.prefix, "pipx_metadata.json")):
+        return "pipx", PIPX_UPDATE_COMMAND
+    if os.path.exists(os.path.join(sys.prefix, "uv-receipt.toml")):
+        return "uv", UV_UPDATE_COMMAND
+    return "pip", PIP_UPDATE_COMMAND
+
+
+def _dependencies_changed(before: str, after: str) -> bool:
+    """Return whether pyproject.toml (and so the dependency list) changed between two commits."""
+    try:
+        result = _run_git(["diff", "--quiet", before, after, "--", "pyproject.toml"], timeout=30)
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return True
+    return result.returncode != 0
+
+
+def _reinstall_commands(python: str, checkout: str, *, windows: bool) -> list[str]:
+    """Return shell commands that reinstall the checkout's dependencies into ``python``.
+
+    POSIX shells get shlex quoting. Windows gets a PowerShell command (call
+    operator and literal single quotes); Command Prompt is not offered, since
+    its metacharacters (&, ^, %) cannot all be quoted safely.
+    """
+    args = [python, "-m", "pip", "install", "-e", checkout]
+    if not windows:
+        return [shlex.join(args)]
+
+    def powershell_literal(value: str) -> str:
+        return "'" + value.replace("'", "''") + "'"
+
+    return [f"& {powershell_literal(python)} -m pip install -e {powershell_literal(checkout)}   # PowerShell"]
+
+
 def do_update() -> int:
-    """Perform self-update from git or print pip guidance."""
+    """Perform self-update from git or print the update command for this installation."""
     git_dir = os.path.join(_PROJECT_ROOT, ".git")
 
     if not os.path.exists(git_dir):
-        print("[i] Panoptic appears to be installed via pip.")
-        print(f"[i] To update, run: {PIP_UPDATE_COMMAND}")
+        installer, command = _installer()
+        print(f"[i] Panoptic appears to be installed with {installer}.")
+        print(f"[i] To update, run: {command}")
         return 0
 
     print("[i] Checking for updates...")
@@ -142,8 +186,14 @@ def do_update() -> int:
         revision = after[:7] if after else "unknown"
         if before is not None and before == after:
             print(f"[i] Already at the latest revision '{revision}'.")
-        else:
-            print(f"[i] Updated to revision '{revision}'.")
+            return 0
+        print(f"[i] Updated to revision '{revision}'.")
+        if before is None or after is None or _dependencies_changed(before, after):
+            # git pull only updates the code; an editable install does not pick
+            # up new or changed dependencies by itself.
+            print("[i] Dependencies may have changed. Reinstall them with:")
+            for line in _reinstall_commands(sys.executable, _PROJECT_ROOT, windows=os.name == "nt"):
+                print(f"    {line}")
         return 0
 
     stderr = result.stderr.decode("utf-8", errors="replace").strip()
