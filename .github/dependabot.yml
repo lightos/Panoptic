@@ -5,7 +5,7 @@ updates:
     schedule:
       interval: weekly
     # Panoptic tracks the latest releases: raise the lower bounds in
-    # pyproject.toml (and mirror them in .github/constraints-min.txt).
+    # pyproject.toml (the minimum-versions CI job derives its pins from them).
     versioning-strategy: increase
     commit-message:
       prefix: deps
